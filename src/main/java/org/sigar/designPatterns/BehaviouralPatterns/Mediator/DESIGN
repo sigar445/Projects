@@ -1,0 +1,257 @@
+The **Command Design Pattern** is a behavioral design pattern that encapsulates a request as an object, allowing you to parameterize clients with queues, requests, and operations. It decouples the object that invokes the operation from the one that knows how to perform it. This pattern is commonly used in GUI-based applications where user actions (like button clicks) need to be encapsulated as objects.
+
+### Key Concepts of the Command Pattern
+
+1. **Command Interface**: Declares an interface for executing an operation.
+2. **Concrete Command**: Implements the command interface to perform specific actions by delegating to receiver objects.
+3. **Receiver**: The component that knows how to execute the request.
+4. **Invoker**: Asks the command to carry out the request.
+5. **Client**: Creates a concrete command object and sets its receiver.
+
+### Practical Example in Java: Remote Control System
+
+Let's consider a scenario where we have a remote control system for different devices like lights, fans, and TVs. The remote can execute different commands such as turning on/off the device, increasing/decreasing the volume, etc.
+
+#### Step-by-Step Implementation
+
+1. **Command Interface**
+
+```java
+// Command Interface
+public interface Command {
+    void execute();
+    void undo();
+}
+```
+
+2. **Receiver Classes**
+
+These classes represent the actual components that will be controlled.
+
+```java
+// Receiver Class for Light
+public class Light {
+    private String room;
+
+    public Light(String room) {
+        this.room = room;
+    }
+
+    public void turnOn() {
+        System.out.println(room + " light is ON");
+    }
+
+    public void turnOff() {
+        System.out.println(room + " light is OFF");
+    }
+}
+
+// Receiver Class for Fan
+public class Fan {
+    private String room;
+
+    public Fan(String room) {
+        this.room = room;
+    }
+
+    public void turnOn() {
+        System.out.println(room + " fan is ON");
+    }
+
+    public void turnOff() {
+        System.out.println(room + " fan is OFF");
+    }
+}
+```
+
+3. **Concrete Command Classes**
+
+These classes implement the `Command` interface to execute specific actions on the receiver.
+
+```java
+// Concrete Command to Turn On Light
+public class LightOnCommand implements Command {
+    private Light light;
+
+    public LightOnCommand(Light light) {
+        this.light = light;
+    }
+
+    @Override
+    public void execute() {
+        light.turnOn();
+    }
+
+    @Override
+    public void undo() {
+        light.turnOff();
+    }
+}
+
+// Concrete Command to Turn Off Light
+public class LightOffCommand implements Command {
+    private Light light;
+
+    public LightOffCommand(Light light) {
+        this.light = light;
+    }
+
+    @Override
+    public void execute() {
+        light.turnOff();
+    }
+
+    @Override
+    public void undo() {
+        light.turnOn();
+    }
+}
+
+// Concrete Command to Turn On Fan
+public class FanOnCommand implements Command {
+    private Fan fan;
+
+    public FanOnCommand(Fan fan) {
+        this.fan = fan;
+    }
+
+    @Override
+    public void execute() {
+        fan.turnOn();
+    }
+
+    @Override
+    public void undo() {
+        fan.turnOff();
+    }
+}
+
+// Concrete Command to Turn Off Fan
+public class FanOffCommand implements Command {
+    private Fan fan;
+
+    public FanOffCommand(Fan fan) {
+        this.fan = fan;
+    }
+
+    @Override
+    public void execute() {
+        fan.turnOff();
+    }
+
+    @Override
+    public void undo() {
+        fan.turnOn();
+    }
+}
+```
+
+4. **Invoker Class**
+
+This class represents the remote control and stores the commands. It can execute or undo the stored commands.
+
+```java
+// Invoker Class: Remote Control
+public class RemoteControl {
+    private Command[] onCommands;
+    private Command[] offCommands;
+    private Command lastCommand;
+
+    public RemoteControl(int slots) {
+        onCommands = new Command[slots];
+        offCommands = new Command[slots];
+
+        // Initialize with no-op commands to avoid null checks
+        Command noCommand = new NoCommand();
+        for (int i = 0; i < slots; i++) {
+            onCommands[i] = noCommand;
+            offCommands[i] = noCommand;
+        }
+        lastCommand = noCommand;
+    }
+
+    public void setCommand(int slot, Command onCommand, Command offCommand) {
+        onCommands[slot] = onCommand;
+        offCommands[slot] = offCommand;
+    }
+
+    public void pressOnButton(int slot) {
+        onCommands[slot].execute();
+        lastCommand = onCommands[slot];
+    }
+
+    public void pressOffButton(int slot) {
+        offCommands[slot].execute();
+        lastCommand = offCommands[slot];
+    }
+
+    public void pressUndoButton() {
+        lastCommand.undo();
+    }
+}
+
+// No-op Command for initialization
+class NoCommand implements Command {
+    @Override
+    public void execute() {}
+
+    @Override
+    public void undo() {}
+}
+```
+
+5. **Client Code**
+
+This is where we set up the commands and simulate user actions.
+
+```java
+public class CommandPatternDemo {
+    public static void main(String[] args) {
+        // Create Receiver objects
+        Light livingRoomLight = new Light("Living Room");
+        Fan bedroomFan = new Fan("Bedroom");
+
+        // Create Command objects
+        Command livingRoomLightOn = new LightOnCommand(livingRoomLight);
+        Command livingRoomLightOff = new LightOffCommand(livingRoomLight);
+        Command bedroomFanOn = new FanOnCommand(bedroomFan);
+        Command bedroomFanOff = new FanOffCommand(bedroomFan);
+
+        // Create Invoker object
+        RemoteControl remote = new RemoteControl(2); // Two slots for two devices
+
+        // Set Commands to the remote slots
+        remote.setCommand(0, livingRoomLightOn, livingRoomLightOff);
+        remote.setCommand(1, bedroomFanOn, bedroomFanOff);
+
+        // Simulate button presses
+        remote.pressOnButton(0); // Turns on the living room light
+        remote.pressOffButton(0); // Turns off the living room light
+        remote.pressUndoButton(); // Undo: Turns on the living room light again
+
+        remote.pressOnButton(1); // Turns on the bedroom fan
+        remote.pressOffButton(1); // Turns off the bedroom fan
+        remote.pressUndoButton(); // Undo: Turns on the bedroom fan again
+    }
+}
+```
+
+### Output of the Program
+
+```
+Living Room light is ON
+Living Room light is OFF
+Living Room light is ON
+Bedroom fan is ON
+Bedroom fan is OFF
+Bedroom fan is ON
+```
+
+### Benefits of the Command Pattern
+
+1. **Decoupling**: It decouples the objects that invoke the operation from the ones that know how to perform them.
+2. **Undo/Redo Capability**: Commands can be reversed using an `undo()` method, making it easy to add undo/redo functionality.
+3. **Extensibility**: New commands can be added without changing existing code, adhering to the Open/Closed Principle.
+4. **Queue and Logging**: Commands can be queued, logged, or scheduled, enabling more sophisticated features.
+
+This example demonstrates how the Command Design Pattern allows encapsulating user actions, making it easier to extend, manage, and provide additional functionalities like undo operations.

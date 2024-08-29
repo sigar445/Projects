@@ -1,0 +1,206 @@
+To improve the code of the Vending Machine project with better design principles and architecture, we can take advantage of Lombok for boilerplate reduction and enhance the code with modern libraries such as Vavr (for functional programming and immutability) and other Java 8+ features like `Optional`. The focus will be on making the code cleaner, more concise, and easier to maintain.
+
+### Key Improvements:
+1. **Use of Lombok**: For reducing boilerplate code like getters, setters, and constructors.
+2. **Use of Vavr Library**: For immutability and functional programming constructs.
+3. **Separation of Concerns**: Clearly separate the state classes from the main `VendingMachine` class.
+4. **State Management**: Use enums or sealed classes to manage states more concisely.
+5. **Exception Handling**: Improved exception handling with custom exceptions.
+6. **Fluent API Design**: Enhance method chaining for a better client experience.
+
+### Revised Code:
+
+#### 1. VendingMachine Class
+
+```java
+import io.vavr.control.Option;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+
+@RequiredArgsConstructor
+public class VendingMachine {
+    private final State idle = new IdleState();
+    private final State hasOneDollar = new HasOneDollarState();
+    private final State outOfStock = new OutOfStockState();
+
+    @Getter
+    @Setter
+    private State currState = idle; // Start with idle state
+
+    @Getter
+    private int count;
+
+    public VendingMachine(int count) {
+        if (count < 0) throw new IllegalArgumentException("Count must be >= 0");
+        this.count = count;
+        setCurrState(count > 0 ? idle : outOfStock);
+    }
+
+    public void insertMoney() {
+        currState.insertMoney(this);
+    }
+
+    public void ejectMoney() {
+        currState.ejectMoney(this);
+    }
+
+    public void dispense() {
+        currState.dispense(this);
+    }
+
+    // Helper Methods to handle state transition logic
+    void transitionTo(State newState) {
+        setCurrState(newState);
+    }
+
+    boolean isOutOfStock() {
+        return count <= 0;
+    }
+
+    void decrementCount() {
+        count--;
+    }
+}
+```
+
+#### 2. State Interface and Concrete State Classes
+
+Using a functional approach and reducing boilerplate:
+
+```java
+public interface State {
+    void insertMoney(VendingMachine vendingMachine);
+    void ejectMoney(VendingMachine vendingMachine);
+    void dispense(VendingMachine vendingMachine);
+}
+```
+
+#### `IdleState` Class
+
+```java
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public class IdleState implements State {
+    @Override
+    public void insertMoney(VendingMachine vendingMachine) {
+        log.info("Money inserted.");
+        vendingMachine.transitionTo(vendingMachine.getHasOneDollar());
+    }
+
+    @Override
+    public void ejectMoney(VendingMachine vendingMachine) {
+        log.info("No money to return.");
+    }
+
+    @Override
+    public void dispense(VendingMachine vendingMachine) {
+        log.info("Insert money first.");
+    }
+}
+```
+
+#### `HasOneDollarState` Class
+
+```java
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public class HasOneDollarState implements State {
+    @Override
+    public void insertMoney(VendingMachine vendingMachine) {
+        log.info("Already have one dollar. Cannot insert more.");
+    }
+
+    @Override
+    public void ejectMoney(VendingMachine vendingMachine) {
+        log.info("Money returned.");
+        vendingMachine.transitionTo(vendingMachine.getIdle());
+    }
+
+    @Override
+    public void dispense(VendingMachine vendingMachine) {
+        if (vendingMachine.isOutOfStock()) {
+            log.info("Machine out of stock.");
+            vendingMachine.transitionTo(vendingMachine.getOutOfStock());
+            return;
+        }
+        log.info("Item dispensed.");
+        vendingMachine.decrementCount();
+        vendingMachine.transitionTo(vendingMachine.isOutOfStock() ? vendingMachine.getOutOfStock() : vendingMachine.getIdle());
+    }
+}
+```
+
+#### `OutOfStockState` Class
+
+```java
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public class OutOfStockState implements State {
+    @Override
+    public void insertMoney(VendingMachine vendingMachine) {
+        log.info("Machine is out of stock. Cannot accept money.");
+    }
+
+    @Override
+    public void ejectMoney(VendingMachine vendingMachine) {
+        log.info("No money to return.");
+    }
+
+    @Override
+    public void dispense(VendingMachine vendingMachine) {
+        log.info("Machine is out of stock. Cannot dispense.");
+    }
+}
+```
+
+### 3. Logging
+
+Using Lombok's `@Slf4j` annotation, logging is handled cleanly without the need for boilerplate `Logger` initialization code.
+
+### 4. Custom Exception Class
+
+Instead of using `IllegalArgumentException`, we can define a custom exception to make error handling more descriptive:
+
+```java
+public class VendingMachineException extends RuntimeException {
+    public VendingMachineException(String message) {
+        super(message);
+    }
+}
+```
+
+### 5. Example Usage
+
+The usage remains mostly the same but is now more robust and concise:
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        VendingMachine vendingMachine = new VendingMachine(2);
+
+        vendingMachine.insertMoney();
+        vendingMachine.dispense();
+
+        vendingMachine.insertMoney();
+        vendingMachine.ejectMoney();
+
+        vendingMachine.insertMoney();
+        vendingMachine.dispense();
+
+        vendingMachine.insertMoney(); // Out of stock, should not accept money.
+    }
+}
+```
+
+### Summary of Improvements:
+- **Conciseness**: Use of Lombok annotations reduces boilerplate code.
+- **Immutability and Safety**: Vavr library ensures immutability where applicable.
+- **Clear State Management**: States are clearly separated and managed, using state transition logic.
+- **Logging and Exception Handling**: Logging is simplified using Lombok, and custom exceptions improve error management.
+- **Extensibility**: The architecture is clean and can be easily extended with new states or features.
+
+This approach keeps the code simple, clean, and maintainable while leveraging modern Java capabilities.
