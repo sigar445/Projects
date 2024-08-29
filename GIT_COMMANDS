@@ -1,0 +1,200 @@
+Here is a list of useful Git commands to help you manage your repository, see changes, view new files, and more:
+
+### 1. **Viewing Changes and Status**
+
+- **Show the current status of the working directory**:
+  ```bash
+  git status
+  ```
+  This command displays the state of the working directory and the staging area. It shows which changes have been staged, which haven’t, and which files aren’t being tracked by Git.
+
+- **View changes in the working directory (unstaged changes)**:
+  ```bash
+  git diff
+  ```
+  This shows the differences between your working directory and the staging area. You’ll see what changes have been made to files but not yet staged.
+
+- **View changes in the staging area (staged changes)**:
+  ```bash
+  git diff --staged
+  ```
+  This shows the differences between the staged files and the last commit. It helps to review changes before committing them.
+
+- **View changes between commits**:
+  ```bash
+  git diff <commit1> <commit2>
+  ```
+  Replace `<commit1>` and `<commit2>` with the specific commit hashes you want to compare.
+
+- **View changes for a specific file**:
+  ```bash
+  git diff <file>
+  ```
+  This shows changes in a specific file.
+
+- **View a summary of changes with filenames only**:
+  ```bash
+  git diff --name-only
+  ```
+  This lists only the filenames that have changes without showing the detailed differences.
+
+### 2. **Viewing Commit History**
+
+- **View the commit history**:
+  ```bash
+  git log
+  ```
+  This shows the commit history with commit hashes, author names, dates, and commit messages.
+
+- **View a summarized commit history (one-line per commit)**:
+  ```bash
+  git log --oneline
+  ```
+  This shows a simplified log with commit hash and message in a single line.
+
+- **View a graph of commits**:
+  ```bash
+  git log --graph --oneline --all --decorate
+  ```
+  This shows the commit history in a graph format, useful for visualizing branches and merges.
+
+### 3. **Adding and Removing Files**
+
+- **Add all changes (new, modified, deleted files) to the staging area**:
+  ```bash
+  git add .
+  ```
+
+- **Add a specific file to the staging area**:
+  ```bash
+  git add <file>
+  ```
+
+- **Remove a file from the working directory and stage the removal**:
+  ```bash
+  git rm <file>
+  ```
+
+- **Unstage a file (remove it from the staging area)**:
+  ```bash
+  git reset <file>
+  ```
+
+### 4. **Committing Changes**
+
+- **Commit staged changes with a message**:
+  ```bash
+  git commit -m "Your commit message"
+  ```
+
+- **Amend the last commit (e.g., if you forgot to add some changes)**:
+  ```bash
+  git commit --amend
+  ```
+
+### 5. **Branching and Merging**
+
+- **List all branches**:
+  ```bash
+  git branch
+  ```
+
+- **Create a new branch**:
+  ```bash
+  git branch <branch-name>
+  ```
+
+- **Switch to a specific branch**:
+  ```bash
+  git checkout <branch-name>
+  ```
+
+- **Create and switch to a new branch**:
+  ```bash
+  git checkout -b <branch-name>
+  ```
+
+- **Merge a branch into the current branch**:
+  ```bash
+  git merge <branch-name>
+  ```
+
+- **Delete a branch**:
+  ```bash
+  git branch -d <branch-name>
+  ```
+
+### 6. **Reverting Changes**
+
+- **Revert all changes in the working directory to the last commit**:
+  ```bash
+  git checkout -- .
+  ```
+
+- **Revert changes for a specific file**:
+  ```bash
+  git checkout -- <file>
+  ```
+
+- **Reset to a specific commit, discarding all changes after it**:
+  ```bash
+  git reset --hard <commit-hash>
+  ```
+
+### 7. **Viewing Remote Repositories**
+
+- **List all remote repositories**:
+  ```bash
+  git remote -v
+  ```
+
+- **Add a new remote repository**:
+  ```bash
+  git remote add origin <remote-url>
+  ```
+
+- **Remove a remote repository**:
+  ```bash
+  git remote remove <remote-name>
+  ```
+
+### 8. **Fetching, Pulling, and Pushing Changes**
+
+- **Fetch changes from a remote repository without merging**:
+  ```bash
+  git fetch
+  ```
+
+- **Pull changes from a remote repository and merge them into the current branch**:
+  ```bash
+  git pull
+  ```
+
+- **Push changes to a remote repository**:
+  ```bash
+  git push origin <branch-name>
+  ```
+
+### 9. **Stashing Changes**
+
+- **Stash changes (save changes temporarily without committing)**:
+  ```bash
+  git stash
+  ```
+
+- **Apply stashed changes**:
+  ```bash
+  git stash apply
+  ```
+
+- **List all stashes**:
+  ```bash
+  git stash list
+  ```
+
+- **Drop a specific stash**:
+  ```bash
+  git stash drop <stash@{index}>
+  ```
+
+These commands cover a wide range of tasks for managing Git repositories efficiently. Let me know if you need any more details or examples!
