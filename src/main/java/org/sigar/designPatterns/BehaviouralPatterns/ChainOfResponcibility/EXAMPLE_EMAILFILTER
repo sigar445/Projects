@@ -1,0 +1,408 @@
+The **Chain of Responsibility** pattern and the **Template Method** pattern are both behavioral design patterns but serve different purposes. However, they can be combined to make a more robust and flexible design, especially in scenarios like an email filtering system.
+
+### Linking Chain of Responsibility with Template Method Pattern
+
+1. **Chain of Responsibility Pattern**:
+   - Allows a request to be passed along a chain of handlers.
+   - Each handler can process the request or pass it to the next handler.
+
+2. **Template Method Pattern**:
+   - Defines the skeleton of an algorithm in a base class, allowing subclasses to provide concrete implementations for some steps.
+   - Provides a way to define common processing steps while allowing flexibility in implementing specific parts.
+
+### Combining Both Patterns
+
+By combining the **Chain of Responsibility** and **Template Method** patterns, you can create a more organized and extendable email filtering system. The **Template Method** pattern can provide a common structure for the filtering logic, while **Chain of Responsibility** can manage the chain of filters.
+
+#### Benefits of Using the Template Method Pattern:
+
+- **Reduces Code Duplication**: The common parts of the filter logic can be placed in an abstract class, avoiding code duplication.
+- **Enforces a Workflow**: The template method defines a sequence of operations that every concrete filter must follow, ensuring consistency.
+
+### Improved Design: Email Filter System with Template Method Pattern
+
+1. **Define the `Email` Class** (Same as before):
+   ```java
+class Email {
+    private String from;
+    private String subject;
+    private String body;
+
+    public Email(String from, String subject, String body) {
+        this.from = from;
+        this.subject = subject;
+        this.body = body;
+    }
+
+    public String getFrom() {
+        return from;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public String getBody() {
+        return body;
+    }
+}
+   ```
+
+2. **Define the `EmailFilter` Abstract Class** using the Template Method pattern:
+   ```java
+abstract class EmailFilter {
+    protected EmailFilter nextFilter;
+
+    public void setNextFilter(EmailFilter nextFilter) {
+        this.nextFilter = nextFilter;
+    }
+
+    // Template method defining the sequence of operations
+    public final void filterEmail(Email email) {
+        if (applyFilter(email)) {
+            handleEmail(email);
+        } else if (nextFilter != null) {
+            nextFilter.filterEmail(email);
+        }
+    }
+
+    // Primitive operation for concrete filters to implement
+    protected abstract boolean applyFilter(Email email);
+
+    // Optional hook method for additional processing
+    protected void handleEmail(Email email) {
+        // Default implementation; can be overridden
+        System.out.println("Email passed through " + this.getClass().getSimpleName());
+    }
+}
+   ```
+
+3. **Create Concrete Handlers (Filters) Using Template Method**:
+   ```java
+class SpamFilter extends EmailFilter {
+
+    @Override
+    protected boolean applyFilter(Email email) {
+        if (email.getSubject().toLowerCase().contains("win money") || email.getBody().toLowerCase().contains("lottery")) {
+            System.out.println("Spam Filter: Email marked as spam.");
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected void handleEmail(Email email) {
+        System.out.println("Handling spam email: " + email.getSubject());
+    }
+}
+
+class BusinessFilter extends EmailFilter {
+
+    @Override
+    protected boolean applyFilter(Email email) {
+        if (email.getFrom().endsWith("@business.com")) {
+            System.out.println("Business Filter: Email categorized as business.");
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected void handleEmail(Email email) {
+        System.out.println("Handling business email: " + email.getSubject());
+    }
+}
+
+class SocialFilter extends EmailFilter {
+
+    @Override
+    protected boolean applyFilter(Email email) {
+        if (email.getFrom().endsWith("@social.com")) {
+            System.out.println("Social Filter: Email categorized as social.");
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected void handleEmail(Email email) {
+        System.out.println("Handling social email: " + email.getSubject());
+    }
+}
+
+class PromotionalFilter extends EmailFilter {
+
+    @Override
+    protected boolean applyFilter(Email email) {
+        if (email.getSubject().toLowerCase().contains("sale") || email.getBody().toLowerCase().contains("discount")) {
+            System.out.println("Promotional Filter: Email categorized as promotional.");
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected void handleEmail(Email email) {
+        System.out.println("Handling promotional email: " + email.getSubject());
+    }
+}
+   ```
+
+4. **Create the Chain of Responsibility**:
+   ```java
+class EmailFilterChain {
+
+    private static EmailFilter createFilterChain() {
+        EmailFilter spamFilter = new SpamFilter();
+        EmailFilter businessFilter = new BusinessFilter();
+        EmailFilter socialFilter = new SocialFilter();
+        EmailFilter promotionalFilter = new PromotionalFilter();
+
+        spamFilter.setNextFilter(businessFilter);
+        businessFilter.setNextFilter(socialFilter);
+        socialFilter.setNextFilter(promotionalFilter);
+
+        return spamFilter;  // First filter in the chain
+    }
+
+    public static void main(String[] args) {
+        EmailFilter filterChain = createFilterChain();
+
+        Email email1 = new Email("john@business.com", "Project Update", "We have a meeting at 10 AM.");
+        Email email2 = new Email("unknown@random.com", "Win Money Now", "Congratulations! You have won a lottery.");
+        Email email3 = new Email("friend@social.com", "Party Invitation", "Let's meet up this weekend!");
+        Email email4 = new Email("store@shop.com", "50% OFF SALE", "Get discounts on all products.");
+
+        filterChain.filterEmail(email1);
+        System.out.println();
+        filterChain.filterEmail(email2);
+        System.out.println();
+        filterChain.filterEmail(email3);
+        System.out.println();
+        filterChain.filterEmail(email4);
+    }
+}
+   ```
+
+### Output:
+```
+Business Filter: Email categorized as business.
+Handling business email: Project Update
+
+Spam Filter: Email marked as spam.
+Handling spam email: Win Money Now
+
+Social Filter: Email categorized as social.
+Handling social email: Party Invitation
+
+Promotional Filter: Email categorized as promotional.
+Handling promotional email: 50% OFF SALE
+```
+
+### Benefits of Combining Both Patterns:
+
+- **Separation of Concerns**: The `applyFilter` method (in the Template Method pattern) focuses on the condition checking, while the `handleEmail` method handles the processing of the filtered email.
+- **Reusability and Extensibility**: Adding new filters is easy. You only need to create a new subclass of `EmailFilter` without changing the existing code.
+- **Cleaner Code Structure**: The common filtering structure is enforced in the abstract class, making the code cleaner and easier to maintain.
+
+By using both the **Chain of Responsibility** and **Template Method** patterns, the email filter system becomes more modular, maintainable, and extendable.
+
+To design an **Email Filter** system using the **Chain of Responsibility** design pattern, we can create a chain of filters that process emails based on different criteria (like spam, business, social, or promotional emails).
+
+### Key Concepts:
+1. **Handler (Filter)**: An interface or abstract class defining the method to process an email.
+2. **ConcreteHandler (Specific Filters)**: Classes that implement the handler interface to filter emails based on specific criteria (e.g., SpamFilter, BusinessFilter, etc.).
+3. **Client**: The class that initializes the filter chain and passes the emails to be processed.
+
+### Example: Email Filtering System
+
+Consider an email filtering system where emails can be categorized as `Spam`, `Business`, `Social`, or `Promotional`.
+
+#### Step-by-step Implementation
+
+1. **Define the `Email` class**:
+   ```java
+class Email {
+    private String from;
+    private String subject;
+    private String body;
+
+    public Email(String from, String subject, String body) {
+        this.from = from;
+        this.subject = subject;
+        this.body = body;
+    }
+
+    public String getFrom() {
+        return from;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public String getBody() {
+        return body;
+    }
+}
+   ```
+
+2. **Define the `Filter` interface (Handler)**:
+   ```java
+abstract class EmailFilter {
+    protected EmailFilter nextFilter;
+
+    public void setNextFilter(EmailFilter nextFilter) {
+        this.nextFilter = nextFilter;
+    }
+
+    public void filterEmail(Email email) {
+        if (nextFilter != null) {
+            nextFilter.filterEmail(email);
+        }
+    }
+
+    abstract protected boolean applyFilter(Email email);
+}
+   ```
+
+3. **Create Concrete Handlers (Specific Filters)**:
+   ```java
+class SpamFilter extends EmailFilter {
+
+    @Override
+    protected boolean applyFilter(Email email) {
+        // Example spam detection logic
+        if (email.getSubject().toLowerCase().contains("win money") || email.getBody().toLowerCase().contains("lottery")) {
+            System.out.println("Spam Filter: Email marked as spam.");
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void filterEmail(Email email) {
+        if (!applyFilter(email) && nextFilter != null) {
+            nextFilter.filterEmail(email);
+        }
+    }
+}
+
+class BusinessFilter extends EmailFilter {
+
+    @Override
+    protected boolean applyFilter(Email email) {
+        if (email.getFrom().endsWith("@business.com")) {
+            System.out.println("Business Filter: Email categorized as business.");
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void filterEmail(Email email) {
+        if (!applyFilter(email) && nextFilter != null) {
+            nextFilter.filterEmail(email);
+        }
+    }
+}
+
+class SocialFilter extends EmailFilter {
+
+    @Override
+    protected boolean applyFilter(Email email) {
+        if (email.getFrom().endsWith("@social.com")) {
+            System.out.println("Social Filter: Email categorized as social.");
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void filterEmail(Email email) {
+        if (!applyFilter(email) && nextFilter != null) {
+            nextFilter.filterEmail(email);
+        }
+    }
+}
+
+class PromotionalFilter extends EmailFilter {
+
+    @Override
+    protected boolean applyFilter(Email email) {
+        if (email.getSubject().toLowerCase().contains("sale") || email.getBody().toLowerCase().contains("discount")) {
+            System.out.println("Promotional Filter: Email categorized as promotional.");
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void filterEmail(Email email) {
+        if (!applyFilter(email) && nextFilter != null) {
+            nextFilter.filterEmail(email);
+        }
+    }
+}
+   ```
+
+4. **Create the Chain of Responsibility**:
+   ```java
+class EmailFilterChain {
+
+    private static EmailFilter createFilterChain() {
+        EmailFilter spamFilter = new SpamFilter();
+        EmailFilter businessFilter = new BusinessFilter();
+        EmailFilter socialFilter = new SocialFilter();
+        EmailFilter promotionalFilter = new PromotionalFilter();
+
+        spamFilter.setNextFilter(businessFilter);
+        businessFilter.setNextFilter(socialFilter);
+        socialFilter.setNextFilter(promotionalFilter);
+
+        return spamFilter;  // First filter in the chain
+    }
+
+    public static void main(String[] args) {
+        EmailFilter filterChain = createFilterChain();
+
+        Email email1 = new Email("john@business.com", "Project Update", "We have a meeting at 10 AM.");
+        Email email2 = new Email("unknown@random.com", "Win Money Now", "Congratulations! You have won a lottery.");
+        Email email3 = new Email("friend@social.com", "Party Invitation", "Let's meet up this weekend!");
+        Email email4 = new Email("store@shop.com", "50% OFF SALE", "Get discounts on all products.");
+
+        filterChain.filterEmail(email1);
+        System.out.println();
+        filterChain.filterEmail(email2);
+        System.out.println();
+        filterChain.filterEmail(email3);
+        System.out.println();
+        filterChain.filterEmail(email4);
+    }
+}
+   ```
+
+### Output:
+```
+Business Filter: Email categorized as business.
+
+Spam Filter: Email marked as spam.
+
+Social Filter: Email categorized as social.
+
+Promotional Filter: Email categorized as promotional.
+```
+
+### Explanation:
+
+1. **Chain Setup**:
+   - The `SpamFilter` is the first in the chain and handles spam emails.
+   - The `BusinessFilter` is the second in the chain and handles business emails.
+   - The `SocialFilter` is the third in the chain and handles social emails.
+   - The `PromotionalFilter` is the last in the chain and handles promotional emails.
+
+2. **Processing Emails**:
+   - When an email is processed, it goes through the chain starting from `SpamFilter`.
+   - If a filter detects that the email matches its criteria, it categorizes it and stops further processing. Otherwise, it passes the email to the next filter in the chain.
+
+This example demonstrates how the **Chain of Responsibility** pattern can be used to design a flexible and extendable email filtering system.

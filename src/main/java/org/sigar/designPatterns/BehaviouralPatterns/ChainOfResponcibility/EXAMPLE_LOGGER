@@ -1,0 +1,134 @@
+The **Chain of Responsibility** design pattern is a behavioral design pattern that allows a request to be passed along a chain of handlers. Each handler decides either to process the request or to pass it to the next handler in the chain. This pattern is useful when multiple objects might handle a request, and the handler is not known beforehand.
+
+### Key Concepts:
+1. **Handler**: Defines an interface for handling requests and optionally forwarding the request to the next handler.
+2. **ConcreteHandler**: Implements the handler interface and processes the request or forwards it to the next handler.
+3. **Client**: Initiates the request to a specific handler.
+
+### Example in Java: Logging System
+
+Consider a logging system where logs can have different levels (INFO, DEBUG, ERROR). Each level of logging can be handled by different handlers.
+
+#### Step-by-step Implementation
+
+1. **Define the `Handler` interface**:
+```java
+abstract class Logger {
+    public static int INFO = 1;
+    public static int DEBUG = 2;
+    public static int ERROR = 3;
+
+    protected int level;
+
+    // Next element in the chain of responsibility
+    protected Logger nextLogger;
+
+    public void setNextLogger(Logger nextLogger) {
+        this.nextLogger = nextLogger;
+    }
+
+    public void logMessage(int level, String message) {
+        if (this.level <= level) {
+            write(message);
+        }
+        if (nextLogger != null) {
+            nextLogger.logMessage(level, message);
+        }
+    }
+
+    abstract protected void write(String message);
+}
+```
+
+2. **Create Concrete Handlers**:
+```java
+class ConsoleLogger extends Logger {
+
+    public ConsoleLogger(int level) {
+        this.level = level;
+    }
+
+    @Override
+    protected void write(String message) {
+        System.out.println("Console::Logger: " + message);
+    }
+}
+
+class ErrorLogger extends Logger {
+
+    public ErrorLogger(int level) {
+        this.level = level;
+    }
+
+    @Override
+    protected void write(String message) {
+        System.out.println("Error::Logger: " + message);
+    }
+}
+
+class FileLogger extends Logger {
+
+    public FileLogger(int level) {
+        this.level = level;
+    }
+
+    @Override
+    protected void write(String message) {
+        System.out.println("File::Logger: " + message);
+    }
+}
+```
+
+3. **Create the Chain of Responsibility**:
+```java
+class ChainPatternDemo {
+
+    private static Logger getChainOfLoggers() {
+
+        Logger errorLogger = new ErrorLogger(Logger.ERROR);
+        Logger fileLogger = new FileLogger(Logger.DEBUG);
+        Logger consoleLogger = new ConsoleLogger(Logger.INFO);
+
+        errorLogger.setNextLogger(fileLogger);
+        fileLogger.setNextLogger(consoleLogger);
+
+        return errorLogger;
+    }
+
+    public static void main(String[] args) {
+        Logger loggerChain = getChainOfLoggers();
+
+        loggerChain.logMessage(Logger.INFO, "This is an information.");
+        System.out.println();
+        loggerChain.logMessage(Logger.DEBUG, "This is a debug level information.");
+        System.out.println();
+        loggerChain.logMessage(Logger.ERROR, "This is an error information.");
+    }
+}
+```
+
+### Output:
+```
+Console::Logger: This is an information.
+
+File::Logger: This is a debug level information.
+Console::Logger: This is a debug level information.
+
+Error::Logger: This is an error information.
+File::Logger: This is an error information.
+Console::Logger: This is an error information.
+```
+
+### Explanation:
+
+1. **Chain Setup**: The chain of loggers is set up such that:
+   - `ErrorLogger` handles `ERROR` messages.
+   - `FileLogger` handles `DEBUG` messages.
+   - `ConsoleLogger` handles `INFO` messages.
+
+2. **Processing Requests**:
+   - A request with `INFO` level is logged only by `ConsoleLogger`.
+   - A request with `DEBUG` level is handled by both `FileLogger` and `ConsoleLogger`.
+   - A request with `ERROR` level is handled by all three loggers.
+
+The pattern ensures that different objects can handle a request without the sender knowing which object will ultimately handle it.

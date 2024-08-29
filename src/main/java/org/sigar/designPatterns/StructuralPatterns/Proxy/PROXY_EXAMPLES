@@ -1,0 +1,191 @@
+Let's consider a more complex and practical use case of the Proxy Design Pattern involving a **Remote Proxy** and **Caching Proxy**.
+
+### Practical Use Case: Database Access Control with Caching Proxy
+
+In this example, we'll create a **Caching Proxy** that controls access to a remote database and caches the results to reduce repeated queries and improve performance.
+
+#### Problem Scenario
+
+Suppose we have a `Database` class that performs expensive operations, such as connecting to a database and fetching data. To optimize performance, we will implement a **Caching Proxy** that caches the results of database queries to minimize repeated queries for the same data.
+
+#### Components of the Example
+
+1. **Subject Interface (`DatabaseAccess`)**: Declares the operations for accessing the database.
+2. **RealSubject (`RealDatabase`)**: Represents the actual connection to the database and performs the expensive operations.
+3. **Proxy (`DatabaseProxy`)**: Controls access to the `RealDatabase`, caches the results, and returns cached data for repeated requests.
+
+#### Example Code
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+
+// Subject Interface
+interface DatabaseAccess {
+    String fetchData(String query);
+}
+
+// RealSubject Class - Represents actual database access
+class RealDatabase implements DatabaseAccess {
+    @Override
+    public String fetchData(String query) {
+        connectToDatabase();
+        // Simulate fetching data with a time delay
+        System.out.println("Executing query: " + query);
+        try {
+            Thread.sleep(2000); // Simulate a delay for fetching data
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "Data for query: " + query;
+    }
+
+    private void connectToDatabase() {
+        System.out.println("Connecting to the database...");
+        try {
+            Thread.sleep(1000); // Simulate connection delay
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+// Proxy Class - Implements caching logic
+class DatabaseProxy implements DatabaseAccess {
+    private RealDatabase realDatabase;
+    private Map<String, String> cache; // Cache to store query results
+
+    public DatabaseProxy() {
+        this.realDatabase = new RealDatabase();
+        this.cache = new HashMap<>();
+    }
+
+    @Override
+    public String fetchData(String query) {
+        if (cache.containsKey(query)) {
+            System.out.println("Returning cached result for query: " + query);
+            return cache.get(query); // Return cached result if available
+        }
+
+        System.out.println("Cache miss for query: " + query);
+        String result = realDatabase.fetchData(query); // Fetch from the real database
+        cache.put(query, result); // Cache the result for future use
+        return result;
+    }
+}
+
+// Client Code
+public class CachingProxyDemo {
+    public static void main(String[] args) {
+        DatabaseAccess database = new DatabaseProxy();
+
+        // First query - Cache miss
+        System.out.println(database.fetchData("SELECT * FROM users WHERE id = 1"));
+
+        // Same query - Cache hit
+        System.out.println(database.fetchData("SELECT * FROM users WHERE id = 1"));
+
+        // Different query - Cache miss
+        System.out.println(database.fetchData("SELECT * FROM users WHERE id = 2"));
+
+        // Repeat query - Cache hit
+        System.out.println(database.fetchData("SELECT * FROM users WHERE id = 2"));
+    }
+}
+```
+
+#### Explanation
+
+- **RealDatabase**: Represents the real object that performs actual database operations, including connecting to the database and executing queries. It has a time delay to simulate the cost of these operations.
+- **DatabaseProxy**: Acts as a proxy that caches the results of queries. If a query has already been executed and the result is cached, it returns the cached result instead of querying the database again.
+- **Client Code**: Simulates client operations by querying the database using the proxy. The first query results in a cache miss, fetching data from the real database and caching it. The second query for the same data is a cache hit, returning the cached data instantly.
+
+#### Output
+
+```plaintext
+Cache miss for query: SELECT * FROM users WHERE id = 1
+Connecting to the database...
+Executing query: SELECT * FROM users WHERE id = 1
+Data for query: SELECT * FROM users WHERE id = 1
+Returning cached result for query: SELECT * FROM users WHERE id = 1
+Data for query: SELECT * FROM users WHERE id = 1
+Cache miss for query: SELECT * FROM users WHERE id = 2
+Connecting to the database...
+Executing query: SELECT * FROM users WHERE id = 2
+Data for query: SELECT * FROM users WHERE id = 2
+Returning cached result for query: SELECT * FROM users WHERE id = 2
+Data for query: SELECT * FROM users WHERE id = 2
+```
+
+#### Advantages of Using the Proxy Pattern Here
+
+- **Performance Improvement**: The caching mechanism reduces redundant database access, improving performance.
+- **Access Control**: The proxy controls access to the real database, which could be extended to include more sophisticated access control mechanisms.
+- **Decoupling and Maintainability**: The client code interacts with the proxy without knowing the complexity of the real database, making the system easier to maintain and extend.
+
+### Extending the Example: Adding Security and Logging with a Smart Proxy
+
+Let's extend this example by adding security checks and logging to demonstrate a **Smart Proxy**. The Smart Proxy adds additional functionality to check user permissions and log query execution times.
+
+#### Example Code: Extending to Smart Proxy
+
+```java
+// Smart Proxy Class - Adds security checks and logging
+class SmartDatabaseProxy implements DatabaseAccess {
+    private RealDatabase realDatabase;
+    private Map<String, String> cache;
+    private String userRole;
+
+    public SmartDatabaseProxy(String userRole) {
+        this.realDatabase = new RealDatabase();
+        this.cache = new HashMap<>();
+        this.userRole = userRole;
+    }
+
+    @Override
+    public String fetchData(String query) {
+        if (!"Admin".equalsIgnoreCase(userRole)) {
+            System.out.println("Access denied for user role: " + userRole);
+            return null; // Only Admin can access the data
+        }
+
+        long startTime = System.currentTimeMillis(); // Start timing for logging
+
+        if (cache.containsKey(query)) {
+            System.out.println("Returning cached result for query: " + query);
+            return cache.get(query);
+        }
+
+        System.out.println("Cache miss for query: " + query);
+        String result = realDatabase.fetchData(query);
+        cache.put(query, result);
+
+        long endTime = System.currentTimeMillis(); // End timing
+        System.out.println("Query executed in " + (endTime - startTime) + " ms");
+
+        return result;
+    }
+}
+
+// Client Code with Smart Proxy
+public class SmartProxyDemo {
+    public static void main(String[] args) {
+        DatabaseAccess adminDatabase = new SmartDatabaseProxy("Admin");
+        DatabaseAccess guestDatabase = new SmartDatabaseProxy("Guest");
+
+        // Admin can access and cache results
+        System.out.println(adminDatabase.fetchData("SELECT * FROM users WHERE id = 1"));
+
+        // Guest should be denied access
+        System.out.println(guestDatabase.fetchData("SELECT * FROM users WHERE id = 1"));
+    }
+}
+```
+
+#### Explanation
+
+- **SmartDatabaseProxy**: Adds user role checks to restrict access to the data and logs the time taken to execute queries.
+- Only **Admin** users can access the data, while **Guest** users are denied access.
+- The client code shows different scenarios with different user roles, demonstrating how the proxy controls access and adds logging.
+
+Would you like to explore further extensions or discuss any specific aspect of the Proxy pattern?

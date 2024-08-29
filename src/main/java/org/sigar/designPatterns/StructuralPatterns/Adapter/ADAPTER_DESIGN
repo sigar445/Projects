@@ -1,0 +1,207 @@
+The Adapter Design Pattern is used to allow two incompatible interfaces to work together. It acts as a bridge between two interfaces, making them compatible without changing their existing code.
+
+### Key Concepts:
+- **Target:** The interface the client expects to use.
+- **Adapter:** The class that implements the target interface and adapts the adaptee to the target.
+- **Adaptee:** The existing interface that needs to be adapted.
+
+### Practical Example: Media Player
+
+Suppose you have a media player application that can play audio files in `.mp3` format, but now you want to extend it to support `.mp4` and `.vlc` formats without modifying the existing codebase.
+
+#### 1. **Target Interface:**
+This is the interface the client expects to use.
+
+```java
+public interface MediaPlayer {
+    void play(String audioType, String fileName);
+}
+```
+
+#### 2. **Adaptee Classes:**
+These are the existing classes that need to be adapted.
+
+```java
+public class Mp4Player {
+    public void playMp4(String fileName) {
+        System.out.println("Playing mp4 file. Name: " + fileName);
+    }
+}
+
+public class VlcPlayer {
+    public void playVlc(String fileName) {
+        System.out.println("Playing vlc file. Name: " + fileName);
+    }
+}
+```
+
+#### 3. **Adapter Class:**
+The adapter class implements the `MediaPlayer` interface and adapts the `Mp4Player` and `VlcPlayer` to work with it.
+
+```java
+public class MediaAdapter implements MediaPlayer {
+
+    private Mp4Player mp4Player;
+    private VlcPlayer vlcPlayer;
+
+    public MediaAdapter(String audioType) {
+        if (audioType.equalsIgnoreCase("mp4")) {
+            mp4Player = new Mp4Player();
+        } else if (audioType.equalsIgnoreCase("vlc")) {
+            vlcPlayer = new VlcPlayer();
+        }
+    }
+
+    @Override
+    public void play(String audioType, String fileName) {
+        if (audioType.equalsIgnoreCase("mp4")) {
+            mp4Player.playMp4(fileName);
+        } else if (audioType.equalsIgnoreCase("vlc")) {
+            vlcPlayer.playVlc(fileName);
+        }
+    }
+}
+```
+
+#### 4. **Client Class:**
+This class uses the `MediaPlayer` interface to play different formats. It doesn’t need to know about the specific implementation details of `Mp4Player` or `VlcPlayer`.
+
+```java
+public class AudioPlayer implements MediaPlayer {
+
+    private MediaAdapter mediaAdapter;
+
+    @Override
+    public void play(String audioType, String fileName) {
+        // Inbuilt support to play mp3 music files
+        if (audioType.equalsIgnoreCase("mp3")) {
+            System.out.println("Playing mp3 file. Name: " + fileName);
+        }
+        // MediaAdapter is providing support to play other file formats
+        else if (audioType.equalsIgnoreCase("mp4") || audioType.equalsIgnoreCase("vlc")) {
+            mediaAdapter = new MediaAdapter(audioType);
+            mediaAdapter.play(audioType, fileName);
+        } else {
+            System.out.println("Invalid media. " + audioType + " format not supported");
+        }
+    }
+}
+```
+
+#### 5. **Client Code:**
+The client interacts with the `AudioPlayer` class to play different media types.
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        AudioPlayer audioPlayer = new AudioPlayer();
+
+        audioPlayer.play("mp3", "beyond_the_horizon.mp3");
+        // Output: Playing mp3 file. Name: beyond_the_horizon.mp3
+
+        audioPlayer.play("mp4", "alone.mp4");
+        // Output: Playing mp4 file. Name: alone.mp4
+
+        audioPlayer.play("vlc", "far_far_away.vlc");
+        // Output: Playing vlc file. Name: far_far_away.vlc
+
+        audioPlayer.play("avi", "mind_me.avi");
+        // Output: Invalid media. avi format not supported
+    }
+}
+```
+
+### Explanation:
+
+1. **Target Interface (MediaPlayer):**
+   - The interface that the client expects to use. It has a method `play(String audioType, String fileName)`.
+
+2. **Adaptee Classes (Mp4Player, VlcPlayer):**
+   - These classes have methods specific to playing `.mp4` and `.vlc` files but do not conform to the `MediaPlayer` interface.
+
+3. **Adapter Class (MediaAdapter):**
+   - The adapter class implements the `MediaPlayer` interface and translates the request from the `AudioPlayer` into calls to the appropriate methods on the `Mp4Player` or `VlcPlayer`.
+
+4. **Client Class (AudioPlayer):**
+   - The client uses the `MediaPlayer` interface to play different audio formats. When an unsupported format is requested, the `MediaAdapter` is used to adapt the request to the appropriate `Mp4Player` or `VlcPlayer` implementation.
+
+### Use Cases:
+- **Legacy Code Integration:** When you need to integrate new functionality with an existing system that cannot be changed.
+- **Third-Party Libraries:** When using third-party libraries that have different interfaces from what your application expects.
+- **Different APIs:** When your application needs to work with multiple APIs that have different interfaces.
+
+### Benefits:
+- **Single Responsibility:** Each class has a single responsibility; the `Adapter` handles the interface translation.
+- **Open/Closed Principle:** The code is open for extension (supporting new formats) but closed for modification (no need to change existing classes).
+
+### Additional Example: **Banking System**
+
+#### Scenario:
+Suppose you have a modern payment gateway that uses a new interface, but your bank system is built on an older interface. You can use the Adapter Pattern to integrate the new payment gateway into the existing bank system.
+
+```java
+// Old Payment System Interface
+public interface OldPaymentSystem {
+    void makePayment(int amount);
+}
+
+// New Payment Gateway Interface
+public interface NewPaymentGateway {
+    void processPayment(String customerId, int amount);
+}
+
+// Implementation of Old Payment System
+public class OldPaymentSystemImpl implements OldPaymentSystem {
+    @Override
+    public void makePayment(int amount) {
+        System.out.println("Payment of " + amount + " made using Old Payment System.");
+    }
+}
+
+// Adapter Class
+public class PaymentAdapter implements OldPaymentSystem {
+
+    private NewPaymentGateway newPaymentGateway;
+
+    public PaymentAdapter(NewPaymentGateway newPaymentGateway) {
+        this.newPaymentGateway = newPaymentGateway;
+    }
+
+    @Override
+    public void makePayment(int amount) {
+        // Adapting the old interface to work with the new one
+        String customerId = "12345"; // This would be fetched dynamically
+        newPaymentGateway.processPayment(customerId, amount);
+    }
+}
+
+// Implementation of New Payment Gateway
+public class NewPaymentGatewayImpl implements NewPaymentGateway {
+    @Override
+    public void processPayment(String customerId, int amount) {
+        System.out.println("Payment of " + amount + " made for customer " + customerId + " using New Payment Gateway.");
+    }
+}
+
+// Client Code
+public class Main {
+    public static void main(String[] args) {
+        OldPaymentSystem oldPayment = new OldPaymentSystemImpl();
+        oldPayment.makePayment(500);
+        // Output: Payment of 500 made using Old Payment System.
+
+        NewPaymentGateway newGateway = new NewPaymentGatewayImpl();
+        OldPaymentSystem adapter = new PaymentAdapter(newGateway);
+        adapter.makePayment(1000);
+        // Output: Payment of 1000 made for customer 12345 using New Payment Gateway.
+    }
+}
+```
+
+### Explanation:
+- **OldPaymentSystem:** Represents the old payment system interface that your bank system currently uses.
+- **NewPaymentGateway:** Represents the new payment gateway interface.
+- **PaymentAdapter:** Adapts the `NewPaymentGateway` to the `OldPaymentSystem`, allowing the old system to use the new payment gateway without modification.
+- **Client Code:** Uses the adapter to make payments through the new payment gateway while still using the old system interface.
+
+The Adapter Pattern is powerful when integrating systems with different interfaces, allowing for flexible and maintainable code.

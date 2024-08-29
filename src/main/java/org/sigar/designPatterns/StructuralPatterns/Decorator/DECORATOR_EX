@@ -1,0 +1,222 @@
+The **Decorator Design Pattern** is a structural pattern that allows behavior to be added to individual objects, dynamically, without affecting the behavior of other objects from the same class. The Decorator pattern is often compared to the Proxy pattern, but while Proxy controls access to an object, Decorator enhances an object's behavior.
+
+### Key Concepts of the Decorator Pattern
+
+- **Component Interface**: Defines the interface for objects that can have responsibilities added to them dynamically.
+- **Concrete Component**: The class to which additional responsibilities can be added.
+- **Decorator**: Implements the same interface as the `Component` and contains a reference to a `Component` object. It adds behavior before or after delegating tasks to the component.
+- **Concrete Decorators**: Extend the `Decorator` and add new functionalities to the component.
+
+### Example: Coffee Shop Beverage System
+
+Let's consider a scenario where we want to create a beverage ordering system for a coffee shop. We have different types of beverages (like Espresso, HouseBlend) and various condiments (like Milk, Mocha, Whip) that can be added to these beverages. The Decorator Pattern is well-suited for such a scenario as it allows us to dynamically add condiments to any beverage without creating subclasses for each possible combination.
+
+#### Step-by-Step Implementation
+
+1. **Component Interface (`Beverage`)**: Defines the operations that can be performed, such as getting the description and cost of the beverage.
+2. **Concrete Component (`Espresso`, `HouseBlend`)**: Represents specific types of beverages.
+3. **Decorator (`CondimentDecorator`)**: An abstract class that implements the `Beverage` interface and contains a reference to a `Beverage` object.
+4. **Concrete Decorators (`Milk`, `Mocha`, `Whip`)**: Classes that extend the `CondimentDecorator` and add additional behavior (like cost and description).
+
+#### Example Code
+
+```java
+// Component Interface
+abstract class Beverage {
+    String description = "Unknown Beverage";
+
+    public String getDescription() {
+        return description;
+    }
+
+    public abstract double cost();
+}
+
+// Concrete Component Classes
+class Espresso extends Beverage {
+    public Espresso() {
+        description = "Espresso";
+    }
+
+    @Override
+    public double cost() {
+        return 1.99;
+    }
+}
+
+class HouseBlend extends Beverage {
+    public HouseBlend() {
+        description = "House Blend Coffee";
+    }
+
+    @Override
+    public double cost() {
+        return 0.89;
+    }
+}
+
+// Decorator Class
+abstract class CondimentDecorator extends Beverage {
+    public abstract String getDescription();
+}
+
+// Concrete Decorator Classes
+class Milk extends CondimentDecorator {
+    Beverage beverage;
+
+    public Milk(Beverage beverage) {
+        this.beverage = beverage;
+    }
+
+    @Override
+    public String getDescription() {
+        return beverage.getDescription() + ", Milk";
+    }
+
+    @Override
+    public double cost() {
+        return 0.10 + beverage.cost();
+    }
+}
+
+class Mocha extends CondimentDecorator {
+    Beverage beverage;
+
+    public Mocha(Beverage beverage) {
+        this.beverage = beverage;
+    }
+
+    @Override
+    public String getDescription() {
+        return beverage.getDescription() + ", Mocha";
+    }
+
+    @Override
+    public double cost() {
+        return 0.20 + beverage.cost();
+    }
+}
+
+class Whip extends CondimentDecorator {
+    Beverage beverage;
+
+    public Whip(Beverage beverage) {
+        this.beverage = beverage;
+    }
+
+    @Override
+    public String getDescription() {
+        return beverage.getDescription() + ", Whip";
+    }
+
+    @Override
+    public double cost() {
+        return 0.30 + beverage.cost();
+    }
+}
+
+// Client Code
+public class DecoratorPatternDemo {
+    public static void main(String[] args) {
+        // Order an Espresso with Milk and Mocha
+        Beverage beverage1 = new Espresso();
+        beverage1 = new Milk(beverage1);
+        beverage1 = new Mocha(beverage1);
+        System.out.println(beverage1.getDescription() + " $" + beverage1.cost());
+
+        // Order a House Blend with Mocha and Whip
+        Beverage beverage2 = new HouseBlend();
+        beverage2 = new Mocha(beverage2);
+        beverage2 = new Whip(beverage2);
+        System.out.println(beverage2.getDescription() + " $" + beverage2.cost());
+    }
+}
+```
+
+#### Explanation
+
+- **Beverage (Component Interface)**: Declares methods like `getDescription()` and `cost()` that will be implemented by concrete components and decorators.
+- **Concrete Components (`Espresso`, `HouseBlend`)**: Represent the core objects (basic types of beverages).
+- **Decorator Class (`CondimentDecorator`)**: Extends `Beverage` and contains a reference to a `Beverage` object. It forces all decorators to implement the `getDescription()` method.
+- **Concrete Decorators (`Milk`, `Mocha`, `Whip`)**: Extend `CondimentDecorator` and add new behavior. For instance, `Milk` adds "Milk" to the description and adds $0.10 to the cost.
+
+#### Output
+
+```plaintext
+Espresso, Milk, Mocha $2.29
+House Blend Coffee, Mocha, Whip $1.39
+```
+
+#### Advantages
+
+- **Open for Extension, Closed for Modification**: New condiments can be added as decorators without modifying existing code.
+- **Flexibility**: Dynamic combination of decorators allows adding multiple layers of behavior.
+- **Single Responsibility Principle**: Each decorator is focused on adding a specific behavior.
+
+### Extending the Example: Dynamic Discounts and Customization
+
+Let's extend the example by adding dynamic discounts that can be applied as decorators. The discount percentage will be applied to the final cost, providing a flexible way to add offers.
+
+#### Example Code: Adding a Discount Decorator
+
+```java
+// Discount Decorator Class
+class Discount extends CondimentDecorator {
+    Beverage beverage;
+    double discountPercentage;
+
+    public Discount(Beverage beverage, double discountPercentage) {
+        this.beverage = beverage;
+        this.discountPercentage = discountPercentage;
+    }
+
+    @Override
+    public String getDescription() {
+        return beverage.getDescription() + ", " + discountPercentage + "% Discount";
+    }
+
+    @Override
+    public double cost() {
+        return beverage.cost() * (1 - discountPercentage / 100);
+    }
+}
+
+// Client Code with Discount
+public class DecoratorPatternWithDiscountDemo {
+    public static void main(String[] args) {
+        // Order an Espresso with Milk, Mocha, and a 10% Discount
+        Beverage beverage1 = new Espresso();
+        beverage1 = new Milk(beverage1);
+        beverage1 = new Mocha(beverage1);
+        beverage1 = new Discount(beverage1, 10); // 10% discount applied
+        System.out.println(beverage1.getDescription() + " $" + beverage1.cost());
+
+        // Order a House Blend with Mocha, Whip, and a 15% Discount
+        Beverage beverage2 = new HouseBlend();
+        beverage2 = new Mocha(beverage2);
+        beverage2 = new Whip(beverage2);
+        beverage2 = new Discount(beverage2, 15); // 15% discount applied
+        System.out.println(beverage2.getDescription() + " $" + beverage2.cost());
+    }
+}
+```
+
+#### Explanation
+
+- **Discount Decorator (`Discount`)**: Adds a discount to the beverage's cost. It applies a percentage discount to the final cost of the beverage with all the condiments added.
+- **Client Code**: Shows different beverage orders with multiple decorators (condiments and discounts).
+
+#### Output
+
+```plaintext
+Espresso, Milk, Mocha, 10.0% Discount $2.06
+House Blend Coffee, Mocha, Whip, 15.0% Discount $1.18
+```
+
+### When to Use the Decorator Pattern?
+
+- When you want to add responsibilities to individual objects, not to an entire class.
+- When it's possible to remove or add responsibilities dynamically at runtime.
+- When subclassing would result in an explosion of classes to cover all possible combinations of behaviors.
+
+The Decorator pattern is powerful for designing flexible and reusable code that can easily adapt to changing requirements. Would you like to see more extensions, like caching, security decorators, or others?

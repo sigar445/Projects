@@ -1,0 +1,174 @@
+### Template Method Design Pattern
+
+#### Overview
+The Template Method Design Pattern defines the skeleton of an algorithm in a method, deferring some steps to subclasses. This pattern allows subclasses to redefine certain steps of an algorithm without changing its structure.
+
+#### Key Concepts
+- **Abstract Class**: Defines the template method that contains the algorithm structure. It also defines abstract methods that subclasses must implement.
+- **Concrete Class**: Implements the abstract methods and provides the specifics of the algorithm.
+
+#### Example: Document Generation
+Imagine a scenario where you need to generate different types of documents (e.g., reports, invoices). The overall process for generating these documents is the same, but the details vary.
+
+##### Step-by-Step Implementation
+1. **Abstract Class (`DocumentGenerator`)**: Defines the template method `generateDocument()` and abstract methods like `createHeader()`, `createContent()`, and `createFooter()`.
+2. **Concrete Classes (`ReportGenerator`, `InvoiceGenerator`)**: Implement the abstract methods with specific content for each document type.
+
+```java
+abstract class DocumentGenerator {
+    // Template Method
+    public final void generateDocument() {
+        createHeader();
+        createContent();
+        createFooter();
+    }
+
+    protected abstract void createHeader();
+    protected abstract void createContent();
+    protected abstract void createFooter();
+}
+
+class ReportGenerator extends DocumentGenerator {
+    @Override
+    protected void createHeader() {
+        System.out.println("Report Header");
+    }
+
+    @Override
+    protected void createContent() {
+        System.out.println("Report Content");
+    }
+
+    @Override
+    protected void createFooter() {
+        System.out.println("Report Footer");
+    }
+}
+
+class InvoiceGenerator extends DocumentGenerator {
+    @Override
+    protected void createHeader() {
+        System.out.println("Invoice Header");
+    }
+
+    @Override
+    protected void createContent() {
+        System.out.println("Invoice Content");
+    }
+
+    @Override
+    protected void createFooter() {
+        System.out.println("Invoice Footer");
+    }
+}
+
+public class TemplateMethodDemo {
+    public static void main(String[] args) {
+        DocumentGenerator report = new ReportGenerator();
+        report.generateDocument();
+
+        DocumentGenerator invoice = new InvoiceGenerator();
+        invoice.generateDocument();
+    }
+}
+```
+
+#### Explanation
+- **Template Method (`generateDocument`)**: Defines the algorithm's structure.
+- **Concrete Classes**: Implement the specific steps of the algorithm.
+
+#### UML Diagram
+1. **Abstract Class (`DocumentGenerator`)** with the `generateDocument()` template method and abstract methods for `createHeader()`, `createContent()`, and `createFooter()`.
+2. **Concrete Classes** like `ReportGenerator` and `InvoiceGenerator`, which implement the abstract methods.
+
+---
+
+### Chain of Responsibility Design Pattern
+
+#### Overview
+The Chain of Responsibility Design Pattern allows an object to send a command without knowing which object will handle the request. The request is passed along a chain of handlers until one of them handles it.
+
+#### Key Concepts
+- **Handler**: Defines an interface with a method to handle requests and a reference to the next handler in the chain.
+- **Concrete Handlers**: Implement the handler interface and decide whether to process the request or pass it to the next handler.
+- **Client**: Sends requests to the first handler in the chain.
+
+#### Example: Support Ticket System
+Consider a system where support tickets are processed by different levels of support staff (e.g., Level 1, Level 2, Level 3). If a ticket can't be handled at one level, it gets escalated to the next.
+
+##### Step-by-Step Implementation
+1. **Handler Interface (`SupportHandler`)**: Declares a method `handleRequest()` and a reference to the next handler.
+2. **Concrete Handlers (`Level1Support`, `Level2Support`, `Level3Support`)**: Handle the request if possible, or pass it to the next handler.
+
+```java
+abstract class SupportHandler {
+    protected SupportHandler nextHandler;
+
+    public void setNextHandler(SupportHandler nextHandler) {
+        this.nextHandler = nextHandler;
+    }
+
+    public abstract void handleRequest(String request);
+}
+
+class Level1Support extends SupportHandler {
+    @Override
+    public void handleRequest(String request) {
+        if (request.equals("Simple Issue")) {
+            System.out.println("Level 1 Support: Handling simple issue");
+        } else if (nextHandler != null) {
+            nextHandler.handleRequest(request);
+        }
+    }
+}
+
+class Level2Support extends SupportHandler {
+    @Override
+    public void handleRequest(String request) {
+        if (request.equals("Complex Issue")) {
+            System.out.println("Level 2 Support: Handling complex issue");
+        } else if (nextHandler != null) {
+            nextHandler.handleRequest(request);
+        }
+    }
+}
+
+class Level3Support extends SupportHandler {
+    @Override
+    public void handleRequest(String request) {
+        if (request.equals("Critical Issue")) {
+            System.out.println("Level 3 Support: Handling critical issue");
+        } else {
+            System.out.println("Level 3 Support: Issue cannot be handled");
+        }
+    }
+}
+
+public class ChainOfResponsibilityDemo {
+    public static void main(String[] args) {
+        SupportHandler level1 = new Level1Support();
+        SupportHandler level2 = new Level2Support();
+        SupportHandler level3 = new Level3Support();
+
+        level1.setNextHandler(level2);
+        level2.setNextHandler(level3);
+
+        level1.handleRequest("Simple Issue");
+        level1.handleRequest("Complex Issue");
+        level1.handleRequest("Critical Issue");
+    }
+}
+```
+
+#### Explanation
+- **Handler Interface (`SupportHandler`)**: Provides the method `handleRequest()` and a reference to the next handler.
+- **Concrete Handlers**: Decide whether to handle the request or pass it on.
+
+#### UML Diagram
+1. **Handler Interface (`SupportHandler`)** with a method `handleRequest()` and a reference to the next handler.
+2. **Concrete Handlers** like `Level1Support`, `Level2Support`, and `Level3Support`, which either handle the request or pass it to the next handler.
+
+### UML Diagrams
+I'll generate general UML diagrams for both patterns.
+
+It seems like I can’t generate any more images right now. Please try again later. However, if you need further explanation or assistance with the concepts, I can help with that!
