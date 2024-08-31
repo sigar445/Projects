@@ -1,0 +1,114 @@
+The Liskov Substitution Principle (LSP) is one of the five SOLID principles of object-oriented programming. It states that objects of a subclass should be replaceable with objects of the superclass without altering the correctness of the program. In simpler terms, if class `S` is a subclass of class `B`, then objects of type `B` should be replaceable with objects of type `S` without breaking the application.
+
+### Example Explanation
+
+To demonstrate the LSP, let’s use a simple example involving geometric shapes. We have a base class `Rectangle`, and a subclass `Square`. A common mistake would be to extend `Square` from `Rectangle`, violating the LSP.
+
+### Incorrect Example: Violation of Liskov Substitution Principle
+
+Here is an example of inheritance misuse, leading to a violation of the LSP:
+
+```java
+// Base class
+class Rectangle {
+    protected int width;
+    protected int height;
+
+    public void setWidth(int width) {
+        this.width = width;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+    public int getArea() {
+        return width * height;
+    }
+}
+
+// Subclass
+class Square extends Rectangle {
+    @Override
+    public void setWidth(int width) {
+        this.width = width;
+        this.height = width; // Sets height equal to width
+    }
+
+    @Override
+    public void setHeight(int height) {
+        this.height = height;
+        this.width = height; // Sets width equal to height
+    }
+}
+```
+
+### Problem with the Above Code
+
+The above code violates the Liskov Substitution Principle because a `Square` is not substitutable for a `Rectangle` without changing the behavior. Specifically:
+
+- A `Square` is defined by having all sides of equal length, but the `Rectangle` class does not have this constraint.
+- Setting the width of a `Square` will automatically change the height, which is not the expected behavior for a `Rectangle`.
+- This behavior breaks code that relies on the `Rectangle` interface, potentially leading to incorrect results or unexpected side effects.
+
+### Corrected Example: Adhering to Liskov Substitution Principle
+
+To fix this, we should create a common base class, `Shape`, that both `Rectangle` and `Square` can inherit from without modifying expected behavior.
+
+```java
+// Base class
+abstract class Shape {
+    public abstract int getArea();
+}
+
+// Rectangle class
+class Rectangle extends Shape {
+    protected int width;
+    protected int height;
+
+    public void setWidth(int width) {
+        this.width = width;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+    @Override
+    public int getArea() {
+        return width * height;
+    }
+}
+
+// Square class
+class Square extends Shape {
+    private int side;
+
+    public void setSide(int side) {
+        this.side = side;
+    }
+
+    @Override
+    public int getArea() {
+        return side * side;
+    }
+}
+```
+
+### Benefits of Adhering to LSP
+
+1. **Maintains Behavior Consistency**: Both `Rectangle` and `Square` adhere to their own logic, preventing unexpected behavior changes when substituting one for another.
+
+2. **Code Reusability**: You can safely interchange instances of `Shape` (e.g., `Rectangle` and `Square`) without modifying client code that depends on the base type.
+
+3. **Better Design**: The design is more intuitive and reflects real-world relationships accurately. `Square` is no longer incorrectly forced to behave like a `Rectangle`.
+
+4. **Ease of Maintenance**: Ensures that subclass modifications do not break the functionality of existing code relying on the base class.
+
+### When and Where LSP Helps
+
+- **Extending Existing Systems**: When extending systems with new subclasses, adhering to LSP ensures that new classes don’t introduce breaking changes.
+- **Refactoring**: During refactoring, LSP ensures that changes made to subclasses do not violate the expected behavior of the base class, reducing bugs.
+- **API Design**: In API design, adhering to LSP prevents unexpected behavior when subclasses are used, enhancing the robustness of the API.
+
+By correctly following LSP, you can create systems that are more maintainable, reliable, and extendable.

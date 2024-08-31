@@ -1,0 +1,187 @@
+In practical scenarios, devices like a coffee maker, alarm, and thermostat typically do not directly trigger other devices; instead, their states or actions are detected by sensors or event listeners, and the mediator acts upon those changes. To better reflect a realistic setup, we can modify the implementation to incorporate an event-driven approach that mimics real-world use cases.
+
+### **Practical Improvements:**
+
+1. **Event Listeners or Sensors**: Devices will update the mediator about their status changes (e.g., an alarm goes off, or someone leaves home), and the mediator will decide what actions to take based on those events.
+
+2. **Device States and Triggers**: Devices will report changes in their state (like the alarm ringing), and the mediator will respond accordingly by commanding other devices to act.
+
+3. **Decoupling Action from Events**: Devices do not directly call methods on other devices; instead, the mediator handles all actions based on the reported event.
+
+### **Updated Implementation for Practical Use Case**
+
+#### **Components:**
+- **Sensors/Triggers**: Simulate events such as leaving the house or an alarm going off.
+- **Mediator (`HomeController`)**: Monitors events and coordinates responses.
+- **Devices (`Thermostat`, `CoffeeMaker`, `Alarm`, `Tablet`)**: Devices only report state changes to the mediator.
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+// Define events for communication
+enum Event {
+    LEAVE_HOME, ALARM_GOES_OFF, SATURDAY_MORNING
+}
+
+// Mediator Interface
+interface SmartHomeMediator {
+    void notify(Device device, Event event);
+    void registerDevice(Device device);
+}
+
+// Concrete Mediator
+class HomeController implements SmartHomeMediator {
+    private List<Device> devices = new ArrayList<>();
+
+    @Override
+    public void registerDevice(Device device) {
+        devices.add(device);
+    }
+
+    @Override
+    public void notify(Device device, Event event) {
+        // Determine the response based on the event
+        System.out.println("Mediator received event: " + event + " from " + device.getClass().getSimpleName());
+
+        // React to events and manage actions accordingly
+        if (event == Event.ALARM_GOES_OFF) {
+            // Action taken when alarm goes off
+            devices.stream()
+                   .filter(d -> d instanceof CoffeeMaker)
+                   .forEach(d -> ((CoffeeMaker) d).brewCoffee());
+        } else if (event == Event.LEAVE_HOME) {
+            // Action taken when leaving home
+            devices.stream()
+                   .filter(d -> d instanceof Thermostat)
+                   .forEach(d -> ((Thermostat) d).adjustTemperature());
+        } else if (event == Event.SATURDAY_MORNING) {
+            // Action taken when it's Saturday morning
+            devices.stream()
+                   .filter(d -> d instanceof Tablet)
+                   .forEach(d -> ((Tablet) d).loadNews());
+        }
+    }
+}
+
+// Abstract Colleague
+abstract class Device {
+    protected SmartHomeMediator mediator;
+
+    public Device(SmartHomeMediator mediator) {
+        this.mediator = mediator;
+        mediator.registerDevice(this);
+    }
+
+    // Devices report events to the mediator
+    public abstract void reportEvent(Event event);
+}
+
+// Concrete Colleagues
+class Thermostat extends Device {
+    public Thermostat(SmartHomeMediator mediator) {
+        super(mediator);
+    }
+
+    public void adjustTemperature() {
+        System.out.println("Thermostat: Adjusting temperature for energy saving.");
+    }
+
+    @Override
+    public void reportEvent(Event event) {
+        mediator.notify(this, event);
+    }
+}
+
+class CoffeeMaker extends Device {
+    public CoffeeMaker(SmartHomeMediator mediator) {
+        super(mediator);
+    }
+
+    public void brewCoffee() {
+        System.out.println("CoffeeMaker: Brewing coffee...");
+    }
+
+    @Override
+    public void reportEvent(Event event) {
+        // CoffeeMaker usually does not report events, handled by mediator's logic
+    }
+}
+
+class Alarm extends Device {
+    public Alarm(SmartHomeMediator mediator) {
+        super(mediator);
+    }
+
+    @Override
+    public void reportEvent(Event event) {
+        // Alarm reports that it's going off
+        System.out.println("Alarm: Alarm goes off.");
+        mediator.notify(this, Event.ALARM_GOES_OFF);
+    }
+}
+
+class Tablet extends Device {
+    public Tablet(SmartHomeMediator mediator) {
+        super(mediator);
+    }
+
+    public void loadNews() {
+        System.out.println("Tablet: Loading the latest Globe and Mail.");
+    }
+
+    @Override
+    public void reportEvent(Event event) {
+        // Tablet might not report events, only reacts
+    }
+}
+
+// Simulated Event Triggers
+class Sensor {
+    private SmartHomeMediator mediator;
+
+    public Sensor(SmartHomeMediator mediator) {
+        this.mediator = mediator;
+    }
+
+    public void simulateLeaveHome() {
+        System.out.println("Sensor: Detected leaving home.");
+        mediator.notify(null, Event.LEAVE_HOME);
+    }
+
+    public void simulateSaturdayMorning() {
+        System.out.println("Sensor: Detected Saturday morning.");
+        mediator.notify(null, Event.SATURDAY_MORNING);
+    }
+}
+
+// Client Code
+public class SmartHomeDemo {
+    public static void main(String[] args) {
+        SmartHomeMediator mediator = new HomeController();
+
+        Device thermostat = new Thermostat(mediator);
+        Device coffeeMaker = new CoffeeMaker(mediator);
+        Device alarm = new Alarm(mediator);
+        Device tablet = new Tablet(mediator);
+
+        // Simulate events
+        Sensor sensor = new Sensor(mediator);
+        sensor.simulateLeaveHome();        // Simulate leaving home
+        alarm.reportEvent(Event.ALARM_GOES_OFF);  // Simulate alarm going off
+        sensor.simulateSaturdayMorning();  // Simulate Saturday morning
+    }
+}
+```
+
+### **Key Adjustments:**
+
+1. **Devices Don't Directly Trigger Others**: Devices only report events (like `Alarm` going off). The mediator decides what actions to take, reflecting how real systems usually operate.
+
+2. **Sensors or External Triggers**: We introduce a `Sensor` class that simulates external events like leaving the house or detecting Saturday morning, making the system more realistic.
+
+3. **Decoupling Logic**: Devices are not aware of each other and only focus on their responsibilities, adhering to the Single Responsibility Principle.
+
+4. **Mediator Manages Coordination**: The mediator controls how devices respond to events, enhancing maintainability by centralizing the decision-making process.
+
+This design effectively captures how smart home systems typically function, where devices operate independently but are coordinated by a central controller based on real-world events or conditions.

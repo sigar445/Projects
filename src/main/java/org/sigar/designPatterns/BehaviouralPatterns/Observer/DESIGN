@@ -1,0 +1,161 @@
+### **Observer Pattern Explanation**
+
+The **Observer Pattern** is a behavioral design pattern that defines a one-to-many dependency between objects so that when one object (the **Subject**) changes its state, all its dependent objects (the **Observers**) are notified and updated automatically. This pattern is commonly used when changes to one object need to be communicated to a set of dependent objects without the subject knowing the specifics of these observers.
+
+### **Key Components of the Observer Pattern:**
+
+1. **Subject**:
+   - The core component being observed. It maintains a list of observers and provides methods to add, remove, and notify them of changes.
+   - Example methods: `attach(Observer observer)`, `detach(Observer observer)`, `notifyObservers()`.
+
+2. **Observer**:
+   - An interface or abstract class that defines the update method that observers must implement.
+   - Example method: `update()`, which gets called when the subject's state changes.
+
+3. **Concrete Subject**:
+   - A concrete implementation of the Subject. It contains the actual state and logic to notify observers when the state changes.
+
+4. **Concrete Observer**:
+   - Implements the Observer interface. It defines the reaction to the subject's state changes.
+
+### **Example of Observer Pattern in Java**
+
+Let’s create a simple weather station that notifies different displays when the weather changes.
+
+#### **Implementation:**
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+// Observer interface
+interface Observer {
+    void update(float temperature, float humidity, float pressure);
+}
+
+// Subject interface
+interface Subject {
+    void registerObserver(Observer observer);
+    void removeObserver(Observer observer);
+    void notifyObservers();
+}
+
+// Concrete Subject
+class WeatherStation implements Subject {
+    private List<Observer> observers;
+    private float temperature;
+    private float humidity;
+    private float pressure;
+
+    public WeatherStation() {
+        observers = new ArrayList<>();
+    }
+
+    @Override
+    public void registerObserver(Observer observer) {
+        observers.add(observer);
+    }
+
+    @Override
+    public void removeObserver(Observer observer) {
+        observers.remove(observer);
+    }
+
+    @Override
+    public void notifyObservers() {
+        for (Observer observer : observers) {
+            observer.update(temperature, humidity, pressure);
+        }
+    }
+
+    public void setMeasurements(float temperature, float humidity, float pressure) {
+        this.temperature = temperature;
+        this.humidity = humidity;
+        this.pressure = pressure;
+        notifyObservers();
+    }
+}
+
+// Concrete Observer 1
+class CurrentConditionsDisplay implements Observer {
+    private float temperature;
+    private float humidity;
+
+    @Override
+    public void update(float temperature, float humidity, float pressure) {
+        this.temperature = temperature;
+        this.humidity = humidity;
+        display();
+    }
+
+    public void display() {
+        System.out.println("Current conditions: " + temperature + "F degrees and " + humidity + "% humidity");
+    }
+}
+
+// Concrete Observer 2
+class StatisticsDisplay implements Observer {
+    private float temperature;
+
+    @Override
+    public void update(float temperature, float humidity, float pressure) {
+        this.temperature = temperature;
+        display();
+    }
+
+    public void display() {
+        System.out.println("Statistics: Temperature is " + temperature + "F");
+    }
+}
+
+// Client Code
+public class WeatherStationDemo {
+    public static void main(String[] args) {
+        WeatherStation weatherStation = new WeatherStation();
+
+        Observer currentDisplay = new CurrentConditionsDisplay();
+        Observer statsDisplay = new StatisticsDisplay();
+
+        weatherStation.registerObserver(currentDisplay);
+        weatherStation.registerObserver(statsDisplay);
+
+        weatherStation.setMeasurements(80, 65, 30.4f);
+        weatherStation.setMeasurements(82, 70, 29.2f);
+    }
+}
+```
+
+### **How Observer Pattern Works:**
+- The `WeatherStation` (Subject) maintains a list of observers.
+- Observers (`CurrentConditionsDisplay` and `StatisticsDisplay`) implement the `Observer` interface.
+- When the weather station’s state changes (e.g., temperature), it calls `notifyObservers()`, which triggers each observer's `update()` method.
+
+### **Differences Between Observer and Mediator Patterns**
+
+1. **Intent**:
+   - **Observer**: Establishes a one-to-many relationship where multiple observers react to state changes in a subject.
+   - **Mediator**: Defines a central point of communication, reducing direct interactions between components, effectively managing communication among them.
+
+2. **Communication**:
+   - **Observer**: Observers are directly updated by the subject without intermediaries.
+   - **Mediator**: Components interact indirectly via the mediator; they do not directly communicate with each other.
+
+3. **Complexity**:
+   - **Observer**: Simple and direct update mechanism; subject only needs to maintain a list of observers.
+   - **Mediator**: More complex, as it encapsulates and coordinates various interactions among components, centralizing the logic.
+
+4. **Dependencies**:
+   - **Observer**: Subject and observers are loosely coupled; they know about each other only via the observer interface.
+   - **Mediator**: The mediator knows about all components it manages, creating a central dependency.
+
+5. **UML Diagram Similarities**:
+   - Both patterns involve multiple classes interacting with a central class (Subject/Mediator).
+   - The UML diagrams might look similar, but the intent behind interactions distinguishes them:
+     - Observer is about one-to-many notifications.
+     - Mediator is about managing complex many-to-many interactions.
+
+### **When to Use Each Pattern**:
+- **Observer**: When you have an object that needs to notify other objects about changes without knowing who they are.
+- **Mediator**: When you need to reduce the number of direct relationships between interacting objects, thus simplifying communication in a complex system.
+
+Would you like a visual UML comparison to further clarify the differences?

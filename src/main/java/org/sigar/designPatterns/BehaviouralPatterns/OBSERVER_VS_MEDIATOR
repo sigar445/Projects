@@ -1,0 +1,74 @@
+Here are simple plain text UML diagrams for the **Observer** and **Mediator** patterns to highlight their structure and key differences.
+
+### **1. Observer Pattern UML Diagram**
+
+```
++-------------------+
+|     Subject       |                     +-------------------------+
+|-------------------|                     |        Observer         |
+| - observers       |<------------------- |-------------------------|
+|-------------------|                     | + update(): void        |
+| + attach()        |                     +-------------------------+
+| + detach()        |                              ^
+| + notifyObservers()|                             / \
++-------------------+                            /   \
+       |                                      /       \
+       |                                    /           \
+       v                                  v               v
++---------------------+         +-----------------+   +--------------------+
+|  ConcreteSubject    |         | ConcreteObserver|   | ConcreteObserver   |
+|---------------------|         |-----------------|   |--------------------|
+| - state             |         | - state         |   | - state            |
+| + setState()        |         | + update()      |   | + update()         |
+| + getState()        |         | + display()     |   | + display()        |
++---------------------+         +-----------------+   +--------------------+
+```
+
+### **Explanation:**
+- **Subject** manages a list of observers and notifies them of state changes.
+- **Observers** implement an `update()` method, which the subject calls when its state changes.
+- Each observer maintains its own state, updated through the subject.
+
+### **2. Mediator Pattern UML Diagram**
+
+```
++-------------------------+
+|       Mediator          |                   +--------------------------+
+|-------------------------|                   |         Colleague        |
+| + notify(sender, event) | <---------------->|--------------------------|
++-------------------------+                   | - mediator               |
+            |                                 | + notifyMediator()       |
+            |                                 +--------------------------+
+            v                                            ^
++-------------------------+                              |
+|    ConcreteMediator     |                              |
+|-------------------------|                              |
+| + notify(sender, event) |                              |
++-------------------------+                              |
+      ^            ^                                     |
+      |            |                                     |
+      |            |                                     |
+      |            |                                     |
++------------+  +------------+                    +----------------+   +----------------+
+| Colleague1 |  | Colleague2 |                    | ConcreteColleague1 | | ConcreteColleague2 |
+|------------|  |------------|                    |--------------------| |--------------------|
+| - mediator |  | - mediator |                    | - mediator         | | - mediator         |
+| + notify() |  | + notify() |                    | + notifyMediator() | | + notifyMediator() |
++------------+  +------------+                    +--------------------+ +--------------------+
+```
+
+### **Explanation:**
+- **Mediator** handles communication between multiple colleagues (components), managing interactions.
+- **Colleagues** only interact with the mediator, not with each other directly.
+- The mediator coordinates actions and interactions, reducing direct dependencies between components.
+
+### **Key Differences from UML:**
+1. **Observer Pattern**:
+   - Centralized subject; observers react directly to subject state changes.
+   - Observers are registered and notified directly.
+
+2. **Mediator Pattern**:
+   - Centralized mediator; manages interactions between independent components.
+   - Components communicate indirectly through the mediator.
+
+The diagrams reveal how the **Observer** pattern focuses on state notification, while the **Mediator** pattern emphasizes coordinated interaction among components.

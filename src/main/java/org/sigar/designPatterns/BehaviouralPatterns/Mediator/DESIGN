@@ -1,257 +1,333 @@
-The **Command Design Pattern** is a behavioral design pattern that encapsulates a request as an object, allowing you to parameterize clients with queues, requests, and operations. It decouples the object that invokes the operation from the one that knows how to perform it. This pattern is commonly used in GUI-based applications where user actions (like button clicks) need to be encapsulated as objects.
+The **Mediator** and **Observer** design patterns are behavioral design patterns that help manage object interaction and communication in an efficient and decoupled way.
 
-### Key Concepts of the Command Pattern
+### 1. Mediator Design Pattern
 
-1. **Command Interface**: Declares an interface for executing an operation.
-2. **Concrete Command**: Implements the command interface to perform specific actions by delegating to receiver objects.
-3. **Receiver**: The component that knows how to execute the request.
-4. **Invoker**: Asks the command to carry out the request.
-5. **Client**: Creates a concrete command object and sets its receiver.
+The **Mediator Design Pattern** is used to reduce the complexity of communication between multiple objects or classes. Instead of having objects reference each other directly, they communicate through a mediator object. This promotes loose coupling and makes the system easier to maintain and extend.
 
-### Practical Example in Java: Remote Control System
+#### Key Concepts
 
-Let's consider a scenario where we have a remote control system for different devices like lights, fans, and TVs. The remote can execute different commands such as turning on/off the device, increasing/decreasing the volume, etc.
+1. **Mediator Interface**: Declares methods for communicating with `Colleague` objects.
+2. **Concrete Mediator**: Implements the mediator interface and coordinates communication between `Colleague` objects.
+3. **Colleague Classes**: Represent the components that need to communicate with each other. They interact with the mediator whenever they would otherwise interact directly with each other.
+
+#### Example: Chat Room
+
+Consider a chat room where multiple users can send messages to each other. The `ChatRoom` acts as the **Mediator** that handles the message exchange between different **Colleague** users.
 
 #### Step-by-Step Implementation
 
-1. **Command Interface**
+1. **Mediator Interface**
 
 ```java
-// Command Interface
-public interface Command {
-    void execute();
-    void undo();
+// Mediator Interface
+public interface ChatMediator {
+    void sendMessage(String message, User user);
+    void addUser(User user);
 }
 ```
 
-2. **Receiver Classes**
-
-These classes represent the actual components that will be controlled.
+2. **Concrete Mediator Class**
 
 ```java
-// Receiver Class for Light
-public class Light {
-    private String room;
+import java.util.ArrayList;
+import java.util.List;
 
-    public Light(String room) {
-        this.room = room;
-    }
+// Concrete Mediator Class
+public class ChatRoom implements ChatMediator {
+    private List<User> users;
 
-    public void turnOn() {
-        System.out.println(room + " light is ON");
-    }
-
-    public void turnOff() {
-        System.out.println(room + " light is OFF");
-    }
-}
-
-// Receiver Class for Fan
-public class Fan {
-    private String room;
-
-    public Fan(String room) {
-        this.room = room;
-    }
-
-    public void turnOn() {
-        System.out.println(room + " fan is ON");
-    }
-
-    public void turnOff() {
-        System.out.println(room + " fan is OFF");
-    }
-}
-```
-
-3. **Concrete Command Classes**
-
-These classes implement the `Command` interface to execute specific actions on the receiver.
-
-```java
-// Concrete Command to Turn On Light
-public class LightOnCommand implements Command {
-    private Light light;
-
-    public LightOnCommand(Light light) {
-        this.light = light;
+    public ChatRoom() {
+        this.users = new ArrayList<>();
     }
 
     @Override
-    public void execute() {
-        light.turnOn();
+    public void addUser(User user) {
+        this.users.add(user);
     }
 
     @Override
-    public void undo() {
-        light.turnOff();
-    }
-}
-
-// Concrete Command to Turn Off Light
-public class LightOffCommand implements Command {
-    private Light light;
-
-    public LightOffCommand(Light light) {
-        this.light = light;
-    }
-
-    @Override
-    public void execute() {
-        light.turnOff();
-    }
-
-    @Override
-    public void undo() {
-        light.turnOn();
-    }
-}
-
-// Concrete Command to Turn On Fan
-public class FanOnCommand implements Command {
-    private Fan fan;
-
-    public FanOnCommand(Fan fan) {
-        this.fan = fan;
-    }
-
-    @Override
-    public void execute() {
-        fan.turnOn();
-    }
-
-    @Override
-    public void undo() {
-        fan.turnOff();
-    }
-}
-
-// Concrete Command to Turn Off Fan
-public class FanOffCommand implements Command {
-    private Fan fan;
-
-    public FanOffCommand(Fan fan) {
-        this.fan = fan;
-    }
-
-    @Override
-    public void execute() {
-        fan.turnOff();
-    }
-
-    @Override
-    public void undo() {
-        fan.turnOn();
-    }
-}
-```
-
-4. **Invoker Class**
-
-This class represents the remote control and stores the commands. It can execute or undo the stored commands.
-
-```java
-// Invoker Class: Remote Control
-public class RemoteControl {
-    private Command[] onCommands;
-    private Command[] offCommands;
-    private Command lastCommand;
-
-    public RemoteControl(int slots) {
-        onCommands = new Command[slots];
-        offCommands = new Command[slots];
-
-        // Initialize with no-op commands to avoid null checks
-        Command noCommand = new NoCommand();
-        for (int i = 0; i < slots; i++) {
-            onCommands[i] = noCommand;
-            offCommands[i] = noCommand;
+    public void sendMessage(String message, User user) {
+        for (User u : this.users) {
+            // Don't message the sender back
+            if (u != user) {
+                u.receive(message);
+            }
         }
-        lastCommand = noCommand;
-    }
-
-    public void setCommand(int slot, Command onCommand, Command offCommand) {
-        onCommands[slot] = onCommand;
-        offCommands[slot] = offCommand;
-    }
-
-    public void pressOnButton(int slot) {
-        onCommands[slot].execute();
-        lastCommand = onCommands[slot];
-    }
-
-    public void pressOffButton(int slot) {
-        offCommands[slot].execute();
-        lastCommand = offCommands[slot];
-    }
-
-    public void pressUndoButton() {
-        lastCommand.undo();
     }
 }
+```
 
-// No-op Command for initialization
-class NoCommand implements Command {
-    @Override
-    public void execute() {}
+3. **Colleague Class**
+
+```java
+// Colleague Class
+public abstract class User {
+    protected ChatMediator mediator;
+    protected String name;
+
+    public User(ChatMediator mediator, String name) {
+        this.mediator = mediator;
+        this.name = name;
+    }
+
+    public abstract void send(String message);
+    public abstract void receive(String message);
+}
+```
+
+4. **Concrete Colleague Class**
+
+```java
+// Concrete Colleague Class
+public class ChatUser extends User {
+    public ChatUser(ChatMediator mediator, String name) {
+        super(mediator, name);
+    }
 
     @Override
-    public void undo() {}
+    public void send(String message) {
+        System.out.println(this.name + ": Sending Message = " + message);
+        mediator.sendMessage(message, this);
+    }
+
+    @Override
+    public void receive(String message) {
+        System.out.println(this.name + ": Received Message = " + message);
+    }
 }
 ```
 
 5. **Client Code**
 
-This is where we set up the commands and simulate user actions.
-
 ```java
-public class CommandPatternDemo {
+public class MediatorPatternDemo {
     public static void main(String[] args) {
-        // Create Receiver objects
-        Light livingRoomLight = new Light("Living Room");
-        Fan bedroomFan = new Fan("Bedroom");
+        ChatMediator mediator = new ChatRoom();
 
-        // Create Command objects
-        Command livingRoomLightOn = new LightOnCommand(livingRoomLight);
-        Command livingRoomLightOff = new LightOffCommand(livingRoomLight);
-        Command bedroomFanOn = new FanOnCommand(bedroomFan);
-        Command bedroomFanOff = new FanOffCommand(bedroomFan);
+        User user1 = new ChatUser(mediator, "Alice");
+        User user2 = new ChatUser(mediator, "Bob");
+        User user3 = new ChatUser(mediator, "Charlie");
+        User user4 = new ChatUser(mediator, "Diana");
 
-        // Create Invoker object
-        RemoteControl remote = new RemoteControl(2); // Two slots for two devices
+        mediator.addUser(user1);
+        mediator.addUser(user2);
+        mediator.addUser(user3);
+        mediator.addUser(user4);
 
-        // Set Commands to the remote slots
-        remote.setCommand(0, livingRoomLightOn, livingRoomLightOff);
-        remote.setCommand(1, bedroomFanOn, bedroomFanOff);
-
-        // Simulate button presses
-        remote.pressOnButton(0); // Turns on the living room light
-        remote.pressOffButton(0); // Turns off the living room light
-        remote.pressUndoButton(); // Undo: Turns on the living room light again
-
-        remote.pressOnButton(1); // Turns on the bedroom fan
-        remote.pressOffButton(1); // Turns off the bedroom fan
-        remote.pressUndoButton(); // Undo: Turns on the bedroom fan again
+        user1.send("Hello, everyone!");
+        user3.send("Hi, Alice!");
     }
 }
 ```
 
-### Output of the Program
+#### Output
 
 ```
-Living Room light is ON
-Living Room light is OFF
-Living Room light is ON
-Bedroom fan is ON
-Bedroom fan is OFF
-Bedroom fan is ON
+Alice: Sending Message = Hello, everyone!
+Bob: Received Message = Hello, everyone!
+Charlie: Received Message = Hello, everyone!
+Diana: Received Message = Hello, everyone!
+Charlie: Sending Message = Hi, Alice!
+Alice: Received Message = Hi, Alice!
+Bob: Received Message = Hi, Alice!
+Diana: Received Message = Hi, Alice!
 ```
 
-### Benefits of the Command Pattern
+#### Benefits of the Mediator Pattern
 
-1. **Decoupling**: It decouples the objects that invoke the operation from the ones that know how to perform them.
-2. **Undo/Redo Capability**: Commands can be reversed using an `undo()` method, making it easy to add undo/redo functionality.
-3. **Extensibility**: New commands can be added without changing existing code, adhering to the Open/Closed Principle.
-4. **Queue and Logging**: Commands can be queued, logged, or scheduled, enabling more sophisticated features.
+1. **Loose Coupling**: Components interact indirectly via a mediator, reducing dependencies.
+2. **Centralized Communication**: Makes it easier to add new functionalities or modify existing ones.
+3. **Simplifies Object Protocols**: Reduces the complexity of communication between multiple objects.
 
-This example demonstrates how the Command Design Pattern allows encapsulating user actions, making it easier to extend, manage, and provide additional functionalities like undo operations.
+#### Drawbacks
+
+1. **Mediator Complexity**: As the number of components grows, the mediator can become complex.
+2. **Single Point of Failure**: The mediator can become a bottleneck if not implemented correctly.
+
+---
+
+### 2. Observer Design Pattern
+
+The **Observer Design Pattern** defines a one-to-many relationship between objects, where if one object changes state, all its dependents are notified and updated automatically. This pattern is useful when changes to one object need to be reflected across multiple objects.
+
+#### Key Concepts
+
+1. **Subject Interface**: Maintains a list of observers and provides methods to attach, detach, and notify observers.
+2. **Concrete Subject**: Implements the subject interface and stores state that interests observers.
+3. **Observer Interface**: Declares the `update()` method for receiving updates.
+4. **Concrete Observer**: Implements the observer interface and defines actions to take when notified.
+
+#### Example: Weather Station
+
+Let's implement a simple weather station where multiple displays (observers) update automatically when the weather data (subject) changes.
+
+#### Step-by-Step Implementation
+
+1. **Observer Interface**
+
+```java
+// Observer Interface
+public interface Observer {
+    void update(float temperature, float humidity, float pressure);
+}
+```
+
+2. **Subject Interface**
+
+```java
+// Subject Interface
+public interface Subject {
+    void registerObserver(Observer o);
+    void removeObserver(Observer o);
+    void notifyObservers();
+}
+```
+
+3. **Concrete Subject**
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+// Concrete Subject Class
+public class WeatherData implements Subject {
+    private List<Observer> observers;
+    private float temperature;
+    private float humidity;
+    private float pressure;
+
+    public WeatherData() {
+        this.observers = new ArrayList<>();
+    }
+
+    @Override
+    public void registerObserver(Observer o) {
+        observers.add(o);
+    }
+
+    @Override
+    public void removeObserver(Observer o) {
+        observers.remove(o);
+    }
+
+    @Override
+    public void notifyObservers() {
+        for (Observer observer : observers) {
+            observer.update(temperature, humidity, pressure);
+        }
+    }
+
+    public void setMeasurements(float temperature, float humidity, float pressure) {
+        this.temperature = temperature;
+        this.humidity = humidity;
+        this.pressure = pressure;
+        measurementsChanged();
+    }
+
+    private void measurementsChanged() {
+        notifyObservers();
+    }
+}
+```
+
+4. **Concrete Observer Classes**
+
+```java
+// Concrete Observer Class
+public class CurrentConditionsDisplay implements Observer {
+    private float temperature;
+    private float humidity;
+
+    @Override
+    public void update(float temperature, float humidity, float pressure) {
+        this.temperature = temperature;
+        this.humidity = humidity;
+        display();
+    }
+
+    public void display() {
+        System.out.println("Current conditions: " + temperature + "F degrees and " + humidity + "% humidity.");
+    }
+}
+
+// Another Concrete Observer Class
+public class StatisticsDisplay implements Observer {
+    private float maxTemp = 0.0f;
+    private float minTemp = 200;
+    private float tempSum = 0.0f;
+    private int numReadings;
+
+    @Override
+    public void update(float temperature, float humidity, float pressure) {
+        tempSum += temperature;
+        numReadings++;
+
+        if (temperature > maxTemp) {
+            maxTemp = temperature;
+        }
+
+        if (temperature < minTemp) {
+            minTemp = temperature;
+        }
+
+        display();
+    }
+
+    public void display() {
+        System.out.println("Avg/Max/Min temperature = " + (tempSum / numReadings) + "/" + maxTemp + "/" + minTemp);
+    }
+}
+```
+
+5. **Client Code**
+
+```java
+public class ObserverPatternDemo {
+    public static void main(String[] args) {
+        WeatherData weatherData = new WeatherData();
+
+        CurrentConditionsDisplay currentDisplay = new CurrentConditionsDisplay();
+        StatisticsDisplay statisticsDisplay = new StatisticsDisplay();
+
+        weatherData.registerObserver(currentDisplay);
+        weatherData.registerObserver(statisticsDisplay);
+
+        weatherData.setMeasurements(80, 65, 30.4f);
+        weatherData.setMeasurements(82, 70, 29.2f);
+        weatherData.setMeasurements(78, 90, 29.2f);
+    }
+}
+```
+
+#### Output
+
+```
+Current conditions: 80.0F degrees and 65.0% humidity.
+Avg/Max/Min temperature = 80.0/80.0/80.0
+Current conditions: 82.0F degrees and 70.0% humidity.
+Avg/Max/Min temperature = 81.0/82.0/80.0
+Current conditions: 78.0F degrees and 90.0% humidity.
+Avg/Max/Min temperature = 80.0/82.0/78.0
+```
+
+#### Benefits of the Observer Pattern
+
+1. **Loose Coupling**: Subjects and observers are loosely coupled; subjects don't need to know the concrete classes of observers.
+2. **Dynamic Relationships**: Observers can be added or removed at runtime.
+3. **Flexibility and Reusability**: New types of observers can be created without changing the subject.
+
+#### Drawbacks
+
+1. **Memory Leaks**: If observers are not removed properly, they may lead to memory leaks.
+2. **Unexpected Updates**: Observers may receive updates at unexpected times, leading to inconsistent states.
+
+### Conclusion
+
+Both the **Mediator** and **Observer** patterns promote loose coupling and communication between objects, but they serve different purposes:
+
+- **Mediator** centralizes complex communication and control logic.
+- **Observer
+
+** provides a way to react to changes in another object automatically.
+
+These patterns are foundational in software design, especially in GUI development, real-time systems, and event-driven architectures.

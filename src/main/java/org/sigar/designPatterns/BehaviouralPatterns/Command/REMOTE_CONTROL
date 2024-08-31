@@ -1,0 +1,155 @@
+To improve the `RemoteControl` (Invoker) class, we can incorporate more sophisticated design choices that offer better control, flexibility, and architecture. This can involve enhancements such as:
+
+1. **Using Collections for Command Storage**: Instead of using arrays, we'll use more flexible data structures like `List` or `Map`.
+
+2. **Providing Dynamic Command Slots**: Allow commands to be added dynamically rather than relying on fixed slots, making the remote more flexible.
+
+3. **Command History for Multiple Undos**: Maintain a command history stack for better undo management.
+
+4. **Better Command Management**: Improve the interface for setting and executing commands, allowing for more intuitive usage and flexibility.
+
+### Improved `RemoteControl` Class
+
+#### Step-by-Step Enhancements
+
+1. **Use `Map` for Command Storage**: Commands will be stored in a `Map<Integer, Pair<Command, Command>>` structure, which allows us to dynamically manage on and off commands for different slots.
+
+2. **Add Command History with `Stack`**: For managing undo operations, a `Stack<Command>` will be used to keep track of command history.
+
+3. **Enhance Methods to Handle Commands Dynamically**: Allow adding, removing, and executing commands more dynamically.
+
+#### Improved `RemoteControl` Class Code
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Stack;
+import javafx.util.Pair;  // Importing Pair utility from JavaFX library
+
+// Invoker Class: Remote Control with Enhanced Design
+public class RemoteControl {
+    // Mapping slot numbers to pairs of commands (on, off)
+    private final Map<Integer, Pair<Command, Command>> commandMap;
+    private final Stack<Command> commandHistory;  // Stack for undo functionality
+
+    public RemoteControl() {
+        this.commandMap = new HashMap<>();
+        this.commandHistory = new Stack<>();
+    }
+
+    // Method to set on/off commands for a given slot
+    public void setCommand(int slot, Command onCommand, Command offCommand) {
+        commandMap.put(slot, new Pair<>(onCommand, offCommand));
+    }
+
+    // Method to remove commands from a slot
+    public void removeCommand(int slot) {
+        commandMap.remove(slot);
+    }
+
+    // Execute the "On" command for a given slot
+    public void pressOnButton(int slot) {
+        Pair<Command, Command> commands = commandMap.get(slot);
+        if (commands != null && commands.getKey() != null) {
+            commands.getKey().execute();
+            commandHistory.push(commands.getKey());  // Push command to history stack
+        } else {
+            System.out.println("No On command assigned for slot: " + slot);
+        }
+    }
+
+    // Execute the "Off" command for a given slot
+    public void pressOffButton(int slot) {
+        Pair<Command, Command> commands = commandMap.get(slot);
+        if (commands != null && commands.getValue() != null) {
+            commands.getValue().execute();
+            commandHistory.push(commands.getValue());  // Push command to history stack
+        } else {
+            System.out.println("No Off command assigned for slot: " + slot);
+        }
+    }
+
+    // Undo the last executed command
+    public void pressUndoButton() {
+        if (!commandHistory.isEmpty()) {
+            Command lastCommand = commandHistory.pop();
+            lastCommand.undo();
+        } else {
+            System.out.println("No commands to undo.");
+        }
+    }
+
+    // Method to display all the commands in the remote
+    public void displayCommands() {
+        System.out.println("Remote Control Command List:");
+        commandMap.forEach((slot, commandPair) -> {
+            System.out.println("Slot " + slot + ": On -> " + commandPair.getKey().getClass().getName()
+                    + ", Off -> " + commandPair.getValue().getClass().getName());
+        });
+    }
+}
+```
+
+#### Enhancements Overview
+
+1. **Command Storage with `Map`**: The `commandMap` allows for flexible slot management. We can dynamically add or remove commands, unlike the fixed-sized array approach.
+
+2. **History Management with `Stack`**: The `commandHistory` `Stack` allows multiple undos, maintaining a proper sequence of operations.
+
+3. **Improved Error Handling and Feedback**: The methods provide clear feedback if a command is not set for a given slot.
+
+4. **Display Commands**: The `displayCommands()` method allows users to see what commands are set for each slot, adding clarity.
+
+5. **Dynamic and Extensible**: By allowing dynamic addition and removal of commands, this class is more adaptable and scalable for future changes.
+
+#### Updated Client Code
+
+The client code remains similar, but now we have a more powerful and flexible remote control.
+
+```java
+public class CommandPatternDemo {
+    public static void main(String[] args) {
+        // Create Receiver objects
+        Light livingRoomLight = new Light("Living Room");
+        Fan bedroomFan = new Fan("Bedroom");
+
+        // Create Command objects
+        Command livingRoomLightOn = new LightOnCommand(livingRoomLight);
+        Command livingRoomLightOff = new LightOffCommand(livingRoomLight);
+        Command bedroomFanOn = new FanOnCommand(bedroomFan);
+        Command bedroomFanOff = new FanOffCommand(bedroomFan);
+
+        // Create Invoker object
+        RemoteControl remote = new RemoteControl(); // Now more dynamic
+
+        // Set Commands to the remote slots
+        remote.setCommand(1, livingRoomLightOn, livingRoomLightOff);
+        remote.setCommand(2, bedroomFanOn, bedroomFanOff);
+
+        // Simulate button presses
+        remote.pressOnButton(1);  // Turns on the living room light
+        remote.pressOffButton(1); // Turns off the living room light
+        remote.pressUndoButton(); // Undo: Turns on the living room light again
+
+        remote.pressOnButton(2);  // Turns on the bedroom fan
+        remote.pressOffButton(2); // Turns off the bedroom fan
+        remote.pressUndoButton(); // Undo: Turns on the bedroom fan again
+
+        // Display current commands
+        remote.displayCommands();
+
+        // Remove a command and try again
+        remote.removeCommand(2);
+        remote.pressOnButton(2);  // No command assigned for slot: 2
+    }
+}
+```
+
+### Benefits of the Improved Design
+
+1. **Scalability**: The `RemoteControl` class can easily be scaled to support any number of commands and slots dynamically.
+2. **Better Undo Management**: Using a `Stack` for history enables multiple undo operations.
+3. **Flexibility and Maintenance**: Easier to add, remove, or change commands without modifying the underlying structure.
+4. **Improved Code Readability and Usability**: The separation of concerns and clear method definitions make the class more maintainable.
+
+This enhanced `RemoteControl` class demonstrates a more robust, scalable, and flexible implementation of the Command design pattern in Java.
