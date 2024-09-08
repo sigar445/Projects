@@ -1,6 +1,6 @@
 package org.sigar.designPatterns.StructuralPatterns.Adapter;
 
-public class CoffeeScreenAdapter implements CoffeeMachineInterface{
+public class CoffeeScreenAdapter implements TouchScreen {
     OldCoffeeMachine coffeeMachine;
     CoffeeScreenAdapter(OldCoffeeMachine machine){
         this.coffeeMachine = machine;

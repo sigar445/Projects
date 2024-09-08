@@ -1,0 +1,139 @@
+The Adapter design pattern is a structural pattern that allows incompatible interfaces to work together. It acts as a bridge between two incompatible interfaces, making them compatible so that they can collaborate and interact seamlessly. This pattern involves a single class, known as the adapter, which is responsible for joining functionalities of independent or incompatible interfaces.
+
+### Components of the Adapter Design Pattern
+
+1. **Target Interface**: Defines the interface expected by the client.
+2. **Adaptee**: The existing class with an incompatible interface that needs to be adapted.
+3. **Adapter**: A class that implements the target interface and internally uses an instance of the adaptee to make it compatible with the target interface.
+4. **Client**: The code that uses the target interface to interact with objects.
+
+### UML Diagram
+
+Here's a UML diagram illustrating the Adapter pattern:
+
+```plaintext
++---------------------+
+|      Client         |
++---------------------+
+          |
+          |
+          v
++---------------------+
+|   Target Interface  |
+|---------------------|
+| + request()         |
++---------------------+
+          ^
+          |
+          |
++---------------------+       +---------------------+
+|      Adapter        |       |      Adaptee        |
+|---------------------|       |---------------------|
+| - adaptee: Adaptee  |       | + specificRequest() |
+|---------------------|       +---------------------+
+| + request()         |
++---------------------+
+          |
+          |
+          v
++---------------------+
+|    Adaptee          |
+|---------------------|
+| + specificRequest() |
++---------------------+
+```
+
+### Example in Java
+
+Let's consider an example where we have an existing `LegacyPrinter` class with a method named `printDocument()`, and we want to adapt it to a new system that expects a `Printer` interface with a method named `print()`.
+
+#### Step 1: Define the Target Interface
+
+```java
+public interface Printer {
+    void print();
+}
+```
+
+#### Step 2: Define the Adaptee
+
+```java
+public class LegacyPrinter {
+    public void printDocument() {
+        System.out.println("Printing document using Legacy Printer.");
+    }
+}
+```
+
+#### Step 3: Create the Adapter
+
+```java
+public class PrinterAdapter implements Printer {
+    private LegacyPrinter legacyPrinter;
+
+    public PrinterAdapter(LegacyPrinter legacyPrinter) {
+        this.legacyPrinter = legacyPrinter;
+    }
+
+    @Override
+    public void print() {
+        legacyPrinter.printDocument();
+    }
+}
+```
+
+#### Step 4: Use the Adapter
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        LegacyPrinter legacyPrinter = new LegacyPrinter();
+        Printer printer = new PrinterAdapter(legacyPrinter);
+        printer.print(); // Output: Printing document using Legacy Printer.
+    }
+}
+```
+
+### Explanation
+
+1. **Target Interface**: `Printer` defines the method `print()` that the client expects.
+2. **Adaptee**: `LegacyPrinter` has an incompatible method `printDocument()`.
+3. **Adapter**: `PrinterAdapter` implements the `Printer` interface and internally uses an instance of `LegacyPrinter` to adapt the `print()` method to call `printDocument()`.
+4. **Client**: The `Main` class uses the `Printer` interface to interact with the `LegacyPrinter` through the `PrinterAdapter`.
+
+### Real-World Usages
+
+1. **Java Collections Framework**:
+   - **Example**: `java.util.Arrays#asList()` adapts an array to a `List`.
+   - **Usage**: Allows arrays to be used as lists without modifying the array class¹.
+
+2. **Java I/O Streams**:
+   - **Example**: `java.io.InputStreamReader` adapts an `InputStream` to a `Reader`.
+   - **Usage**: Enables reading from an input stream using character-based methods¹.
+
+3. **Java Swing**:
+   - **Example**: `javax.swing.table.TableModel` adapts data to be displayed in a `JTable`.
+   - **Usage**: Allows different data sources to be displayed in a table without modifying the data source classes¹.
+
+### Summary
+
+The Adapter pattern is a powerful tool for integrating incompatible interfaces, promoting code reuse, and enhancing flexibility. It is widely used in various libraries and frameworks to bridge gaps between different interfaces.
+
+Would you like to explore more examples or have any specific questions about the Adapter pattern?
+
+¹: [GeeksforGeeks - Adapter Design Pattern in Java](https://www.geeksforgeeks.org/adapter-design-pattern-in-java/)
+
+Source: Conversation with Copilot, 8/9/2024
+(1) Adapter Design Pattern in Java - GeeksforGeeks. https://www.geeksforgeeks.org/adapter-design-pattern-in-java/.
+(2) The Adapter Pattern in Java - Baeldung. https://www.baeldung.com/java-adapter-pattern.
+(3) Adapter design pattern in java - Java2Blog. https://java2blog.com/adapter-design-pattern-in-java/.
+(4) Adapter Design Pattern in Java - DigitalOcean. https://www.digitalocean.com/community/tutorials/adapter-design-pattern-java.
+(5) Adapter Pattern in Java: Seamless Integration of ... - Java Design Patterns. https://java-design-patterns.com/patterns/adapter/.
+(6) Java Adapter Design Pattern Tutorial - squash.io. https://www.squash.io/java-adapter-design-pattern-tutorial/.
+(7) Template Method Design Pattern - GeeksforGeeks. https://www.geeksforgeeks.org/template-method-design-pattern/.
+(8) Template method pattern - Wikipedia. https://en.wikipedia.org/wiki/Template_method_pattern.
+(9) Template Method Pattern :: CC 410 Textbook. https://textbooks.cs.ksu.edu/cc410/i-oop/09-design-patterns/09-template-method/index.html.
+(10) Adapter Design Pattern - GeeksforGeeks. https://www.geeksforgeeks.org/adapter-pattern/.
+(11) Adapter pattern - Wikipedia. https://en.wikipedia.org/wiki/Adapter_pattern.
+(12) Adapter Design Pattern (UML Class Diagram) - Software Ideas. https://www.softwareideas.net/a/383/adapter-design-pattern-uml-class-diagram-.
+(13) Adapter Design Pattern - Definition and Examples | Pentalog. https://www.pentalog.com/blog/design-patterns/adapter-design-pattern/.
