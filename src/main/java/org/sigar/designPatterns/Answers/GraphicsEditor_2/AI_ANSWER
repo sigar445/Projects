@@ -1,0 +1,219 @@
+Sure! Let's start with the **Composite Pattern** implementation and then move on to the **Command Pattern**.
+
+### Composite Pattern Implementation
+
+```python
+from abc import ABC, abstractmethod
+from typing import List
+
+# Abstract base class for all shapes
+class Shape(ABC):
+    @abstractmethod
+    def draw(self):
+        pass
+
+    @abstractmethod
+    def resize(self):
+        pass
+
+    @abstractmethod
+    def set_color(self, color: str):
+        pass
+
+# Composite class that can contain multiple shapes
+class CompositeShape(Shape):
+    def __init__(self):
+        self.shapes: List[Shape] = []
+
+    def add_shape(self, shape: Shape):
+        self.shapes.append(shape)
+
+    def remove_shape(self, shape: Shape):
+        self.shapes.remove(shape)
+
+    def draw(self):
+        for shape in self.shapes:
+            shape.draw()
+
+    def resize(self):
+        for shape in self.shapes:
+            shape.resize()
+
+    def set_color(self, color: str):
+        for shape in self.shapes:
+            shape.set_color(color)
+
+# Concrete shape classes
+class Circle(Shape):
+    def draw(self):
+        print("Drawing Circle")
+
+    def resize(self):
+        print("Resizing Circle")
+
+    def set_color(self, color: str):
+        print(f"Setting Circle color to {color}")
+
+class Rectangle(Shape):
+    def draw(self):
+        print("Drawing Rectangle")
+
+    def resize(self):
+        print("Resizing Rectangle")
+
+    def set_color(self, color: str):
+        print(f"Setting Rectangle color to {color}")
+
+class Line(Shape):
+    def draw(self):
+        print("Drawing Line")
+
+    def resize(self):
+        print("Resizing Line")
+
+    def set_color(self, color: str):
+        print(f"Setting Line color to {color}")
+
+# Example usage
+composite = CompositeShape()
+circle = Circle()
+rectangle = Rectangle()
+line = Line()
+
+composite.add_shape(circle)
+composite.add_shape(rectangle)
+composite.add_shape(line)
+
+composite.draw()
+composite.resize()
+composite.set_color("red")
+```
+
+### Command Pattern Implementation
+
+```python
+from abc import ABC, abstractmethod
+
+# Command interface
+class Command(ABC):
+    @abstractmethod
+    def execute(self):
+        pass
+
+# Concrete commands
+class DrawCommand(Command):
+    def __init__(self, shape):
+        self.shape = shape
+
+    def execute(self):
+        self.shape.draw()
+
+class ResizeCommand(Command):
+    def __init__(self, shape):
+        self.shape = shape
+
+    def execute(self):
+        self.shape.resize()
+
+class ColorCommand(Command):
+    def __init__(self, shape, color):
+        self.shape = shape
+        self.color = color
+
+    def execute(self):
+        self.shape.set_color(self.color)
+
+# Shape classes
+class Shape(ABC):
+    @abstractmethod
+    def draw(self):
+        pass
+
+    @abstractmethod
+    def resize(self):
+        pass
+
+    @abstractmethod
+    def set_color(self, color: str):
+        pass
+
+class Circle(Shape):
+    def draw(self):
+        print("Drawing Circle")
+
+    def resize(self):
+        print("Resizing Circle")
+
+    def set_color(self, color: str):
+        print(f"Setting Circle color to {color}")
+
+class Rectangle(Shape):
+    def draw(self):
+        print("Drawing Rectangle")
+
+    def resize(self):
+        print("Resizing Rectangle")
+
+    def set_color(self, color: str):
+        print(f"Setting Rectangle color to {color}")
+
+class Line(Shape):
+    def draw(self):
+        print("Drawing Line")
+
+    def resize(self):
+        print("Resizing Line")
+
+    def set_color(self, color: str):
+        print(f"Setting Line color to {color}")
+
+# Example usage
+circle = Circle()
+rectangle = Rectangle()
+line = Line()
+
+draw_circle = DrawCommand(circle)
+resize_circle = ResizeCommand(circle)
+color_circle = ColorCommand(circle, "blue")
+
+draw_rectangle = DrawCommand(rectangle)
+resize_rectangle = ResizeCommand(rectangle)
+color_rectangle = ColorCommand(rectangle, "green")
+
+draw_line = DrawCommand(line)
+resize_line = ResizeCommand(line)
+color_line = ColorCommand(line, "yellow")
+
+commands = [draw_circle, resize_circle, color_circle, draw_rectangle, resize_rectangle, color_rectangle, draw_line, resize_line, color_line]
+
+for command in commands:
+    command.execute()
+```
+
+### Pros and Cons
+
+#### Composite Pattern
+
+**Pros:**
+- **Uniformity**: Treats individual objects and compositions uniformly.
+- **Scalability**: Easily create complex shapes by combining simpler shapes.
+- **Maintainability**: Each shape class is independent, making the code easier to maintain and extend.
+
+**Cons:**
+- **Complexity**: Can become complex with deep hierarchies.
+- **Performance**: May have performance overhead due to recursive operations.
+
+#### Command Pattern
+
+**Pros:**
+- **Decoupling**: Decouples the sender of a request from its receiver.
+- **Flexibility**: Easily add new commands without changing existing code.
+- **Undo/Redo**: Supports undoable operations by storing command history.
+
+**Cons:**
+- **Verbosity**: Requires creating many command classes, which can lead to code bloat.
+- **Overhead**: May introduce additional overhead due to the creation and management of command objects.
+
+Both patterns have their strengths and are suitable for different aspects of the problem. The Composite Pattern is excellent for managing a hierarchy of shapes, while the Command Pattern is great for encapsulating operations and supporting undoable actions.
+
+Would you like to explore more about these patterns or see another example?

@@ -1,0 +1,213 @@
+To design the notification system using the Factory Method Design Pattern, you would implement the pattern that allows the creation of objects (notification strategies) without specifying the exact class to be instantiated. The Factory Method pattern provides a way to encapsulate object creation, making the code more maintainable and extensible.
+
+### **Factory Method Design Pattern Explanation**
+
+1. **Factory Interface (`NotificationFactory`)**: Defines the factory method `createNotification()` that will be implemented by concrete factories.
+
+2. **Concrete Factories (`EmailNotificationFactory`, `SMSNotificationFactory`, `PushNotificationFactory`)**: Each concrete factory implements the `NotificationFactory` interface and is responsible for creating its corresponding notification object.
+
+3. **Notification Interface (`Notification`)**: Defines the `sendNotification()` method that all notifications must implement.
+
+4. **Concrete Notification Classes (`EmailNotification`, `SMSNotification`, `PushNotification`)**: Implement the `Notification` interface, providing the specific behavior for each notification type.
+
+### **Code Implementation Using Factory Method**
+
+1. **`Notification` Interface**: Defines the contract for all notification methods.
+
+   ```java
+   public interface Notification {
+       void sendNotification(String message);
+   }
+   ```
+
+2. **Concrete Notification Classes**: Implement the `Notification` interface.
+
+   ```java
+   public class EmailNotification implements Notification {
+       @Override
+       public void sendNotification(String message) {
+           System.out.println("Sending Email: " + message);
+       }
+   }
+
+   public class SMSNotification implements Notification {
+       @Override
+       public void sendNotification(String message) {
+           System.out.println("Sending SMS: " + message);
+       }
+   }
+
+   public class PushNotification implements Notification {
+       @Override
+       public void sendNotification(String message) {
+           System.out.println("Sending Push Notification: " + message);
+       }
+   }
+   ```
+
+3. **`NotificationFactory` Interface**: Defines the factory method `createNotification()`.
+
+   ```java
+   public interface NotificationFactory {
+       Notification createNotification();
+   }
+   ```
+
+4. **Concrete Factory Classes**: Implement the `NotificationFactory` interface.
+
+   ```java
+   public class EmailNotificationFactory implements NotificationFactory {
+       @Override
+       public Notification createNotification() {
+           return new EmailNotification();
+       }
+   }
+
+   public class SMSNotificationFactory implements NotificationFactory {
+       @Override
+       public Notification createNotification() {
+           return new SMSNotification();
+       }
+   }
+
+   public class PushNotificationFactory implements NotificationFactory {
+       @Override
+       public Notification createNotification() {
+           return new PushNotification();
+       }
+   }
+   ```
+
+5. **Usage Example**:
+
+   ```java
+   public class NotificationSystem {
+       public static void main(String[] args) {
+           NotificationFactory factory;
+
+           // Create and send an email notification
+           factory = new EmailNotificationFactory();
+           Notification emailNotification = factory.createNotification();
+           emailNotification.sendNotification("Hello via Email!");
+
+           // Create and send an SMS notification
+           factory = new SMSNotificationFactory();
+           Notification smsNotification = factory.createNotification();
+           smsNotification.sendNotification("Hello via SMS!");
+
+           // Create and send a push notification
+           factory = new PushNotificationFactory();
+           Notification pushNotification = factory.createNotification();
+           pushNotification.sendNotification("Hello via Push Notification!");
+       }
+   }
+   ```
+
+### **Comparison: Strategy vs. Factory Method**
+
+**1. Strategy Design Pattern:**
+   - **Pros**:
+     - Allows dynamic switching of algorithms or strategies at runtime.
+     - Supports Open-Closed Principle by adding new strategies without altering existing code.
+   - **Cons**:
+     - Requires client code to be aware of available strategies.
+     - Can lead to numerous classes if many strategies are required.
+
+**2. Factory Method Design Pattern:**
+   - **Pros**:
+     - Encapsulates object creation, reducing the dependency on concrete classes.
+     - Easier to add new notification types by simply adding new factories.
+   - **Cons**:
+     - Still requires client code to manage different factory classes.
+     - Can lead to class explosion when many product variants are needed.
+
+**Which Design is Better?**
+
+- **Use Strategy Pattern** when:
+  - You need to change the notification method dynamically at runtime.
+  - Extending behavior by adding new strategies without modifying existing code is a priority.
+
+- **Use Factory Method Pattern** when:
+  - You need to encapsulate object creation and ensure that new types are introduced with minimal changes.
+  - You prefer a clear separation between object creation and usage.
+
+**Conclusion**:
+
+If the primary goal is to frequently switch notification methods during runtime, the **Strategy Pattern** is preferable. However, if the focus is on encapsulating object creation and adhering to the Factory principle of delegating responsibility, the **Factory Method Pattern** is more suitable.
+
+// Product Interface
+public interface Notification {
+    void send(String message);
+}
+
+// Concrete Product for Email
+public class EmailNotification implements Notification {
+    @Override
+    public void send(String message) {
+        System.out.println("Sending Email: " + message);
+    }
+}
+
+// Concrete Product for SMS
+public class SMSNotification implements Notification {
+    @Override
+    public void send(String message) {
+        System.out.println("Sending SMS: " + message);
+    }
+}
+
+// Concrete Product for Push Notification
+public class PushNotification implements Notification {
+    @Override
+    public void send(String message) {
+        System.out.println("Sending Push Notification: " + message);
+    }
+}
+
+// Creator
+public abstract class NotificationFactory {
+    public abstract Notification createNotification();
+
+    public void sendNotification(String message) {
+        Notification notification = createNotification();
+        notification.send(message);
+    }
+}
+
+// Concrete Creator for Email
+public class EmailFactory extends NotificationFactory {
+    @Override
+    public Notification createNotification() {
+        return new EmailNotification();
+    }
+}
+
+// Concrete Creator for SMS
+public class SMSFactory extends NotificationFactory {
+    @Override
+    public Notification createNotification() {
+        return new SMSNotification();
+    }
+}
+
+// Concrete Creator for Push Notification
+public class PushFactory extends NotificationFactory {
+    @Override
+    public Notification createNotification() {
+        return new PushNotification();
+    }
+}
+
+// Client Code
+public class Main {
+    public static void main(String[] args) {
+        NotificationFactory emailFactory = new EmailFactory();
+        emailFactory.sendNotification("Hello via Email!");
+
+        NotificationFactory smsFactory = new SMSFactory();
+        smsFactory.sendNotification("Hello via SMS!");
+
+        NotificationFactory pushFactory = new PushFactory();
+        pushFactory.sendNotification("Hello via Push Notification!");
+    }
+}

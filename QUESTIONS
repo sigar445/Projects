@@ -1,0 +1,100 @@
+Here's a set of 30 intermediate to advanced questions designed to make you think about which design patterns to apply in various scenarios. The questions cover a mix of structural, behavioral, creational, and MVC patterns and encourage you to consider multiple patterns for each problem. The answers will be provided separately at the end to help you test your understanding.
+
+### **Question Set: Design Pattern Scenarios**
+
+1. You are designing a notification system that can send messages via email, SMS, and push notifications. New notification methods might be added in the future. How would you design this system to support extensibility without changing existing code?
+
+2. You have a graphics editor application where shapes like circles, rectangles, and lines can be drawn. The shapes should be able to resize, color, and perform other operations independently without affecting each other. How would you structure your shape classes?
+
+3. You are building a payment gateway system that supports multiple payment methods (credit card, PayPal, crypto). The payment method can change dynamically at runtime. How would you handle this?
+
+4. Your application needs to provide a simplified interface to a complex subsystem of database operations, including fetching, updating, and deleting records. How would you design this interaction?
+
+5. In a web application, you have to validate user input forms, each with a different set of validation rules. You want to avoid writing a large if-else block for each form type. What design will help you implement this?
+
+    6. You need to implement a caching mechanism for your web application where you can switch between different caching strategies (in-memory, distributed, etc.) without modifying the client code. How would you approach this?
+
+7. You are developing a file conversion tool that converts files between various formats (PDF to DOC, DOC to HTML, etc.). How can you design this to allow easy addition of new conversion formats?
+
+8. You have multiple algorithms for sorting data, and you want to allow the user to select which sorting algorithm to use at runtime. How would you design this?
+
+9. You are developing a GUI framework where components like buttons, text fields, and labels can be nested inside other components, such as panels. How would you design this relationship?
+
+10. You want to add logging, authentication, and compression functionalities to your existing HTTP server without changing its core codebase. What design approach would allow you to dynamically add these features?
+
+11. You are building a restaurant ordering system where an order can consist of multiple items and extras, each priced separately. How can you design this system to handle complex order compositions?
+
+12. Your application needs to coordinate complex workflows across different subsystems, like payment processing, inventory management, and shipping. Each subsystem has its own responsibilities and should operate independently. What pattern would help you manage this workflow?
+
+13. You are creating a report generation tool that can produce reports in different formats (PDF, Excel, HTML). You want to easily add new formats without modifying the existing report-generating logic. How would you design this?
+
+14. In an online game, players can perform actions like running, jumping, and attacking. The player's state can change dynamically, affecting which actions are available. How would you manage the player's behavior?
+
+15. You need to build a plugin system for an application, allowing third-party developers to add new functionalities without changing the core application. How would you approach the design of this plugin architecture?
+
+16. Your application must handle multiple types of requests (e.g., file uploads, data processing, notifications) and process them sequentially or conditionally based on the request type. How would you structure your code?
+
+17. You are building a software system that interfaces with multiple third-party services, and you want to switch between these services easily. How would you abstract this interaction?
+
+18. In an e-commerce platform, you need to ensure that only one instance of a shopping cart exists for each user session. How would you enforce this?
+
+19. You are designing an application that requires object creation with many optional and mandatory parameters, some of which are complex objects themselves. How would you handle the object creation?
+
+20. Your application needs to execute a series of operations in a specific sequence but with the ability to change the order or add new operations easily. What approach would help you achieve this?
+
+21. You need to ensure that an object behaves differently depending on its state without using conditionals to check the state in the methods. How would you design this?
+
+22. You have a set of legacy systems that need to be integrated into your new application, but their interfaces are incompatible with your existing code. How would you design a solution for this?
+
+23. Your application needs to traverse different types of data structures (trees, graphs, lists) uniformly. How would you design the traversal mechanism?
+
+24. You are developing a data analysis tool that applies different filters and transformations to data sets, with the ability to change or stack these operations dynamically. How would you design this?
+
+25. You have an application where objects need to be created with a varying number of steps, which may change over time. How would you manage this creation process?
+
+26. You are tasked with designing a system that records every action a user performs and allows undoing these actions in reverse order. How would you approach this?
+
+27. In a messaging app, users can send text, images, and videos. You need a system that handles message rendering based on the message type. How would you design this?
+
+28. You need to design a system where certain objects must notify other objects of state changes without being tightly coupled. How would you set this up?
+
+29. You have a complex object that you need to create from multiple simple objects in a specific order, ensuring that no steps are missed during assembly. How would you handle this?
+
+30. Your application needs to dynamically adjust its behavior based on user-defined rules that can be changed without modifying the core code. How would you structure this system?
+
+---
+
+### **Answers**
+
+1. Strategy, Factory
+2. Composite, Command
+3. Strategy, Factory
+4. Facade
+5. Chain of Responsibility, Strategy
+6. Strategy, Proxy
+7. Factory, Strategy
+8. Strategy
+9. Composite
+10. Decorator
+11. Composite, Builder
+12. Mediator, Chain of Responsibility
+13. Factory, Template Method
+14. State
+15. Factory, Plugin Pattern
+16. Chain of Responsibility, Command
+17. Adapter, Proxy
+18. Singleton
+19. Builder, Factory
+20. Command, Template Method
+21. State
+22. Adapter
+23. Iterator
+24. Decorator, Strategy
+25. Builder
+26. Command
+27. Factory, Strategy
+28. Observer
+29. Builder, Composite
+30. Rule Engine, Strategy
+
+These answers should help you reflect on the design patterns that best fit each scenario. If you’d like further explanations or breakdowns of any specific patterns in these contexts, feel free to ask!

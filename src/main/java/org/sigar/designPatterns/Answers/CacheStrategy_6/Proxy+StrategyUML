@@ -1,0 +1,197 @@
+Combining the **Strategy Pattern** with the **Proxy Pattern** creates a more sophisticated design where the **Proxy** can control access to the chosen **Strategy**. This setup is useful when you want to add additional behavior like logging, lazy initialization, access control, or caching checks before or after the actual caching operations.
+
+### Thought Process:
+1. **Problem Analysis**:
+   - You have multiple caching strategies and want the flexibility to switch between them dynamically.
+   - You also want to add additional control, logging, or validation before accessing the caching strategies.
+
+2. **Design Combination**:
+   - **Strategy Pattern** handles interchangeable caching algorithms.
+   - **Proxy Pattern** adds control and additional behavior around the caching operations.
+
+3. **Design Solution**:
+   - Use the **Proxy Pattern** to wrap around each caching strategy. The Proxy will manage the access and add any additional behavior (e.g., logging access or modifying behavior).
+
+### Text UML Diagram:
+
+```
++------------------------+                   +-------------------------------+
+|      CacheContext      |                   |        CacheStrategy          |
++------------------------+                   +-------------------------------+
+| - strategy: CacheStrategy |     <|---<<interface>>------------------------ |
++------------------------+                   | + cacheData(key, value)       |
+| + setStrategy(strategy: CacheStrategy)     | + getData(key): Object        |
+| + cacheData(key, value)                    +-------------------------------+
+| + getData(key): Object                     |                              / | \
++------------------------+                   |                                 |
+                  |                          |                                 |
+                  |                        Proxy                             Proxy
+   +---------------------+                  +----------------------+          +----------------------+
+   | ProxyCacheStrategy  |----------------->| InMemoryCacheProxy   |          | DistributedCacheProxy|
+   +---------------------+                  +----------------------+          +----------------------+
+   | - realCache: CacheStrategy             | - realCache: CacheStrategy     | - realCache: CacheStrategy
+   | + cacheData(key, value)                | + cacheData(key, value)        | + cacheData(key, value)
+   | + getData(key): Object                 | + getData(key): Object         | + getData(key): Object
+   +---------------------+                  +----------------------+          +----------------------+
+
++---------------------+
+| NoCacheProxy        |
++---------------------+
+| - realCache: CacheStrategy
+| + cacheData(key, value)
+| + getData(key): Object
++---------------------+
+```
+
+### Explanation of the UML:
+1. **CacheContext**: Manages a reference to a `CacheStrategy` object and delegates caching operations to it.
+2. **CacheStrategy**: Interface defining the caching operations that all concrete strategies implement.
+3. **ProxyCacheStrategy**: Proxy that adds additional control or behavior around caching operations.
+4. **Concrete Proxies** (`InMemoryCacheProxy`, `DistributedCacheProxy`, `NoCacheProxy`): These proxies encapsulate the real caching strategies and add behaviors like logging, access control, or validation.
+
+### Java Code Example:
+
+Here's an implementation of combining the Strategy and Proxy Patterns for caching:
+
+```java
+// Strategy Interface
+interface CacheStrategy {
+    void cacheData(String key, Object value);
+    Object getData(String key);
+}
+
+// Proxy Abstract Class
+abstract class ProxyCacheStrategy implements CacheStrategy {
+    protected CacheStrategy realCache;
+
+    public ProxyCacheStrategy(CacheStrategy realCache) {
+        this.realCache = realCache;
+    }
+
+    @Override
+    public void cacheData(String key, Object value) {
+        System.out.println("Proxy before caching: " + key);
+        realCache.cacheData(key, value);
+        System.out.println("Proxy after caching: " + key);
+    }
+
+    @Override
+    public Object getData(String key) {
+        System.out.println("Proxy before retrieving: " + key);
+        Object value = realCache.getData(key);
+        System.out.println("Proxy after retrieving: " + key);
+        return value;
+    }
+}
+
+// Concrete Strategy: In-Memory Cache
+class InMemoryCache implements CacheStrategy {
+    private final Map<String, Object> cache = new HashMap<>();
+
+    @Override
+    public void cacheData(String key, Object value) {
+        cache.put(key, value);
+        System.out.println("Cached in-memory: " + key);
+    }
+
+    @Override
+    public Object getData(String key) {
+        return cache.get(key);
+    }
+}
+
+// Concrete Proxy: In-Memory Cache Proxy
+class InMemoryCacheProxy extends ProxyCacheStrategy {
+    public InMemoryCacheProxy(CacheStrategy realCache) {
+        super(realCache);
+    }
+}
+
+// Concrete Strategy: Distributed Cache
+class DistributedCache implements CacheStrategy {
+    private final Map<String, Object> distributedCache = new HashMap<>();
+
+    @Override
+    public void cacheData(String key, Object value) {
+        distributedCache.put(key, value);
+        System.out.println("Cached in distributed cache: " + key);
+    }
+
+    @Override
+    public Object getData(String key) {
+        return distributedCache.get(key);
+    }
+}
+
+// Concrete Proxy: Distributed Cache Proxy
+class DistributedCacheProxy extends ProxyCacheStrategy {
+    public DistributedCacheProxy(CacheStrategy realCache) {
+        super(realCache);
+    }
+}
+
+// Concrete Strategy: No Cache
+class NoCache implements CacheStrategy {
+    @Override
+    public void cacheData(String key, Object value) {
+        System.out.println("No caching performed for: " + key);
+    }
+
+    @Override
+    public Object getData(String key) {
+        System.out.println("No caching strategy, returning null for: " + key);
+        return null;
+    }
+}
+
+// Concrete Proxy: No Cache Proxy
+class NoCacheProxy extends ProxyCacheStrategy {
+    public NoCacheProxy(CacheStrategy realCache) {
+        super(realCache);
+    }
+}
+
+// Context class to use caching
+class CacheContext {
+    private CacheStrategy strategy;
+
+    public void setStrategy(CacheStrategy strategy) {
+        this.strategy = strategy;
+    }
+
+    public void cacheData(String key, Object value) {
+        strategy.cacheData(key, value);
+    }
+
+    public Object getData(String key) {
+        return strategy.getData(key);
+    }
+}
+
+// Main class to demonstrate usage
+public class CombinedStrategyProxyDemo {
+    public static void main(String[] args) {
+        CacheContext cacheContext = new CacheContext();
+
+        // Use In-Memory Cache with Proxy
+        cacheContext.setStrategy(new InMemoryCacheProxy(new InMemoryCache()));
+        cacheContext.cacheData("user1", "John Doe");
+        System.out.println(cacheContext.getData("user1"));
+
+        // Switch to Distributed Cache with Proxy
+        cacheContext.setStrategy(new DistributedCacheProxy(new DistributedCache()));
+        cacheContext.cacheData("user2", "Jane Doe");
+        System.out.println(cacheContext.getData("user2"));
+
+        // Switch to No Cache with Proxy
+        cacheContext.setStrategy(new NoCacheProxy(new NoCache()));
+        cacheContext.cacheData("user3", "No Cache User");
+        System.out.println(cacheContext.getData("user3"));
+    }
+}
+```
+
+### Key Points of the Combined Design:
+- **ProxyCacheStrategy** acts as a proxy to control access and add additional behavior around the caching strategy.
+- **Concrete Proxies** add specific behavior (like logging) and interact with their respective caching strategies (`InMemoryCache`, `DistributedCache`, `NoCache`).
+- This design provides a flexible, extendable, and maintainable caching mechanism, keeping client code clean and decoupled from specific caching implementations.

@@ -1,0 +1,171 @@
+    Yes, when working with multiple databases like MongoDB, SQL, and BigQuery, each of the operations (`FetchOperation`, `UpdateOperation`, `DeleteOperation`) would need specific implementations tailored to each database. For example:
+
+    - **`FetchOperation`**: Different implementations for MongoDB, SQL, and BigQuery to fetch records.
+    - **`UpdateOperation`**: Different implementations to update records for each database.
+    - **`DeleteOperation`**: Different implementations to delete records for each database.
+
+    ### **Challenges with the Current Approach:**
+    1. **Too Many Implementations**: As each operation (`Fetch`, `Update`, `Delete`) requires separate implementations for each database, this approach can lead to a large number of classes. For three databases and three operations, you'll end up with nine classes, and this grows rapidly with additional operations or databases.
+
+    2. **Maintenance Overhead**: Adding new databases or modifying existing operations requires changes in multiple places, increasing the maintenance burden.
+
+    3. **Lack of Flexibility**: Each class is tightly coupled to the specific database operations, making it hard to change or extend functionality without altering multiple classes.
+
+    ### **Better Approach Using Strategy Pattern**
+    To manage this complexity, you can use the **Strategy Pattern** combined with the **Facade Pattern**. Here's how:
+
+    1. **Define Common Interfaces**: Create a common interface for each operation (`FetchStrategy`, `UpdateStrategy`, `DeleteStrategy`) that defines the method signatures.
+
+    2. **Concrete Implementations**: Implement the interfaces for each specific database, providing the required logic.
+
+    3. **Strategy Selection**: The Facade (`DatabaseFacade`) will dynamically select the appropriate strategy (implementation) based on the current database context.
+
+    ### **Refactored Design with Strategy Pattern**
+
+    #### **Step 1: Common Interfaces**
+
+    ```java
+    // Common interface for Fetch Operation
+    interface FetchStrategy {
+        Record fetch(int id);
+    }
+
+    // Common interface for Update Operation
+    interface UpdateStrategy {
+        void update(Record record);
+    }
+
+    // Common interface for Delete Operation
+    interface DeleteStrategy {
+        void delete(int id);
+    }
+    ```
+
+    #### **Step 2: Implementations for Each Database**
+
+    ```java
+    // Fetch implementation for MongoDB
+    class MongoFetchOperation implements FetchStrategy {
+        @Override
+        public Record fetch(int id) {
+            System.out.println("Fetching record from MongoDB with id: " + id);
+            return new Record(id, "MongoDB Data");
+        }
+    }
+
+    // Fetch implementation for SQL
+    class SqlFetchOperation implements FetchStrategy {
+        @Override
+        public Record fetch(int id) {
+            System.out.println("Fetching record from SQL with id: " + id);
+            return new Record(id, "SQL Data");
+        }
+    }
+
+    // Fetch implementation for BigQuery
+    class BigQueryFetchOperation implements FetchStrategy {
+        @Override
+        public Record fetch(int id) {
+            System.out.println("Fetching record from BigQuery with id: " + id);
+            return new Record(id, "BigQuery Data");
+        }
+
+    // Similarly, create Update and Delete classes for MongoDB, SQL, and BigQuery
+    // Update implementation for MongoDB
+    class MongoUpdateOperation implements UpdateStrategy {
+        @Override
+        public void update(Record record) {
+            System.out.println("Updating record in MongoDB with id: " + record.getId());
+            record.setData("Updated MongoDB Data");
+        }
+    }
+
+    // Delete implementation for MongoDB
+    class MongoDeleteOperation implements DeleteStrategy {
+        @Override
+        public void delete(int id) {
+            System.out.println("Deleting record from MongoDB with id: " + id);
+        }
+    }
+
+    // Continue with SQL and BigQuery implementations for Update and Delete
+    ```
+
+    #### **Step 3: Facade with Strategy Selection**
+
+    ```java
+    // Facade class that uses strategy pattern to manage multiple database operations
+    public class DatabaseFacade {
+        private FetchStrategy fetchStrategy;
+        private UpdateStrategy updateStrategy;
+        private DeleteStrategy deleteStrategy;
+
+        // Method to set the strategy based on the database type
+        public void setDatabaseType(String databaseType) {
+            switch (databaseType.toLowerCase()) {
+                case "mongo":
+                    this.fetchStrategy = new MongoFetchOperation();
+                    this.updateStrategy = new MongoUpdateOperation();
+                    this.deleteStrategy = new MongoDeleteOperation();
+                    break;
+                case "sql":
+                    this.fetchStrategy = new SqlFetchOperation();
+                    this.updateStrategy = new SqlUpdateOperation();
+                    this.deleteStrategy = new SqlDeleteOperation();
+                    break;
+                case "bigquery":
+                    this.fetchStrategy = new BigQueryFetchOperation();
+                    this.updateStrategy = new BigQueryUpdateOperation();
+                    this.deleteStrategy = new BigQueryDeleteOperation();
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported database type: " + databaseType);
+            }
+        }
+
+        // Simplified methods to call strategies
+        public Record fetchRecord(int id) {
+            return fetchStrategy.fetch(id);
+        }
+
+        public void updateRecord(Record record) {
+            updateStrategy.update(record);
+        }
+
+        public void deleteRecord(int id) {
+            deleteStrategy.delete(id);
+        }
+    }
+    ```
+
+    #### **Step 4: Main Class Usage**
+
+    ```java
+    public class FacadePatternDemo {
+        public static void main(String[] args) {
+            DatabaseFacade databaseFacade = new DatabaseFacade();
+
+            // Set the strategy to use MongoDB operations
+            databaseFacade.setDatabaseType("mongo");
+            Record record = databaseFacade.fetchRecord(1);
+            System.out.println("Fetched: " + record);
+            databaseFacade.updateRecord(record);
+            databaseFacade.deleteRecord(record.getId());
+
+            // Switch to SQL operations
+            databaseFacade.setDatabaseType("sql");
+            record = databaseFacade.fetchRecord(2);
+            System.out.println("Fetched: " + record);
+            databaseFacade.updateRecord(record);
+            databaseFacade.deleteRecord(record.getId());
+        }
+    }
+    ```
+
+    ### **Benefits of This Approach:**
+    - **Reduced Complexity**: Keeps the operations modular and easily maintainable.
+    - **Extensibility**: Adding support for a new database only requires implementing the required strategies.
+    - **Encapsulation**: Encapsulates the selection and execution of database operations without changing the Facade or the client code.
+    - **Separation of Concerns**: Each class has a single responsibility, making it easy to manage and test.
+
+    This design integrates the Strategy Pattern with the Facade Pattern to handle multiple database operations efficiently, avoiding a massive proliferation of classes and interfaces while maintaining clean and manageable code. Let me know if you have any further questions or need additional modifications!

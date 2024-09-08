@@ -1,0 +1,208 @@
+Object-Oriented Programming (OOP) design principles help guide the creation of software that is modular, maintainable, and scalable. Here are the core OOP principles with examples to illustrate each:
+
+### 1. **Encapsulation**
+Encapsulation is the concept of bundling data and methods that operate on the data within one unit (class) and restricting access to some of the object’s components.
+
+**Example:**
+```java
+public class BankAccount {
+    private double balance;
+
+    // Public method to access balance
+    public double getBalance() {
+        return balance;
+    }
+
+    // Public method to modify balance
+    public void deposit(double amount) {
+        if (amount > 0) {
+            balance += amount;
+        }
+    }
+}
+```
+In this example, the `balance` variable is private, and access is controlled through public methods.
+
+### 2. **Abstraction**
+Abstraction focuses on exposing only the essential features of an object and hiding unnecessary details.
+
+**Example:**
+```java
+abstract class Animal {
+    abstract void makeSound(); // Abstract method (no body)
+}
+
+class Dog extends Animal {
+    @Override
+    void makeSound() {
+        System.out.println("Bark");
+    }
+}
+```
+Here, `Animal` is an abstract class that defines the general concept of `makeSound()`, while specific implementations (like `Dog`) provide the actual details.
+
+### 3. **Inheritance**
+Inheritance allows a new class to inherit the properties and behavior of an existing class.
+
+**Example:**
+```java
+class Vehicle {
+    String brand = "Ford";
+}
+
+class Car extends Vehicle {
+    int wheels = 4;
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Car myCar = new Car();
+        System.out.println(myCar.brand); // Access inherited property
+    }
+}
+```
+`Car` inherits the `brand` property from the `Vehicle` class, demonstrating inheritance.
+
+### 4. **Polymorphism**
+Polymorphism allows objects to be treated as instances of their parent class. The behavior can vary based on the object’s actual class.
+
+**Example:**
+```java
+class Animal {
+    void makeSound() {
+        System.out.println("Some sound");
+    }
+}
+
+class Cat extends Animal {
+    @Override
+    void makeSound() {
+        System.out.println("Meow");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Animal myCat = new Cat();
+        myCat.makeSound(); // Outputs: Meow
+    }
+}
+```
+The `myCat` object is of type `Animal`, but it calls the overridden `makeSound()` method from the `Cat` class.
+
+### 5. **Single Responsibility Principle (SRP)**
+A class should have only one reason to change, meaning it should have only one job or responsibility.
+
+**Example:**
+```java
+class UserService {
+    void createUser() {
+        // Create user logic
+    }
+}
+
+class EmailService {
+    void sendEmail() {
+        // Send email logic
+    }
+}
+```
+`UserService` handles user creation, and `EmailService` handles sending emails, keeping responsibilities separate.
+
+### 6. **Open/Closed Principle (OCP)**
+Software entities (classes, modules, functions) should be open for extension but closed for modification.
+
+**Example:**
+```java
+abstract class Shape {
+    abstract double area();
+}
+
+class Circle extends Shape {
+    private double radius;
+
+    Circle(double radius) {
+        this.radius = radius;
+    }
+
+    @Override
+    double area() {
+        return Math.PI * radius * radius;
+    }
+}
+```
+New shapes can be added by extending the `Shape` class without modifying existing code.
+
+### 7. **Liskov Substitution Principle (LSP)**
+Objects of a superclass should be replaceable with objects of a subclass without affecting the functionality.
+
+**Example:**
+```java
+class Bird {
+    void fly() {
+        System.out.println("Flying");
+    }
+}
+
+class Sparrow extends Bird { }
+
+public class Main {
+    public static void main(String[] args) {
+        Bird myBird = new Sparrow();
+        myBird.fly(); // Outputs: Flying
+    }
+}
+```
+The `Sparrow` can be used in place of `Bird` without breaking functionality.
+
+### 8. **Interface Segregation Principle (ISP)**
+A class should not be forced to implement interfaces it does not use. It's better to create more specific interfaces.
+
+**Example:**
+```java
+interface Drivable {
+    void drive();
+}
+
+interface Flyable {
+    void fly();
+}
+
+class Car implements Drivable {
+    public void drive() {
+        System.out.println("Driving");
+    }
+}
+```
+`Car` only implements the `Drivable` interface because it doesn’t need to fly.
+
+### 9. **Dependency Inversion Principle (DIP)**
+High-level modules should not depend on low-level modules. Both should depend on abstractions.
+
+**Example:**
+```java
+interface NotificationService {
+    void sendNotification(String message);
+}
+
+class EmailNotification implements NotificationService {
+    public void sendNotification(String message) {
+        System.out.println("Email sent: " + message);
+    }
+}
+
+class UserController {
+    private NotificationService notificationService;
+
+    UserController(NotificationService notificationService) {
+        this.notificationService = notificationService;
+    }
+
+    void notifyUser() {
+        notificationService.sendNotification("Welcome!");
+    }
+}
+```
+The `UserController` depends on the `NotificationService` interface, not on a specific implementation like `EmailNotification`.
+
+These principles help in creating robust, maintainable, and flexible software. Would you like more examples or a deeper dive into any of these principles?

@@ -1,0 +1,15 @@
++-------------------+
+| NotificationSystem|
++-------------------+
+| - strategy: NotificationType |
+| + sendNotification()         |
++-------------------+
+        |
+        |
+        v
++-------------------+          +-------------------+          +-------------------+
+| EmailNotification |          | SMSNotification   |          | PushNotification  |
+| (ConcreteStrategy)|          | (ConcreteStrategy)|          | (ConcreteStrategy)|
++-------------------+          +-------------------+          +-------------------+
+| + sendNotification()         | + sendNotification()         | + sendNotification()|
++-------------------+          +-------------------+          +-------------------+

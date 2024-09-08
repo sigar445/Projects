@@ -1,0 +1,16 @@
++------------------------+            +-------------------------------+
+|      ValidatorContext   |            |        ValidationStrategy      |
++------------------------+            +-------------------------------+
+| - strategy: ValidationStrategy |   <|---<<interface>>----------------|
++------------------------+            |                               |
+| + setStrategy(strategy: ValidationStrategy)                        |
+| + validate(formData: FormData)                                      |
++------------------------+            +-------------------------------+
+                  |                                              / | \
+                  |                                                |
+                  |
+   +-------------------+               +------------------+            +------------------+
+   | LoginFormValidation|             | RegistrationFormValidation|   | FeedbackFormValidation|
+   +-------------------+               +------------------+            +------------------+
+   | + validate(data: FormData)   |    | + validate(data: FormData)   |   | + validate(data: FormData)   |
+   +-------------------+               +------------------+            +------------------+

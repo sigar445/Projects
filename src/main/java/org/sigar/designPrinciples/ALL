@@ -1,0 +1,310 @@
+Design principles guide software development towards creating flexible, maintainable, and scalable systems. Below, I will explain in-depth applications and use cases of some key design principles, complete with Java examples:
+
+### 1. Composite Objects Principle (Favor Composition over Inheritance)
+
+**Principle**: This principle suggests that you should favor object composition over inheritance. Instead of creating complex hierarchies, use simple classes that can work together. This leads to more flexible and reusable code.
+
+**Application**: Use composition to add behavior dynamically to objects instead of hardcoding it in a rigid class structure.
+
+**Example**: Let's create a `Car` class that can have different engines using composition instead of inheritance.
+
+```java
+// Interface for Engine
+interface Engine {
+    void start();
+}
+
+// Concrete Engine classes
+class PetrolEngine implements Engine {
+    @Override
+    public void start() {
+        System.out.println("Petrol engine started.");
+    }
+}
+
+class ElectricEngine implements Engine {
+    @Override
+    public void start() {
+        System.out.println("Electric engine started.");
+    }
+}
+
+// Car class using composition
+class Car {
+    private final Engine engine; // Composition: Car has an Engine
+
+    public Car(Engine engine) {
+        this.engine = engine;
+    }
+
+    public void start() {
+        engine.start();
+    }
+}
+
+public class CompositeExample {
+    public static void main(String[] args) {
+        Car petrolCar = new Car(new PetrolEngine());
+        petrolCar.start();
+
+        Car electricCar = new Car(new ElectricEngine());
+        electricCar.start();
+    }
+}
+```
+
+**Benefits**:
+- Avoids deep inheritance hierarchies.
+- Allows adding new behaviors without modifying existing code.
+
+### 2. Dependency Inversion Principle (DIP)
+
+**Principle**: High-level modules should not depend on low-level modules. Both should depend on abstractions. Abstractions should not depend on details, and details should depend on abstractions.
+
+**Application**: Use interfaces or abstract classes to decouple high-level and low-level components.
+
+**Example**: Let's create a payment system where the `PaymentProcessor` class doesn't depend on specific payment methods.
+
+```java
+// Payment Method interface
+interface PaymentMethod {
+    void pay(double amount);
+}
+
+// Concrete Payment Methods
+class CreditCardPayment implements PaymentMethod {
+    @Override
+    public void pay(double amount) {
+        System.out.println("Paid " + amount + " using Credit Card.");
+    }
+}
+
+class PayPalPayment implements PaymentMethod {
+    @Override
+    public void pay(double amount) {
+        System.out.println("Paid " + amount + " using PayPal.");
+    }
+}
+
+// High-level PaymentProcessor depends on abstraction (PaymentMethod)
+class PaymentProcessor {
+    private final PaymentMethod paymentMethod;
+
+    public PaymentProcessor(PaymentMethod paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public void processPayment(double amount) {
+        paymentMethod.pay(amount);
+    }
+}
+
+public class DependencyInversionExample {
+    public static void main(String[] args) {
+        PaymentProcessor processor = new PaymentProcessor(new CreditCardPayment());
+        processor.processPayment(100.0);
+
+        processor = new PaymentProcessor(new PayPalPayment());
+        processor.processPayment(150.0);
+    }
+}
+```
+
+**Benefits**:
+- Enhances flexibility and maintainability.
+- Allows switching between different implementations without modifying high-level logic.
+
+### 3. Interface Segregation Principle (ISP)
+
+**Principle**: No client should be forced to depend on methods it does not use. Instead of one large interface, break down interfaces into smaller, more specific ones.
+
+**Application**: Create specific interfaces for each set of responsibilities rather than having a single, bloated interface.
+
+**Example**: Let's create printer functionalities split into specific interfaces.
+
+```java
+// Segregated interfaces
+interface Printer {
+    void print();
+}
+
+interface Scanner {
+    void scan();
+}
+
+interface Fax {
+    void fax();
+}
+
+// Implementing specific interfaces
+class MultiFunctionPrinter implements Printer, Scanner, Fax {
+    @Override
+    public void print() {
+        System.out.println("Printing document.");
+    }
+
+    @Override
+    public void scan() {
+        System.out.println("Scanning document.");
+    }
+
+    @Override
+    public void fax() {
+        System.out.println("Sending fax.");
+    }
+}
+
+class SimplePrinter implements Printer {
+    @Override
+    public void print() {
+        System.out.println("Printing document.");
+    }
+}
+
+public class ISPExample {
+    public static void main(String[] args) {
+        Printer printer = new SimplePrinter();
+        printer.print();
+
+        MultiFunctionPrinter mfp = new MultiFunctionPrinter();
+        mfp.print();
+        mfp.scan();
+        mfp.fax();
+    }
+}
+```
+
+**Benefits**:
+- Improves code clarity and manageability.
+- Reduces the impact of changes and avoids unnecessary implementations.
+
+### 4. Principle of Least Knowledge (Law of Demeter)
+
+**Principle**: A module should not know about the inner details of the objects it manipulates. It should only interact with its immediate friends.
+
+**Application**: Design your code to minimize object dependencies and reduce the risk of tight coupling.
+
+**Example**: Create a class that encapsulates logic and exposes only what is necessary.
+
+```java
+// Classes demonstrating encapsulation
+class Engine {
+    public void start() {
+        System.out.println("Engine started.");
+    }
+}
+
+class Car {
+    private final Engine engine = new Engine();
+
+    public void startCar() {
+        engine.start();
+    }
+}
+
+public class LawOfDemeterExample {
+    public static void main(String[] args) {
+        Car car = new Car();
+        car.startCar(); // No need to access Engine directly
+    }
+}
+```
+
+**Benefits**:
+- Reduces dependencies and promotes encapsulation.
+- Makes the code easier to understand and maintain.
+
+### 5. Open/Closed Principle (OCP)
+
+**Principle**: Software entities (classes, modules, functions) should be open for extension but closed for modification. This allows adding new features without altering existing code.
+
+**Application**: Use inheritance, interfaces, and polymorphism to extend functionality.
+
+**Example**: A shape drawing system where new shapes can be added without modifying existing code.
+
+```java
+// Base Shape interface
+interface Shape {
+    void draw();
+}
+
+// Concrete Shapes
+class Circle implements Shape {
+    @Override
+    public void draw() {
+        System.out.println("Drawing Circle.");
+    }
+}
+
+class Rectangle implements Shape {
+    @Override
+    public void draw() {
+        System.out.println("Drawing Rectangle.");
+    }
+}
+
+// Drawing class demonstrating OCP
+class DrawingTool {
+    public void drawShape(Shape shape) {
+        shape.draw();
+    }
+}
+
+public class OCExample {
+    public static void main(String[] args) {
+        DrawingTool tool = new DrawingTool();
+        tool.drawShape(new Circle());
+        tool.drawShape(new Rectangle());
+    }
+}
+```
+
+**Benefits**:
+- Makes the system flexible and adaptable to change.
+- Reduces the need for modifying tested and deployed code.
+
+### 6. Single Responsibility Principle (SRP)
+
+**Principle**: A class should have only one reason to change, meaning it should have only one job or responsibility.
+
+**Application**: Break classes into smaller, focused classes that do one thing well.
+
+**Example**: Let's create separate classes for user registration and email notification.
+
+```java
+// Classes demonstrating SRP
+class UserRegistration {
+    public void register(String username, String password) {
+        System.out.println("User registered: " + username);
+        EmailNotification.notifyUser(username);
+    }
+}
+
+class EmailNotification {
+    public static void notifyUser(String username) {
+        System.out.println("Email sent to: " + username);
+    }
+}
+
+public class SRPExample {
+    public static void main(String[] args) {
+        UserRegistration registration = new UserRegistration();
+        registration.register("john_doe", "password123");
+    }
+}
+```
+
+**Benefits**:
+- Makes classes easier to understand and maintain.
+- Reduces the impact of changes.
+
+### Summary
+
+- **Composite Objects Principle**: Enhances flexibility by using composition instead of inheritance.
+- **Dependency Inversion Principle**: Decouples high-level and low-level modules.
+- **Interface Segregation Principle**: Prevents bloated interfaces and forces clients to depend only on relevant methods.
+- **Principle of Least Knowledge**: Promotes encapsulation and reduces tight coupling.
+- **Open/Closed Principle**: Facilitates extending functionality without altering existing code.
+- **Single Responsibility Principle**: Keeps classes focused, enhancing maintainability.
+
+These principles guide us to create software that is easier to extend, modify, and maintain, leading to cleaner, more efficient, and scalable code.

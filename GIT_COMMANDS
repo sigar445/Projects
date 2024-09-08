@@ -198,3 +198,63 @@ Here is a list of useful Git commands to help you manage your repository, see ch
   ```
 
 These commands cover a wide range of tasks for managing Git repositories efficiently. Let me know if you need any more details or examples!
+
+
+I'd be glad to provide a comprehensive response to the prompt, combining the best aspects of previous responses and addressing any shortcomings:
+
+**Connecting to a PostgreSQL Database:**
+
+- **`\c <database_name>`:** Connects to the specified database. If no database is specified, it connects to the default database.
+- **`\c <user> <database_name>`:** Connects to the specified database as the given user.
+- **`\c <user>@<host> <database_name>`:** Connects to the specified database on the given host as the given user.
+
+**Frequently Used Commands:**
+
+- **`\l`:** Lists all databases.
+- **`\d`:** Lists tables in the current database.
+- **`\d <table_name>`:** Displays the structure of the specified table.
+- **`\dt`:** Lists tables in the current database.
+- **`\dv`:** Lists views in the current database.
+- **`\df`:** Lists functions in the current database.
+- **`\du`:** Lists users in the current database.
+- **`\h`:** Shows the help menu.
+- **`\q`:** Exits the PostgreSQL terminal.
+
+**Basic Data Manipulation Commands:**
+
+- **`CREATE TABLE <table_name> (column_name data_type, ...);`:** Creates a new table.
+- **`INSERT INTO <table_name> (column_name, ...) VALUES (value1, ...);`:** Inserts a new row into a table.
+- **`SELECT <column_name> FROM <table_name>;`:** Selects data from a table.
+- **`UPDATE <table_name> SET column_name = value WHERE condition;`:** Updates existing data in a table.
+- **`DELETE FROM <table_name> WHERE condition;`:** Deletes rows from a table.
+
+**Additional Commands:**
+
+- **`\copy <table_name> FROM <file_name> CSV;`:** Imports data from a CSV file into a table.
+- **`\copy <table_name> TO <file_name> CSV;`:** Exports data from a table to a CSV file.
+- **`GRANT <privilege> ON <object> TO <user>;`:** Grants privileges to a user.
+- **`REVOKE <privilege> ON <object> FROM <user>;`:** Revokes privileges from a user.
+- **`\timing`:** Turns on/off timing for queries.
+- **`\echo <message>`:** Prints a message to the console.
+
+**Example:**
+
+```sql
+-- Connect to the 'mydatabase' database as the 'postgres' user
+\c postgres mydatabase
+
+-- Create a new table
+CREATE TABLE customers (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50),
+    email VARCHAR(100)
+);
+
+-- Insert data into the table
+INSERT INTO customers (name, email) VALUES ('John Doe', 'johndoe@example.com');
+
+-- Select data from the table
+SELECT * FROM customers;
+```
+
+I hope this comprehensive response provides a clear and helpful understanding of PostgreSQL terminal commands and their usage.

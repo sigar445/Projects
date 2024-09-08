@@ -1,0 +1,118 @@
+Here's an improved version of your `Invoker` class, incorporating the latest Java practices, better naming conventions, additional features, and a more robust design. This revised code includes enhanced error handling, immutability where applicable, better encapsulation, and clear method names.
+
+### **Improved Invoker Class Design**
+
+#### **Key Improvements:**
+1. **Immutability**: The `history` list is now `private` and final, encapsulating it fully with controlled access.
+2. **Optional Return Types**: Use `Optional` for safe access and handling of potential `null` results.
+3. **Command Validation**: More descriptive error messages and validation have been added.
+4. **Undo Stack**: A stack is used for undo operations, simplifying the undo feature and ensuring commands are undone in reverse order of execution.
+5. **Functional Interface Usage**: Improved with lambda expressions where appropriate.
+6. **Logging and Monitoring**: Optionally added to track command execution for better traceability.
+
+### **Refactored Code:**
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Stack;
+import java.util.logging.Logger;
+
+// Command interface with execute and undo methods
+interface Command {
+    void execute();
+    void undo();
+}
+
+// Invoker class that manages commands
+public class CommandInvoker {
+    private static final Logger LOGGER = Logger.getLogger(CommandInvoker.class.getName());
+    private final List<Command> commandHistory = new ArrayList<>(); // Stores all commands
+    private final Stack<Command> undoStack = new Stack<>();        // Tracks commands for undo
+
+    /**
+     * Adds a command to the invoker's history and returns the command's index.
+     *
+     * @param command The command to be added.
+     * @return The index of the added command.
+     */
+    public int addCommand(Command command) {
+        commandHistory.add(command);
+        LOGGER.info("Command added to history at index: " + (commandHistory.size() - 1));
+        return commandHistory.size() - 1;
+    }
+
+    /**
+     * Executes the command at the given index if valid, otherwise throws an exception.
+     *
+     * @param index The index of the command to be executed.
+     * @throws IllegalArgumentException if the index is out of range.
+     */
+    public void executeCommand(int index) {
+        validateIndex(index).ifPresentOrElse(command -> {
+            command.execute();
+            undoStack.push(command);  // Push the command to the undo stack after execution
+            LOGGER.info("Executed command at index: " + index);
+        }, () -> {
+            throw new IllegalArgumentException("Invalid index. Must be between 0 and " + (commandHistory.size() - 1));
+        });
+    }
+
+    /**
+     * Undoes the last executed command from the undo stack.
+     */
+    public void undoLastCommand() {
+        if (!undoStack.isEmpty()) {
+            Command command = undoStack.pop();
+            command.undo();
+            LOGGER.info("Undone last executed command.");
+        } else {
+            LOGGER.warning("No commands to undo.");
+        }
+    }
+
+    /**
+     * Undoes the command at the given index if valid, otherwise throws an exception.
+     *
+     * @param index The index of the command to be undone.
+     * @throws IllegalArgumentException if the index is out of range.
+     */
+    public void undoCommand(int index) {
+        validateIndex(index).ifPresentOrElse(command -> {
+            command.undo();
+            LOGGER.info("Undone command at index: " + index);
+        }, () -> {
+            throw new IllegalArgumentException("Invalid index. Must be between 0 and " + (commandHistory.size() - 1));
+        });
+    }
+
+    /**
+     * Validates the command index and returns an Optional containing the command if valid.
+     *
+     * @param index The index to validate.
+     * @return An Optional containing the Command if the index is valid.
+     */
+    private Optional<Command> validateIndex(int index) {
+        if (index >= 0 && index < commandHistory.size()) {
+            return Optional.of(commandHistory.get(index));
+        } else {
+            return Optional.empty();
+        }
+    }
+}
+```
+
+### **Key Changes Explained:**
+
+1. **Improved Error Handling**: The `validateIndex` method checks the index range and provides a descriptive error message. It uses `Optional` to avoid direct `null` checks.
+
+2. **Undo Mechanism**: The use of an `undoStack` simplifies the undo functionality by keeping track of commands as they are executed, ensuring they are undone in reverse order.
+
+3. **Logging**: The `Logger` provides traceability for command operations, which is essential for debugging and monitoring command executions.
+
+4. **Clean and Consistent Naming**: All method names clearly reflect their actions, making the code self-explanatory.
+
+5. **Avoiding Direct Access**: Methods operate on the `commandHistory` and `undoStack`, preventing any direct manipulation of internal data.
+
+Would you like further refinements or more features added to this design?

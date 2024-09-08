@@ -1,0 +1,128 @@
+### Law of Demeter (Principle of Least Knowledge)
+
+The **Law of Demeter**, also known as the **Principle of Least Knowledge**, states that a given object should have limited knowledge of other objects. Specifically, an object should only talk to its immediate "friends" and not to strangers. The principle aims to reduce dependencies between modules, minimizing coupling and making code easier to maintain and less error-prone.
+
+### Core Concept
+
+The Law of Demeter suggests that a method `M` of an object `O` should only call the methods of:
+
+1. **`O` itself** (the object calling the method).
+2. **Objects passed as parameters to `M`**.
+3. **Objects that `M` creates or instantiates**.
+4. **Objects that are directly owned or held by `O`** (its fields).
+
+By adhering to this rule, you prevent methods from making a series of calls that navigate through different objects ("talking to strangers"), which can lead to a fragile codebase.
+
+### Example: Violating the Law of Demeter
+
+Let’s illustrate a common violation of the Law of Demeter using a car engine scenario.
+
+```java
+class Engine {
+    public void start() {
+        System.out.println("Engine started.");
+    }
+}
+
+class Car {
+    private Engine engine;
+
+    public Car() {
+        this.engine = new Engine();
+    }
+
+    public Engine getEngine() {
+        return engine;
+    }
+}
+
+class Driver {
+    public void drive(Car car) {
+        car.getEngine().start(); // Violates the Law of Demeter
+    }
+}
+
+public class DemeterViolationExample {
+    public static void main(String[] args) {
+        Car car = new Car();
+        Driver driver = new Driver();
+        driver.drive(car);
+    }
+}
+```
+
+**Violation Explanation**:
+
+- The `Driver` class directly accesses the `Engine` object through the `Car` object (`car.getEngine().start();`).
+- The `Driver` class is aware of the internal structure of `Car` and interacts directly with `Car`'s `Engine`, violating the Law of Demeter.
+- This code is fragile because any change in the `Car` class structure (e.g., renaming `getEngine`) could break the `Driver` class.
+
+### Corrected Example: Adhering to the Law of Demeter
+
+To fix this, we should encapsulate the `Engine`'s behavior within the `Car` class and let `Driver` interact only with `Car`.
+
+```java
+class Engine {
+    public void start() {
+        System.out.println("Engine started.");
+    }
+}
+
+class Car {
+    private final Engine engine;
+
+    public Car() {
+        this.engine = new Engine();
+    }
+
+    // Encapsulate engine behavior
+    public void start() {
+        engine.start();
+    }
+}
+
+class Driver {
+    // Driver interacts directly with Car, not Engine
+    public void drive(Car car) {
+        car.start(); // Adheres to the Law of Demeter
+    }
+}
+
+public class DemeterAdherenceExample {
+    public static void main(String[] args) {
+        Car car = new Car();
+        Driver driver = new Driver();
+        driver.drive(car);
+    }
+}
+```
+
+**Adherence Explanation**:
+
+- The `Car` class encapsulates the `start()` behavior of the `Engine`.
+- The `Driver` interacts only with `Car`, not with the `Engine`.
+- Changes within `Car` (e.g., modifying `Engine` or changing its implementation) will not affect the `Driver`, making the code more robust and maintainable.
+
+### Benefits of Following the Law of Demeter
+
+1. **Reduced Coupling**: Limits dependencies between classes, which makes the code less fragile.
+
+2. **Increased Encapsulation**: Hides the internal workings of classes, which aligns with the principles of object-oriented design.
+
+3. **Ease of Maintenance**: Since classes know less about each other, changes are localized, reducing the ripple effect of changes.
+
+4. **Simplified Testing**: Since objects interact only with their immediate friends, testing individual components becomes easier.
+
+5. **Enhanced Code Readability**: Minimizes the chain of method calls, making the code cleaner and easier to understand.
+
+### Use Cases
+
+- **Encapsulating Complex Subsystems**: For instance, in a banking application, an `Account` class should not directly interact with `DatabaseConnection` objects. Instead, it should delegate such interactions to a repository or service class.
+
+- **Building APIs**: When designing APIs, adhering to this principle ensures that the API remains robust and less prone to breaking changes.
+
+- **Event-Driven Architectures**: Helps in designing event-driven or observer patterns where objects interact indirectly, enhancing decoupling.
+
+### Summary
+
+The Law of Demeter encourages designing systems where objects have minimal knowledge of each other, promoting loose coupling and higher encapsulation. By ensuring that objects "talk only to their friends," your code becomes more maintainable, flexible, and easier to understand.

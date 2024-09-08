@@ -1,0 +1,71 @@
+1. Composite Pattern Structure:
+
+                  +------------------+
+                  |      Shape       |  <--- Interface
+                  +------------------+
+                  | + draw()         |
+                  | + resize()       |
+                  | + color()        |
+                  +------------------+
+                         ▲
+         +---------------+---------------+
+         |               |               |
++----------------+ +----------------+ +----------------+
+|    Circle      | |  Rectangle     | |    Line        |
++----------------+ +----------------+ +----------------+
+| - radius       | | - width        | | - length       |
+| - center       | | - height       | | - start, end   |
++----------------+ +----------------+ +----------------+
+| + draw()       | | + draw()       | | + draw()       |
+| + resize()     | | + resize()     | | + resize()     |
+| + color()      | | + color()      | | + color()      |
++----------------+ +----------------+ +----------------+
+
+                  +------------------+
+                  | CompositeShape   |  <--- Manages multiple shapes
+                  +------------------+
+                  | - shapes: List<Shape> |
+                  +------------------+
+                  | + addShape()     |
+                  | + removeShape()  |
+                  | + draw()         |
+                  | + resize()       |
+                  | + color()        |
+                  +------------------+
+
+2. Command Pattern Structure:
+
+                +----------------------+
+                |      Command         |  <--- Interface
+                +----------------------+
+                | + execute()          |
+                | + undo()             |
+                +----------------------+
+                       ▲
+                       |
+         +-------------+-------------+
+         |             |             |
++----------------+ +----------------+ +----------------+
+|  DrawCommand   | | ResizeCommand  | |  ColorCommand  |
++----------------+ +----------------+ +----------------+
+| - shape: Shape | | - shape: Shape | | - shape: Shape |
++----------------+ +----------------+ +----------------+
+| + execute()    | | + execute()    | | + execute()    |
+| + undo()       | | + undo()       | | + undo()       |
++----------------+ +----------------+ +----------------+
+
+                  +-------------------+
+                  | CommandInvoker    |  <--- Manages and executes commands
+                  +-------------------+
+                  | - history: List<Command> |
+                  +-------------------+
+                  | + executeCommand() |
+                  | + undoCommand()    |
+                  +-------------------+
+
+3. Integration of Composite and Command Patterns:
+
+- `CommandInvoker` interacts with `Command` classes.
+- `Command` classes (e.g., `DrawCommand`, `ResizeCommand`) operate on `Shape` objects, which can be individual shapes (`Circle`, `Rectangle`, `Line`) or `CompositeShape`.
+- `CompositeShape` uses the Composite pattern to manage a group of shapes, allowing group operations like draw, resize, and color.
+- `Shape` interface serves as a common contract for all shape operations, enabling uniform command execution.
