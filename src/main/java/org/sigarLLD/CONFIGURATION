@@ -1,0 +1,119 @@
+If your `JPAURLService` has its own dependencies, you need to ensure that they are properly configured and injected when you create the `JPAURLService` bean in your `AppConfig` class. Here’s how you can manage dependencies in your service classes when using Spring:
+
+### 1. **Constructor Injection for Dependencies**
+
+You should ideally use constructor injection for your `JPAURLService` to ensure that all its dependencies are injected when the service is created. For example, if `JPAURLService` depends on a `URLRepository`, you can define it as follows:
+
+#### Step 1: Define the Dependency
+
+Assuming you have a repository interface that extends `JpaRepository`:
+
+```java
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface URLRepository extends JpaRepository<UrlShortened, Long> {
+    // Custom query methods can be defined here
+}
+```
+
+#### Step 2: Implement the JPAURLService
+
+Now, implement `JPAURLService` and inject the repository through the constructor:
+
+```java
+import org.springframework.stereotype.Service;
+
+@Service
+public class JPAURLService implements URLService {
+
+    private final URLRepository urlRepository;
+
+    // Constructor Injection
+    public JPAURLService(URLRepository urlRepository) {
+        this.urlRepository = urlRepository;
+    }
+
+    // Implementation of URLService methods
+}
+```
+
+### 2. **Spring Configuration with Dependencies**
+
+You don’t need to create a bean for `JPAURLService` explicitly in the `AppConfig` class if you use the `@Service` annotation on it. Spring will automatically detect it and inject its dependencies:
+
+```java
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class AppConfig {
+    // No need to create JPAURLService bean explicitly,
+    // Spring will handle it automatically
+}
+```
+
+### 3. **Ensure Spring Manages Dependencies**
+
+- Make sure that all the dependencies required by `JPAURLService` are also managed by Spring (i.e., they are annotated with `@Component`, `@Service`, `@Repository`, etc.).
+- For example, if you have other services or repositories that `JPAURLService` depends on, ensure they are also defined as beans.
+
+### Example of Complete Setup
+
+Here’s a complete example with a repository and a service with dependencies:
+
+```java
+// URLRepository.java
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface URLRepository extends JpaRepository<UrlShortened, Long> {
+    // Custom query methods can be defined here
+}
+
+// JPAURLService.java
+import org.springframework.stereotype.Service;
+
+@Service
+public class JPAURLService implements URLService {
+
+    private final URLRepository urlRepository;
+
+    public JPAURLService(URLRepository urlRepository) {
+        this.urlRepository = urlRepository;
+    }
+
+    // Implementation of URLService methods
+}
+
+// AppConfig.java
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class AppConfig {
+    // No explicit beans needed for JPAURLService;
+    // Spring manages it automatically
+}
+
+// URLController.java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class URLController {
+
+    private final URLService urlService;
+
+    @Autowired
+    public URLController(URLService urlService) {
+        this.urlService = urlService;  // Injects JPAURLService
+    }
+
+    // Your methods go here
+}
+```
+
+### Summary
+
+- Use constructor injection in your service classes to handle dependencies properly.
+- If you annotate your `JPAURLService` with `@Service`, Spring will automatically manage it and its dependencies.
+- You don’t need to manually define beans for services with `@Service`; just ensure that all required dependencies are also managed by Spring.
+
+Let me know if you have any further questions or need more examples!

@@ -1,6 +1,7 @@
-package org.sigar.designPatterns.StructuralPatterns.Proxy;
+package org.sigar.designPatterns.StructuralPatterns.Proxy.Document;
 
 import lombok.AllArgsConstructor;
+import org.sigar.designPatterns.StructuralPatterns.Proxy.RealDocument;
 
 @AllArgsConstructor
 public class DocumentProxy implements Document{

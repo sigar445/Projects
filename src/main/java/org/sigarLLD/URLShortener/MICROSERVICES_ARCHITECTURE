@@ -1,0 +1,330 @@
+To adapt your URL shortener application to microservices architecture and follow modern design principles, the following changes can be implemented:
+
+### 1. **Breaking the Monolith into Microservices**
+The monolithic design should be split into individual services, each handling a distinct responsibility. For example:
+- **URL Shortening Service**: Manages URL shortening and retrieval.
+- **Analytics Service**: Tracks and processes analytics.
+- **Notification or Monitoring Service** (optional): For logging, alerting, and performance monitoring.
+
+Each of these services will have its own responsibility and database, ensuring isolation and scalability.
+
+### 2. **Best Practices for Microservices Architecture**
+- **Single Responsibility Principle**: Each service should do only one thing.
+- **API Gateway**: To manage traffic and route requests.
+- **Service Discovery**: For service-to-service communication.
+- **Centralized Logging and Monitoring**: Using tools like **ELK Stack** (Elasticsearch, Logstash, Kibana), **Prometheus**, or **Grafana**.
+- **Event-Driven Communication**: Services should be loosely coupled and communicate via events (e.g., Kafka, RabbitMQ).
+- **Circuit Breakers and Resilience**: Use libraries like **Resilience4j** for fault tolerance.
+
+### 3. **Service Contracts via OpenAPI/Swagger**
+Expose well-defined API contracts using **Swagger** for documentation, and **OpenAPI** for generating client SDKs. Each microservice should have its own Swagger documentation.
+
+### 4. **Logger & Distributed Tracing**
+Integrate **SLF4J** with **Logback** for logging and use distributed tracing tools like **Jaeger** or **Zipkin** for tracking requests across multiple services.
+
+---
+
+Here’s how you can update your code to follow these microservices architecture best practices, including logger setup, service isolation, error handling, and modern design principles.
+
+### 1. **URL Shortener Service**
+
+```java
+@RestController
+@RequestMapping("/api/v1/urls")
+public class UrlController {
+
+    private final UrlShorteningService urlShorteningService;
+    private static final Logger logger = LoggerFactory.getLogger(UrlController.class);
+
+    @Autowired
+    public UrlController(UrlShorteningService urlShorteningService) {
+        this.urlShorteningService = urlShorteningService;
+    }
+
+    @PostMapping("/shorten")
+    public ResponseEntity<UrlResponse> shortenUrl(@RequestBody UrlRequest urlRequest) {
+        logger.info("Received request to shorten URL: {}", urlRequest.getUrl());
+
+        try {
+            UrlResponse shortenedUrl = urlShorteningService.shortenUrl(urlRequest);
+            return ResponseEntity.ok(shortenedUrl);
+        } catch (InvalidUrlException e) {
+            logger.error("Invalid URL provided: {}", urlRequest.getUrl(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UrlResponse("Invalid URL"));
+        } catch (Exception e) {
+            logger.error("Error occurred while shortening URL", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/{tinyUrl}")
+    public ResponseEntity<UrlResponse> redirectToOriginalUrl(@PathVariable String tinyUrl) {
+        logger.info("Fetching original URL for tinyUrl: {}", tinyUrl);
+
+        UrlResponse originalUrl = urlShorteningService.getOriginalUrl(tinyUrl);
+        if (originalUrl != null) {
+            logger.info("Redirecting to: {}", originalUrl.getUrl());
+            return ResponseEntity.ok(originalUrl);
+        } else {
+            logger.warn("Tiny URL not found: {}", tinyUrl);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+}
+```
+
+### 2. **Service Implementation**
+
+The service layer implements URL shortening and analytics functionality.
+
+```java
+@Service
+public class JpaUrlShorteningService implements UrlShorteningService {
+
+    private static final Logger logger = LoggerFactory.getLogger(JpaUrlShorteningService.class);
+
+    private final UrlRepository urlRepository;
+
+    @Autowired
+    public JpaUrlShorteningService(UrlRepository urlRepository) {
+        this.urlRepository = urlRepository;
+    }
+
+    @Override
+    public UrlResponse shortenUrl(UrlRequest urlRequest) throws InvalidUrlException {
+        String longUrl = urlRequest.getUrl();
+        logger.info("Validating URL: {}", longUrl);
+
+        if (!isValidUrl(longUrl)) {
+            logger.warn("Invalid URL detected: {}", longUrl);
+            throw new InvalidUrlException("Invalid URL: " + longUrl);
+        }
+
+        // Check if the URL already exists
+        UrlEntity existingUrlEntity = urlRepository.findByUrl(longUrl);
+        if (existingUrlEntity != null) {
+            logger.info("URL already shortened: {}", existingUrlEntity.getTinyUrl());
+            return new UrlResponse(existingUrlEntity.getTinyUrl());
+        }
+
+        // Generate and save new shortened URL
+        String tinyUrl = UUID.randomUUID().toString().substring(0, 8);
+        UrlEntity newUrlEntity = new UrlEntity(longUrl, tinyUrl, LocalDateTime.now(), LocalDateTime.now().plusDays(30), 0);
+        urlRepository.save(newUrlEntity);
+
+        logger.info("URL successfully shortened to: {}", tinyUrl);
+        return new UrlResponse(tinyUrl);
+    }
+
+    @Override
+    public UrlResponse getOriginalUrl(String tinyUrl) {
+        UrlEntity urlEntity = urlRepository.findByTinyUrl(tinyUrl);
+        if (urlEntity != null) {
+            logger.info("URL found for tinyUrl: {}", tinyUrl);
+            urlEntity.incrementHits();
+            urlRepository.save(urlEntity); // Update hit counter
+            return new UrlResponse(urlEntity.getUrl());
+        } else {
+            logger.warn("URL not found for tinyUrl: {}", tinyUrl);
+            return null;
+        }
+    }
+
+    private boolean isValidUrl(String url) {
+        try {
+            URI uri = new URI(url.trim());
+            new URL(uri.toString());
+            return true;
+        } catch (URISyntaxException | MalformedURLException e) {
+            logger.error("URL validation failed: {}", e.getMessage());
+            return false;
+        }
+    }
+}
+```
+
+### 3. **DTOs for Data Transfer**
+
+Define request and response objects for clean API boundaries.
+
+```java
+public class UrlRequest {
+    private String url;
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+}
+
+public class UrlResponse {
+    private String url;
+
+    public UrlResponse(String url) {
+        this.url = url;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+}
+```
+
+### 4. **Repository Layer (JPA)**
+
+Repository pattern for data persistence and access.
+
+```java
+@Repository
+public interface UrlRepository extends JpaRepository<UrlEntity, Long> {
+    UrlEntity findByTinyUrl(String tinyUrl);
+    UrlEntity findByUrl(String url);
+}
+```
+
+### 5. **Error Handling**
+
+Custom exceptions and global exception handling for better control.
+
+```java
+@ResponseStatus(HttpStatus.BAD_REQUEST)
+public class InvalidUrlException extends RuntimeException {
+    public InvalidUrlException(String message) {
+        super(message);
+    }
+}
+```
+
+Global exception handler:
+
+```java
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(InvalidUrlException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidUrlException(InvalidUrlException e) {
+        logger.error("InvalidUrlException: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                             .body(new ErrorResponse(e.getMessage()));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleException(Exception e) {
+        logger.error("Internal server error: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                             .body(new ErrorResponse("Internal server error"));
+    }
+}
+```
+
+### 6. **Analytics Service (Asynchronous)**
+
+Decouple analytics to its own service and handle asynchronously. This can be part of an event-driven system.
+
+```java
+@Service
+public class AnalyticsService {
+
+    private final UrlRepository urlRepository;
+
+    @Autowired
+    public AnalyticsService(UrlRepository urlRepository) {
+        this.urlRepository = urlRepository;
+    }
+
+    @Async
+    public void trackHit(String tinyUrl) {
+        UrlEntity urlEntity = urlRepository.findByTinyUrl(tinyUrl);
+        if (urlEntity != null) {
+            urlEntity.incrementHits();
+            urlRepository.save(urlEntity);
+        }
+    }
+}
+```
+
+### 7. **Microservices Communication (Event-Driven)**
+
+For distributed services, use an event-driven architecture with Kafka or RabbitMQ to notify other services when URLs are shortened or accessed. This decouples services and improves scalability.
+
+1. **Producer Example**:
+
+```java
+@Service
+public class UrlEventProducer {
+
+    private final KafkaTemplate<String, String> kafkaTemplate;
+
+    @Autowired
+    public UrlEventProducer(KafkaTemplate<String, String> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
+    public void publishUrlShortenedEvent(String tinyUrl) {
+        kafkaTemplate.send("url-shortened-topic", tinyUrl);
+    }
+}
+```
+
+2. **Consumer Example**:
+
+```java
+@Service
+public class UrlEventConsumer {
+
+    @KafkaListener(topics = "url-shortened-topic", groupId = "analytics-group")
+    public void listen(String message) {
+        // Process the event (e.g., log analytics)
+    }
+}
+```
+
+### 8. **API Gateway and Load Balancer**
+
+Implement an API Gateway using **Spring Cloud Gateway** or **Kong** to handle routing, rate-limiting, and load balancing.
+
+```yaml
+
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: url-shortener
+          uri: lb://URL-SHORTENER-SERVICE
+          predicates:
+            - Path=/api/v1/urls/**
+```
+
+### 9. **Centralized Logging and Distributed Tracing**
+
+To track logs across services, integrate **ELK Stack** (Elasticsearch, Logstash, Kibana) and **Jaeger** for distributed tracing.
+
+```yaml
+logging:
+  level:
+    root: INFO
+    com.yourcompany: DEBUG
+  file:
+    name: /var/log/url-shortener.log
+```
+
+---
+
+### Conclusion:
+With this architecture:
+- Each service (e.g., URL shortening, analytics) is independent and scalable.
+- Services communicate asynchronously using Kafka or RabbitMQ.
+- API Gateway handles traffic routing and security.
+- Distributed logging and tracing provide observability.
+- Asynchronous processing improves system resilience.
+
+By adopting microservices principles, you ensure scalability, fault tolerance, and maintainability for your URL shortener application.

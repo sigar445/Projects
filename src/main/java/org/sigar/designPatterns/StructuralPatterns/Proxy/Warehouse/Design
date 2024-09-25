@@ -1,0 +1,88 @@
+Here's an implementation of the Proxy Design Pattern with `Warehouse` and `WarehouseProxy` classes, where both implement an `Order` interface containing the `fulfillOrder` method. The `WarehouseProxy` (Fulfillment Center) maintains a list of warehouses and checks for items locally before delegating to the appropriate warehouse if needed.
+
+### Design:
+1. **`Order` Interface**: Defines the `fulfillOrder` method.
+2. **`Warehouse` Class**: Represents an actual warehouse where the order fulfillment logic is implemented.
+3. **`WarehouseProxy` Class**: Acts as a proxy, first checking for items locally and, if not found, delegates the order fulfillment to the warehouses in the list.
+
+### Code Implementation:
+
+```java
+import java.util.*;
+
+// Order interface with fulfillOrder method
+interface Order {
+    boolean fulfillOrder(String item);
+}
+
+// Concrete implementation of a warehouse
+class Warehouse implements Order {
+    private final String name;
+    private final Set<String> inventory;
+
+    public Warehouse(String name, Set<String> inventory) {
+        this.name = name;
+        this.inventory = inventory;
+    }
+
+    @Override
+    public boolean fulfillOrder(String item) {
+        boolean fulfilled = inventory.remove(item);
+        if (fulfilled) {
+            System.out.println("Order fulfilled by " + name + " for item: " + item);
+        } else {
+            System.out.println(name + " does not have the item: " + item);
+        }
+        return fulfilled;
+    }
+}
+
+// Proxy class for managing multiple warehouses (Fulfillment Center)
+class WarehouseProxy implements Order {
+    private final List<Warehouse> warehouses;
+    private final Set<String> localInventory;
+
+    public WarehouseProxy(List<Warehouse> warehouses) {
+        this.warehouses = warehouses;
+        this.localInventory = new HashSet<>(Arrays.asList("item1", "item2")); // Local inventory example
+    }
+
+    @Override
+    public boolean fulfillOrder(String item) {
+        // Check in local inventory first
+        if (localInventory.remove(item)) {
+            System.out.println("Order fulfilled by Fulfillment Center locally for item: " + item);
+            return true;
+        }
+
+        // Check in external warehouses if not available locally
+        return warehouses.stream()
+                .anyMatch(warehouse -> warehouse.fulfillOrder(item));
+    }
+}
+
+// Test the Proxy Design Pattern
+public class ProxyPatternDemo {
+    public static void main(String[] args) {
+        // Creating warehouses with their inventories
+        Warehouse warehouse1 = new Warehouse("Warehouse 1", new HashSet<>(Arrays.asList("item3", "item4", "item5")));
+        Warehouse warehouse2 = new Warehouse("Warehouse 2", new HashSet<>(Arrays.asList("item6", "item7")));
+
+        // Creating the proxy with a list of warehouses
+        WarehouseProxy fulfillmentCenter = new WarehouseProxy(List.of(warehouse1, warehouse2));
+
+        // Test fulfilling orders
+        List<String> orders = Arrays.asList("item1", "item3", "item6", "item2", "item8");
+        orders.forEach(fulfillmentCenter::fulfillOrder);
+    }
+}
+```
+
+### Key Points:
+- **`Order` Interface**: Defines the contract (`fulfillOrder`) that both `Warehouse` and `WarehouseProxy` must implement.
+- **`Warehouse` Class**: Implements the actual order fulfillment logic.
+- **`WarehouseProxy` Class**: Checks the local inventory first. If not found, it uses the `stream()` and `anyMatch()` methods to delegate the call to the appropriate warehouse, leveraging functional programming and modern Java practices.
+- **Lambda Expressions**: The `anyMatch` method uses a lambda to efficiently find the first warehouse that can fulfill the order.
+- **Conciseness and Modern Practices**: This approach utilizes Java streams, lambdas, and immutable collections (`List.of`), adhering to modern Java programming principles.
+
+This implementation reflects an efficient and maintainable application of the Proxy Design Pattern using the latest Java features. Let me know if you need further adjustments or explanations!

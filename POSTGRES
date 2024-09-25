@@ -1,0 +1,137 @@
+mongod --dbpath ~/data/db
+mongodb://localhost:27017
+
+-Dmongodb.uri="mongodb+srv://sigar123:$#123Uttam@cluster0.n45k0.mongodb.net/sample_training?w=majority"
+
+Here’s a guide to help you get started with basic PostgreSQL commands, from connecting to the database to performing essential operations like creating tables, inserting data, and querying.
+
+### Step 1: Starting PostgreSQL
+
+Before using PostgreSQL commands, ensure that the PostgreSQL server is running on your machine. You can start the PostgreSQL service using the following commands based on your operating system:
+
+- **Linux**:
+  
+  ```bash
+  sudo service postgresql start
+   sudo service  postgresql restart
+    To connect - sudo -u postgres psql
+
+  ```
+
+- **Windows**:
+  
+  Open **pgAdmin** or start the **PostgreSQL server** using the services panel.
+
+### Step 2: Connecting to PostgreSQL
+
+To interact with PostgreSQL from the terminal, use the `psql` command-line interface. 
+
+1. **Open Terminal**.
+2. **Connect to PostgreSQL** with your username (`postgres` is the default superuser):
+
+   ```bash
+   psql -U username -d database_name
+   ```
+
+   Replace `username` with your PostgreSQL username (often `postgres`) and `database_name` with the name of the database you want to connect to. If you don't specify a database, it will connect to the default database with your username.
+
+3. **Alternatively, just connect to the server**:
+
+   ```bash
+   psql -U postgres
+   ```
+
+### Step 3: Basic PostgreSQL Commands
+
+Once inside the PostgreSQL prompt (`psql`), you can start using the following commands:
+
+1. **List All Databases**:
+
+   ```sql
+   \l
+   ```
+
+2. **Create a New Database**:
+
+   ```sql
+   CREATE DATABASE mydatabase;
+   ```
+
+3. **Connect to a Database**:
+
+   ```sql
+   \c mydatabase
+   ```
+
+4. **List All Tables in the Current Database**:
+
+   ```sql
+   \dt
+   ```
+
+5. **Describe a Table (View Table Structure)**:
+
+   ```sql
+   \d table_name
+   ```
+
+6. **Create a New Table**:
+
+   ```sql
+   CREATE TABLE employees (
+       id SERIAL PRIMARY KEY,
+       name VARCHAR(50) NOT NULL,
+       age INTEGER,
+       department VARCHAR(50)
+   );
+   ```
+
+7. **Insert Data into a Table**:
+
+   ```sql
+   INSERT INTO employees (name, age, department) VALUES ('John Doe', 30, 'HR');
+   ```
+
+8. **Select Data from a Table**:
+
+   ```sql
+   SELECT * FROM employees;
+   ```
+
+9. **Update Data in a Table**:
+
+   ```sql
+   UPDATE employees SET age = 31 WHERE name = 'John Doe';
+   ```
+
+10. **Delete Data from a Table**:
+
+    ```sql
+    DELETE FROM employees WHERE name = 'John Doe';
+    ```
+
+11. **Drop a Table**:
+
+    ```sql
+    DROP TABLE employees;
+    ```
+
+12. **Exit the psql Command-Line Interface**:
+
+    ```sql
+    \q
+    ```
+
+### Quick Tips
+
+- **Autocompletion**: Press `TAB` to autocomplete commands or see suggestions.
+- **Command History**: Use the arrow keys (`↑` and `↓`) to navigate through previously entered commands.
+- **Help for Commands**: Type `\?` to get a list of all `psql` commands and `\h` for SQL command syntax help.
+
+### Next Steps
+
+1. **Explore Advanced Queries**: Learn about joins, groupings, and filtering data.
+2. **Understand Indexes**: Learn how to create indexes to optimize query performance.
+3. **Explore Transactions**: Learn to use `BEGIN`, `COMMIT`, and `ROLLBACK` for transaction control.
+
+Let me know if you need more help with specific commands or functionalities in PostgreSQL!

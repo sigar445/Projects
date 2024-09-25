@@ -1,4 +1,6 @@
-package org.sigar.designPatterns.StructuralPatterns.Proxy;
+package org.sigar.designPatterns.StructuralPatterns.Proxy.Document;
+
+import org.sigar.designPatterns.StructuralPatterns.Proxy.RealDocument;
 
 public class DocumentProxyDemo {
     public static void checkProxy(){

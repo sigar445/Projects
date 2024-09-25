@@ -1,0 +1,77 @@
+The default location for the `AppConfig` class (or any Spring configuration class) is typically within the base package of your Spring Boot application. Here’s a more detailed explanation:
+
+### Default Package Structure in Spring Boot
+
+When you create a Spring Boot application, the application is usually structured with a main class annotated with `@SpringBootApplication`. This class acts as the starting point for the Spring context. By default, Spring Boot will scan the package of this main class and all its sub-packages for components, configurations, and other beans.
+
+### Recommended Structure
+
+1. **Main Application Class:**
+   Your main application class is usually located in the root package:
+
+   ```java
+   package com.example.shortener; // Root package
+
+   import org.springframework.boot.SpringApplication;
+   import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+   @SpringBootApplication
+   public class ShortenerApplication {
+       public static void main(String[] args) {
+           SpringApplication.run(ShortenerApplication.class, args);
+       }
+   }
+   ```
+
+2. **Configuration Class Location:**
+   You can place the `AppConfig` class in the same package as the main application class or in a sub-package. For example:
+
+   ```java
+   package com.example.shortener.config; // Sub-package for configuration classes
+
+   import org.springframework.context.annotation.Bean;
+   import org.springframework.context.annotation.Configuration;
+
+   @Configuration
+   public class AppConfig {
+       // Bean definitions
+   }
+   ```
+
+### Component Scanning
+
+The `@SpringBootApplication` annotation implicitly includes `@ComponentScan`, which will scan the package of the main class and all its sub-packages for Spring components, including:
+
+- `@Component`
+- `@Service`
+- `@Repository`
+- `@Controller`
+- `@Configuration`
+
+### Custom Component Scanning
+
+If you have your configuration class in a different package that is not a sub-package of the main application class, you may need to specify the package to scan explicitly using `@ComponentScan`. Here’s an example:
+
+```java
+package com.example.shortener; // Main package
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+
+@SpringBootApplication
+@ComponentScan(basePackages = {"com.example.shortener", "com.example.otherpackage"}) // Custom packages to scan
+public class ShortenerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ShortenerApplication.class, args);
+    }
+}
+```
+
+### Summary
+
+- Place your `AppConfig` class in the same package as your main application class or a sub-package to ensure it’s picked up by Spring's component scanning.
+- By default, Spring Boot scans the main application class's package and all sub-packages.
+- If you need to scan different packages, use `@ComponentScan` to specify them.
+
+Let me know if you have any more questions!

@@ -150,7 +150,7 @@ Here is a list of useful Git commands to help you manage your repository, see ch
 
 - **Add a new remote repository**:
   ```bash
-  git remote add origin <remote-url>
+  git remote add origin <remote-urlShortened>
   ```
 
 - **Remove a remote repository**:

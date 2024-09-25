@@ -1,0 +1,187 @@
+To use `UrlMapper` and add the `@Mapper` annotation in your Spring application, you need to follow these steps:
+
+### 1. Add MapStruct Dependency
+First, add the MapStruct dependency to your `pom.xml` file:
+
+```xml
+<dependency>
+    <groupId>org.mapstruct</groupId>
+    <artifactId>mapstruct</artifactId>
+    <version>1.5.3.Final</version>
+</dependency>
+<dependency>
+    <groupId>org.mapstruct</groupId>
+    <artifactId>mapstruct-processor</artifactId>
+    <version>1.5.3.Final</version>
+    <scope>provided</scope>
+</dependency>
+```
+
+### 2. Create DTO Classes
+Define your Data Transfer Objects (DTOs) for the URL entity. For example:
+
+```java
+public class UrlRequest {
+    @NotEmpty(message = "URL cannot be empty")
+    private String url;
+    // Getters and setters
+}
+
+public class UrlResponse {
+    private String url;
+    private String tinyUrl;
+    // Getters and setters
+}
+```
+
+### 3. Create the Mapper Interface
+Create an interface for the mapper and annotate it with `@Mapper`. This interface will define the methods for mapping between your entity and DTOs.
+
+```java
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+
+@Mapper(componentModel = "spring")
+public interface UrlMapper {
+    @Mapping(source = "url", target = "url")
+    @Mapping(source = "tinyUrl", target = "tinyUrl")
+    UrlResponse toResponse(UrlShortened urlShortened);
+
+    @Mapping(source = "url", target = "url")
+    UrlShortened toEntity(UrlRequest urlRequest);
+}
+```
+
+### 4. Use the Mapper in Your Service or Controller
+Inject the mapper into your service or controller and use it to convert between entities and DTOs.
+
+#### In the Service Layer:
+```java
+@Service
+public class JpaURLService implements URLService {
+    private final UrlRepo urlRepository;
+    private final UrlMapper urlMapper;
+
+    @Autowired
+    public JpaURLService(UrlRepo urlRepository, UrlMapper urlMapper) {
+        this.urlRepository = urlRepository;
+        this.urlMapper = urlMapper;
+    }
+
+    @Override
+    public UrlShortened getOriginalUrl(String tinyUrl) {
+        UrlShortened urlShortened = urlRepository.findByTinyUrl(tinyUrl);
+        if (urlShortened == null) {
+            throw new UrlNotFoundException("URL not found for tinyUrl: " + tinyUrl);
+        }
+        return urlShortened;
+    }
+
+    @Override
+    public UrlShortened getShortenedUrl(String longUrl) {
+        if (!isUrlValid(longUrl)) {
+            throw new InvalidUrlException("Invalid URL: " + longUrl);
+        }
+        return generateShortUrl(longUrl);
+    }
+
+    // Other methods remain unchanged
+}
+```
+
+#### In the Controller:
+```java
+@RestController
+@RequestMapping("/shortener")
+public class URLController {
+    private final URLService urlService;
+    private final UrlMapper urlMapper;
+
+    @Autowired
+    public URLController(URLService urlService, UrlMapper urlMapper) {
+        this.urlService = urlService;
+        this.urlMapper = urlMapper;
+    }
+
+    @PostMapping
+    public ResponseEntity<UrlResponse> storeURL(@RequestBody UrlRequest urlRequest) {
+        try {
+            UrlShortened urlShortened = urlService.getShortenedUrl(urlRequest.getUrl());
+            UrlResponse urlResponse = urlMapper.toResponse(urlShortened);
+            return ResponseEntity.ok(urlResponse);
+        } catch (InvalidUrlException e) {
+            return ResponseEntity.badRequest().body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    @GetMapping("/{tinyURL}")
+    public ResponseEntity<String> fetchURL(@PathVariable String tinyURL) {
+        try {
+            String url = urlService.getOriginalUrl(tinyURL).getUrl();
+            return ResponseEntity.ok(url);
+        } catch (UrlNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+}
+```
+
+### Explanation
+- **MapStruct**: A code generator that greatly simplifies the implementation of mappings between Java bean types based on a convention-over-configuration approach.
+- **@Mapper**: This annotation tells MapStruct to generate an implementation of the interface during the build process.
+- **Mapping Methods**: Define methods to map between your entity and DTOs. The `@Mapping` annotation specifies the source and target properties.
+
+By following these steps, you can efficiently map between your entity and DTOs, ensuring clean and maintainable code. Let me know if you need further assistance!
+
+Source: Conversation with Copilot, 25/9/2024
+(1) Spring Boot Tutorial | Full Course [2023] [NEW]. https://www.youtube.com/watch?v=9SGDpanrc8U.
+(2) Row Mapper Concept | Fetching data using Spring JDBC. https://www.youtube.com/watch?v=R4yEt6Jv9G0.
+(3) Learn how Spring Boot Model Mapper works Fast and Simple. https://www.youtube.com/watch?v=Lb03gf4zo2U.
+(4) Spring MVC Handler Mapping Example - Java Code Geeks. https://examples.javacodegeeks.com/java-development/enterprise-java/spring/mvc/spring-mvc-handler-mapping-example/.
+(5) Spring MVC - Mapping Request URI to Controller ... - LogicBig. https://www.logicbig.com/tutorials/spring-framework/spring-web-mvc/spring-request-mapping.html.
+(6) URL Matching in Spring Boot - Baeldung. https://www.baeldung.com/spring-boot-3-url-matching.
+(7) Spring @RequestMapping - Baeldung. https://www.baeldung.com/spring-requestmapping.
+(8) undefined. https://www.youtube.com/playlist?list=PL0zysOflRCekeiERASkpi-crREVensZGS.
+(9) undefined. https://www.youtube.com/playlist?list.
+The provided code defines a Spring Data JPA mapper interface named `UrlMapper`. This interface is used to map `UrlShortened` entities to `UrlResponse` objects.
+
+**Here's a breakdown of its purpose:**
+
+- **Mapping:** The `toResponse` method defines how to map an `UrlShortened` entity to an `UrlResponse` object. This is typically used to transform data from the database into a format that is suitable for returning to the client.
+- **Spring Data JPA:** The `@Mapper` annotation with `componentModel = "spring"` indicates that Spring Data JPA will automatically generate an implementation of this interface at runtime. This implementation will use reflection to map the properties of `UrlShortened` to the corresponding properties of `UrlResponse`.
+- **Flexibility:** Using a mapper interface provides flexibility in defining how the mapping should be done. You can customize the mapping logic, including adding or removing properties, performing calculations, or applying formatting.
+
+**Example usage:**
+
+```java
+@Service
+public class URLService {
+
+    private final UrlMapper urlMapper;
+
+    @Autowired
+    public URLService(UrlMapper urlMapper) {
+        this.urlMapper = urlMapper;
+    }
+
+    public UrlResponse getShortenedUrl(String longUrl) {
+        UrlShortened shortenedUrl = ... // Get shortened URL from database
+        return urlMapper.toResponse(shortenedUrl);
+    }
+}
+```
+
+In this example, the `URLService` uses the `urlMapper` to convert an `UrlShortened` entity into an `UrlResponse` object, which can then be returned to the client.
+
+**Key benefits of using a mapper interface:**
+
+- **Separation of concerns:** Clearly separates the mapping logic from the business logic of the service layer.
+- **Flexibility:** Allows for customization of the mapping process.
+- **Maintainability:** Makes the code easier to understand and maintain.
+- **Auto-generation:** Spring Data JPA automatically generates the mapper implementation, reducing boilerplate code.
+
+**Overall, the `UrlMapper` interface is a powerful tool for mapping entities to DTOs in Spring Data JPA applications.**
