@@ -1,0 +1,100 @@
+Running multiple instances of a single Spring Boot application on different ports can be done in several ways. Below are three common methods:
+
+### 1. Modify the `server.port` in `application.properties` or `application.yml`
+You can create different configurations for each instance by specifying a different port for each one.
+
+#### Steps:
+1. **Copy the Spring Boot JAR file multiple times**:
+   - Let’s assume your application is packaged as `myapp.jar`. Create copies like:
+     - `myapp1.jar`
+     - `myapp2.jar`
+
+2. **Set different ports for each instance**:
+   - You can run the same JAR file with different `application.properties` configurations.
+
+   **Option 1: Modify `application.properties` or `application.yml` for each instance**
+   - For the first instance, use:
+     ```properties
+     server.port=8080
+     ```
+   - For the second instance, use:
+     ```properties
+     server.port=8081
+     ```
+   - Make sure to specify different configuration files for each instance.
+
+   **Option 2: Use command-line arguments**
+   You can specify the port when starting the application with the `-Dserver.port` parameter.
+
+   Example for running the first instance:
+   ```bash
+   java -jar myapp.jar --server.port=8080
+   ```
+
+   Example for running the second instance:
+   ```bash
+   java -jar myapp.jar --server.port=8081
+   ```
+
+### 2. Use Spring Profiles
+Spring Profiles allow you to create different configurations for different environments or instances. This is useful for setting different ports based on the active profile.
+
+#### Steps:
+1. **Configure profiles in your `application.properties` or `application.yml`**:
+   ```properties
+   # Default profile
+   server.port=8080
+
+   # Profile for the second instance
+   spring.profiles.active=instance2
+   ```
+
+   And then, in `application-instance2.properties`:
+   ```properties
+   server.port=8081
+   ```
+
+2. **Run the instances with different profiles**:
+   - For the first instance:
+     ```bash
+     java -jar myapp.jar --spring.profiles.active=default
+     ```
+   - For the second instance:
+     ```bash
+     java -jar myapp.jar --spring.profiles.active=instance2
+     ```
+
+### 3. Dockerize and Run Multiple Containers
+If you are using Docker, you can run multiple containers of the same application but expose them on different ports.
+
+#### Steps:
+1. **Create a Dockerfile for your Spring Boot app** (if you don’t have one):
+   ```dockerfile
+   FROM openjdk:17-jdk-alpine
+   VOLUME /tmp
+   ARG JAR_FILE=target/myapp.jar
+   COPY ${JAR_FILE} myapp.jar
+   ENTRYPOINT ["java","-jar","/myapp.jar"]
+   ```
+
+2. **Build the Docker image**:
+   ```bash
+   docker build -t myapp-image .
+   ```
+
+3. **Run multiple containers with different ports**:
+   - Run the first instance:
+     ```bash
+     docker run -d -p 8080:8080 myapp-image
+     ```
+   - Run the second instance (mapping to a different port):
+     ```bash
+     docker run -d -p 8081:8080 myapp-image
+     ```
+
+### Summary:
+- **Option 1**: Use `--server.port` when launching your application to specify different ports.
+- **Option 2**: Use Spring Profiles for different configurations.
+- **Option 3**: If using Docker, run multiple containers and map them to different host ports.
+
+This allows you to scale and run multiple instances of the same Spring Boot application while utilizing different ports.

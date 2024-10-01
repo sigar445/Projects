@@ -1,0 +1,141 @@
+To configure your Spring Boot application to use the Nginx reverse proxy configuration, you don't need to modify much in the Spring Boot application itself. Instead, the configuration primarily involves making sure that Nginx forwards requests to your Spring Boot app correctly, while the app is properly set up to handle requests from Nginx. Here’s a step-by-step guide:
+
+### 1. **Ensure Your Spring Boot Application Runs on Different Ports**
+
+As per the Nginx configuration, you will be running multiple instances of your Spring Boot application on different ports, like `8080`, `8081`, etc.
+
+- Modify the `application.properties` or `application.yml` file for each instance to specify a different port:
+   - For **instance 1** (port 8080):
+     ```properties
+     server.port=8080
+     ```
+   - For **instance 2** (port 8081):
+     ```properties
+     server.port=8081
+     ```
+
+You can also specify the port while running the JAR using command-line arguments:
+```bash
+java -jar myapp.jar --server.port=8080
+```
+```bash
+java -jar myapp.jar --server.port=8081
+```
+
+### 2. **Configure Nginx to Proxy Requests to Spring Boot**
+
+Assuming you've already set up Nginx as shown earlier, the Nginx configuration will forward incoming requests from port 80 (HTTP) to your Spring Boot applications running on ports 8080 and 8081.
+
+Nginx configuration (`/etc/nginx/sites-available/myapp`):
+
+```nginx
+upstream backend {
+    server 127.0.0.1:8080;  # First Spring Boot instance
+    server 127.0.0.1:8081;  # Second Spring Boot instance
+}
+
+server {
+    listen 80;  # Listen on port 80 for HTTP requests
+
+    location / {
+        proxy_pass http://backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+### 3. **Handle Forwarded Headers in Spring Boot**
+
+Nginx, when acting as a reverse proxy, forwards headers such as the original client IP address, the protocol (HTTP/HTTPS), etc. Spring Boot doesn't automatically trust these headers, so you need to configure it to understand that it's running behind a reverse proxy.
+
+You can add the **Spring Boot starter for Web** dependency (if you don’t have it already) and configure your Spring Boot application to handle these forwarded headers correctly.
+
+#### Option 1: Use `ForwardedHeaderFilter`
+You can add a `ForwardedHeaderFilter` in your Spring Boot application to ensure that headers forwarded by Nginx (like the original client IP, protocol) are handled properly.
+
+**Add this to your Spring Boot application class or a configuration class:**
+
+```java
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.filter.ForwardedHeaderFilter;
+
+@Bean
+public ForwardedHeaderFilter forwardedHeaderFilter() {
+    return new ForwardedHeaderFilter();
+}
+```
+
+This filter ensures that Spring Boot correctly interprets the `X-Forwarded-For` and `X-Forwarded-Proto` headers sent by Nginx.
+
+#### Option 2: Use `server.use-forward-headers` Property
+Alternatively, Spring Boot can be configured to automatically recognize forwarded headers from reverse proxies like Nginx using the `server.use-forward-headers=true` property. Add this to your `application.properties` or `application.yml`:
+
+```properties
+server.use-forward-headers=true
+```
+
+This enables Spring Boot to automatically process the `X-Forwarded-*` headers and adjust things like the `request.getScheme()` to return `https` if Nginx is handling HTTPS.
+
+### 4. **Running Multiple Instances of Spring Boot**
+
+- Start your Spring Boot applications on different ports.
+
+  Run two instances of the application on ports `8080` and `8081`:
+  ```bash
+  java -jar myapp.jar --server.port=8080
+  ```
+  ```bash
+  java -jar myapp.jar --server.port=8081
+  ```
+
+  Alternatively, you can use Docker or Kubernetes to containerize your Spring Boot application and run it on different ports in separate containers.
+
+### 5. **Verify Nginx and Spring Boot Setup**
+
+1. **Check if Spring Boot apps are running**:
+   - Visit `http://localhost:8080` and `http://localhost:8081` in your browser. You should be able to access both instances directly.
+
+2. **Test Nginx Proxy**:
+   - Visit `http://localhost/` (Nginx on port 80). This request will be proxied by Nginx and distributed between your two Spring Boot instances (`8080` and `8081`).
+
+   - Check Nginx logs for any errors:
+     ```bash
+     tail -f /var/log/nginx/error.log
+     tail -f /var/log/nginx/access.log
+     ```
+
+### 6. **Optional: SSL Termination (for HTTPS)**
+
+If you want Nginx to handle HTTPS (SSL termination), you'll need to configure SSL certificates for Nginx. This can be done by adding the following to your Nginx configuration:
+
+```nginx
+server {
+    listen 443 ssl;  # Listen on port 443 for HTTPS
+    server_name localhost;
+
+    ssl_certificate /etc/nginx/ssl/cert.pem;
+    ssl_certificate_key /etc/nginx/ssl/cert.key;
+
+    location / {
+        proxy_pass http://backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+You would need to replace `/etc/nginx/ssl/cert.pem` and `/etc/nginx/ssl/cert.key` with the paths to your actual SSL certificate and key.
+
+### Summary
+
+1. Run multiple instances of your Spring Boot application on different ports (e.g., 8080, 8081).
+2. Configure Nginx as a reverse proxy to distribute traffic between these instances.
+3. Ensure your Spring Boot app is properly configured to handle forwarded headers (`X-Forwarded-*`).
+4. Test your setup by visiting `http://localhost/`.
+
+This setup allows Nginx to act as a load balancer for your Spring Boot application running on different ports.

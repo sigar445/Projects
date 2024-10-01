@@ -1,0 +1,80 @@
+To add Nginx configuration for `localhost`, you need to modify or create a configuration file in Nginx's configuration directory. Typically, the file is located in `/etc/nginx/` on Linux systems. Here’s how to add the configuration:
+
+### Steps to Add Nginx Configuration for `localhost`
+
+1. **Open the Nginx configuration file:**
+
+   The main Nginx configuration file is usually located at `/etc/nginx/nginx.conf`. You can edit this file directly, but it's more common to create a separate site-specific configuration file under `/etc/nginx/sites-available/`.
+
+   - To create a new configuration file for your localhost setup, run:
+     ```bash
+     sudo nano /etc/nginx/sites-available/myapp
+     ```
+
+2. **Add the Nginx configuration for your Spring Boot app:**
+
+   Add the following configuration to your new file. This example assumes you want to proxy requests to multiple Spring Boot instances running on `localhost`:
+
+   ```nginx
+   upstream backend {
+       server 127.0.0.1:8080;  # First instance of your Spring Boot app
+       server 127.0.0.1:8081;  # Second instance of your Spring Boot app
+   }
+
+   server {
+       listen 80;  # Listen on port 80 for HTTP requests
+
+       location / {
+           proxy_pass http://backend;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header X-Forwarded-Proto $scheme;
+       }
+   }
+   ```
+
+3. **Link the configuration file to `sites-enabled`:**
+
+   Once the configuration is created in `sites-available`, you need to enable it by creating a symbolic link to the `sites-enabled` directory:
+
+   ```bash
+   sudo ln -s /etc/nginx/sites-available/myapp /etc/nginx/sites-enabled/
+   ```
+
+4. **Test the Nginx configuration:**
+
+   Before reloading or restarting Nginx, it’s a good idea to test the configuration to ensure there are no syntax errors:
+
+   ```bash
+   sudo nginx -t
+   ```
+
+   If the configuration test is successful, you’ll see an output like:
+   ```bash
+   nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+   nginx: configuration file /etc/nginx/nginx.conf test is successful
+   ```
+
+5. **Reload Nginx to apply the configuration:**
+
+   After testing, reload Nginx to apply the new configuration:
+
+   ```bash
+   sudo systemctl reload nginx
+   ```
+
+6. **Access your Spring Boot app through Nginx:**
+
+   Now, you can access your Spring Boot application via `localhost` in your browser. Nginx will route the requests to the upstream Spring Boot instances running on `localhost:8080` and `localhost:8081` based on your load balancing configuration.
+
+### Example:
+- Accessing `http://localhost/` will now route requests through Nginx to your Spring Boot instances on ports `8080` and `8081` as defined in the configuration.
+
+### Location of Nginx Configuration Files:
+- **Main Nginx Configuration**: `/etc/nginx/nginx.conf`
+- **Site-Specific Configurations**:
+  - `/etc/nginx/sites-available/` (where you add the new configuration)
+  - `/etc/nginx/sites-enabled/` (where you link the configuration file)
+
+By adding the configuration in `sites-available` and enabling it via `sites-enabled`, you ensure that your changes are isolated and easier to manage.

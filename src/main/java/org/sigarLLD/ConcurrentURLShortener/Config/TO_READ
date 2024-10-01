@@ -183,3 +183,19 @@ Source: Conversation with Copilot, 25/9/2024
 (25) Implementing client-side load balancing in Java RMI. https://colinchjava.github.io/2023-09-14/11-59-47-312510-implementing-client-side-load-balancing-in-java-rmi/.
 (26) GitHub - dialoghmari/Load-Balancer: A java simulation of a Load .... https://github.com/dialoghmari/Load-Balancer.
 (27) Spring Cloud Load Balancer: Traffic Distribution Made Simple. https://bootcamptoprod.com/spring-cloud-load-balancer/.
+upstream backend {
+    server 127.0.0.1:8080;  # First instance of your Spring Boot app
+    server 127.0.0.1:8081;  # Second instance of your Spring Boot app
+}
+
+server {
+    listen 80;  # Listen on port 80 for HTTP requests
+
+    location / {
+        proxy_pass http://backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
