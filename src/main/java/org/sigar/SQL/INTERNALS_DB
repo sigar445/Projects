@@ -1,0 +1,141 @@
+In PostgreSQL, there isn't a `page_size` configuration parameter that can be shown directly with the `SHOW` command. Instead, the page size is a fixed property that is set when the database cluster is initialized.
+Yes, you can physically see the database files, including the catalog and pages, in the PostgreSQL data directory. However, directly manipulating these files is not recommended, as it can lead to corruption or data loss. Here’s how you can locate and view these files:
+
+### 1. **Locate the PostgreSQL Data Directory**
+The data directory is where PostgreSQL stores all its database files. The location can vary based on your installation method (e.g., default installation, Docker, etc.).
+
+#### a. Find the Data Directory
+You can find the data directory path by running the following SQL command in `psql`:
+
+```sql
+SHOW data_directory;
+```
+
+### 2. **Understanding the Directory Structure**
+Once you have the data directory path, navigate to that directory using your file explorer or terminal. You will find a structure like this:
+
+- **Base Directory**: Contains a subdirectory for each database, identified by their OIDs (Object Identifiers).
+  - `/base/<db_oid>/`: This folder contains the data files for the database.
+- **Global Directory**: Contains global tables (like user and role information).
+  - `/global/`: Contains files like `pg_global` for shared catalogs.
+- **PG Subdirectories**: These include:
+  - `/pg_wal/`: Write Ahead Logs (WAL) used for transaction logging.
+  - `/pg_tblspc/`: Tablespaces (if used).
+  - `/pg_xact/`: Transaction log information.
+
+### 3. **Viewing Database Catalog Files**
+The database catalog is stored in system tables, and these are physically represented in the filesystem as files within the database's data directory. The actual files are binary and not human-readable. Here’s what you can expect:
+
+- **Catalog Tables**: System catalog tables, such as `pg_class`, `pg_attribute`, and others, have their data stored in files corresponding to their database. For example, `pg_class` could be found in a file named something like `16384`, where `16384` is the OID of the relation.
+
+### 4. **Understanding File Naming and Structure**
+- Each table and index in a PostgreSQL database is stored in its own file, and the naming convention usually follows the OID.
+- You can find the OIDs of the tables in the `pg_class` system catalog. For example:
+
+  ```sql
+  SELECT oid, relname FROM pg_class WHERE relkind IN ('r', 'i');
+  ```
+
+### 5. **Warning**
+While you can explore these files, **do not modify or delete them manually**. This can corrupt the database and lead to data loss. Always use SQL commands to interact with the database instead.
+
+### Example: Finding the Data Directory in Linux
+If you're using a Linux system, you can typically find the data directory at:
+
+```bash
+/var/lib/postgresql/<version>/main
+```
+
+### Example: Accessing the Data Directory
+1. Open a terminal.
+2. Navigate to the data directory:
+
+   ```bash
+   cd /var/lib/postgresql/12/main   # Adjust for your PostgreSQL version
+   ```
+
+3. List the contents:
+
+   ```bash
+   ls -l
+   ```
+
+### Finding the Page Size
+
+You can find out the page size using the following methods:
+
+1. **Using the `pg_table_size` Function**: This won't show you the page size directly, but it helps you understand table sizes in relation to pages.
+
+   ```sql
+   SELECT pg_table_size('your_table_name');
+   ```
+
+2. **Using SQL Queries to Query System Catalog**:
+
+   You can run this query to get the default page size for your PostgreSQL installation:
+
+   ```sql
+   SELECT setting FROM pg_settings WHERE name = 'block_size';
+   ```
+
+### Example Query
+Here's how you would typically run this in the `psql` command line:
+
+```sql
+SELECT setting FROM pg_settings WHERE name = 'block_size';
+```
+
+This query will return the default block size (or page size) for your PostgreSQL database, typically 8192 bytes (8 KB).
+
+### Important Notes
+- The page size is typically set during the initialization of the database cluster using the `initdb` command and cannot be changed afterward without recreating the cluster.
+- The default page size for PostgreSQL is **8 KB** but can be configured to be larger (up to 64 KB) when initializing the cluster using specific flags.
+In the PostgreSQL data directory structure you provided, the following directories and files are relevant to database catalogs and table pages:
+
+### 1. **Catalogs and Table Pages**
+- **`base/`**: This directory contains subdirectories for each database. Each subdirectory is named with the OID (Object Identifier) of the database. Inside these subdirectories, you'll find files that represent tables and indexes in that database. Each file corresponds to a specific table or index, and these files store the actual data pages for those tables.
+
+- **`global/`**: This directory contains global system catalogs that apply across all databases, such as `pg_database`, `pg_authid`, and other system tables. These files are also stored with their OIDs.
+
+### Example Structure
+- When you navigate to `base/<db_oid>/`, you will see files that correspond to each table, index, and other relations within that database. For example, if you have a table with OID 12345, the file `12345` (no file extension) in the database's directory will contain the pages for that table.
+
+### 2. **Other Directories**
+The other directories you listed are generally for managing transactions, logs, temporary data, and other PostgreSQL functions but do not contain actual table data or catalogs. Here’s a brief description of those:
+
+- **`pg_wal/`**: This directory contains Write Ahead Log (WAL) files that are used for data durability and recovery.
+
+- **`pg_stat/`**: This contains statistics about the database's activity and performance.
+
+- **`pg_tblspc/`**: This directory is for tablespaces and is used if you have created tablespaces to store data in locations other than the default data directory.
+
+- **`pg_xact/`, `pg_multixact/`, `pg_commit_ts/`**: These directories manage transaction-related information, like transaction states and timestamps.
+
+### Summary
+- **Database Catalogs**: Found in the **`global/`** directory and the **`base/<db_oid>/`** directories (where `<db_oid>` corresponds to the database's OID).
+- **Table Pages**: Stored in the **`base/<db_oid>/`** directories as individual files corresponding to each table and index.
+The files and directories you see in the **`/var/lib/postgresql/12/main/global/`** directory contain important system catalog data for PostgreSQL. Here’s a breakdown of what these files represent:
+
+### Global System Catalog Files
+1. **Numerical Files (e.g., `1136`, `1213`, etc.)**:
+   - These files correspond to specific global system catalogs. Each file contains metadata about various database objects, such as roles, databases, and permissions. The number itself is the OID (Object Identifier) of the relation (catalog).
+
+2. **_fsm Files (e.g., `1214_fsm`)**:
+   - **FSM** stands for Free Space Map. These files keep track of free space within the associated table or index file. This helps PostgreSQL manage space efficiently, especially for operations like INSERTs and UPDATEs.
+
+3. **_vm Files (e.g., `1214_vm`)**:
+   - **VM** stands for Visibility Map. This file keeps track of which pages in the associated table contain only visible tuples for all transactions. It helps improve performance during certain operations, particularly for VACUUM and SELECT queries.
+
+4. **`pg_control`**:
+   - This file contains control information about the database cluster, including the database version, timeline ID, and other essential information necessary for the operation of the database.
+
+5. **`pg_filenode.map`**:
+   - This file maps the physical file numbers (filenodes) used by PostgreSQL to their corresponding OIDs. It is useful for managing file storage internally.
+
+6. **`pg_internal.init`**:
+   - This file is used to initialize internal PostgreSQL settings and is typically managed by the PostgreSQL server.
+
+### Summary
+- The files in the **`global/`** directory contain crucial metadata for global catalogs and management of free and visible space in the database. Each file relates to a different aspect of PostgreSQL's catalog system, with OIDs serving as unique identifiers for database objects.
+
+If you have further questions or need additional clarification on any of these files or their purpose, feel free to ask!ions about the PostgreSQL structure or need further clarification, feel free to ask!el free to ask!

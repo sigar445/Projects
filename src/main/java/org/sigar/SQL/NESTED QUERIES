@@ -1,0 +1,192 @@
+Nested queries (or subqueries) involve embedding one query within another, allowing complex data manipulations across multiple tables. To demonstrate 3-table nested querying, we'll create three related tables and showcase how the inner queries can return values for outer queries.
+
+Let’s use the following tables:
+
+1. `Employees`: Stores employee details.
+2. `Departments`: Stores department details.
+3. `Projects`: Stores project details where employees work on.
+
+### Step 1: Create the Sample Tables
+
+We’ll create three tables: `Employees`, `Departments`, and `Projects`.
+
+```sql
+-- Creating Employees table
+CREATE TABLE Employees (
+    id INT PRIMARY KEY,
+    name VARCHAR(100),
+    department_id INT,
+    salary DECIMAL(10, 2)
+);
+
+-- Creating Departments table
+CREATE TABLE Departments (
+    id INT PRIMARY KEY,
+    name VARCHAR(100)
+);
+
+-- Creating Projects table
+CREATE TABLE Projects (
+    id INT PRIMARY KEY,
+    employee_id INT,
+    project_name VARCHAR(100),
+    hours_worked INT
+);
+```
+
+### Step 2: Insert Sample Data
+
+Insert data into all three tables.
+
+```sql
+-- Inserting data into Departments table
+INSERT INTO Departments (id, name)
+VALUES (1, 'HR'), (2, 'Engineering'), (3, 'Marketing');
+
+-- Inserting data into Employees table
+INSERT INTO Employees (id, name, department_id, salary)
+VALUES
+(1, 'Alice', 1, 50000),
+(2, 'Bob', 2, 75000),
+(3, 'Charlie', 2, 60000),
+(4, 'Diana', 3, 45000),
+(5, 'Edward', 3, 47000);
+
+-- Inserting data into Projects table
+INSERT INTO Projects (id, employee_id, project_name, hours_worked)
+VALUES
+(1, 1, 'Project A', 100),
+(2, 2, 'Project B', 150),
+(3, 2, 'Project C', 80),
+(4, 3, 'Project D', 120),
+(5, 4, 'Project E', 90),
+(6, 5, 'Project F', 110);
+```
+
+### Step 3: Nested Queries (3 Tables)
+
+#### 1. Three-Table Nested Query with `SELECT`
+
+Let’s find all departments where employees have worked on projects for more than 100 hours. We'll use a subquery that first finds all `employee_id` values with `hours_worked > 100` in the `Projects` table, then finds corresponding department names.
+
+```sql
+-- Nested query using 3 tables
+SELECT d.name AS department_name
+FROM Departments d
+WHERE d.id IN (
+    SELECT e.department_id
+    FROM Employees e
+    WHERE e.id IN (
+        SELECT p.employee_id
+        FROM Projects p
+        WHERE p.hours_worked > 100
+    )
+);
+```
+
+**Explanation**:
+1. **Innermost Query**: `(SELECT p.employee_id FROM Projects p WHERE p.hours_worked > 100)` returns the IDs of employees who worked on projects for more than 100 hours.
+2. **Second Query**: `(SELECT e.department_id FROM Employees e WHERE e.id IN (...))` returns the `department_id` for the employees found in the innermost query.
+3. **Outer Query**: `SELECT d.name FROM Departments d WHERE d.id IN (...)` returns the department names associated with those departments.
+
+**Output** (based on data):
+```
+department_name
+---------------
+Engineering
+Marketing
+```
+
+#### 2. Subquery Using Aggregation
+
+Let’s find employees whose salary is higher than the average salary of employees working on projects for more than 100 hours. We will nest multiple subqueries that work on the `Projects` and `Employees` tables.
+
+```sql
+-- Nested query with aggregation to compare salary
+SELECT name
+FROM Employees
+WHERE salary > (
+    SELECT AVG(salary)
+    FROM Employees
+    WHERE id IN (
+        SELECT employee_id
+        FROM Projects
+        WHERE hours_worked > 100
+    )
+);
+```
+
+**Explanation**:
+1. **Innermost Query**: `(SELECT employee_id FROM Projects WHERE hours_worked > 100)` retrieves employee IDs who worked more than 100 hours.
+2. **Second Query**: `SELECT AVG(salary) FROM Employees WHERE id IN (...)` calculates the average salary of these employees.
+3. **Outer Query**: `SELECT name FROM Employees WHERE salary > (...)` retrieves the names of employees whose salary exceeds that average.
+
+**Output** (based on data):
+```
+name
+-----
+Bob
+```
+
+#### 3. Subquery in `UPDATE`
+
+Increase the salary by 10% for employees who have worked on any project in the `Marketing` department. This requires finding employees in the `Projects` table, their department from the `Employees` table, and verifying that their department is 'Marketing'.
+
+```sql
+-- Nested query in UPDATE statement
+UPDATE Employees
+SET salary = salary * 1.10
+WHERE id IN (
+    SELECT employee_id
+    FROM Projects
+    WHERE employee_id IN (
+        SELECT id
+        FROM Employees
+        WHERE department_id = (
+            SELECT id
+            FROM Departments
+            WHERE name = 'Marketing'
+        )
+    )
+);
+```
+
+**Explanation**:
+1. **Innermost Query**: `(SELECT id FROM Departments WHERE name = 'Marketing')` gets the ID for the 'Marketing' department.
+2. **Second Query**: `SELECT id FROM Employees WHERE department_id = (...)` finds all employees in the 'Marketing' department.
+3. **Outer Query**: `UPDATE Employees SET salary = salary * 1.10 WHERE id IN (...)` increases the salary of employees working on any project and belonging to the 'Marketing' department.
+
+#### 4. Subquery in `DELETE`
+
+Delete projects where employees worked in the 'HR' department. This involves a nested query to find employees in 'HR' and then remove their corresponding projects.
+
+```sql
+-- Nested query in DELETE statement
+DELETE FROM Projects
+WHERE employee_id IN (
+    SELECT id
+    FROM Employees
+    WHERE department_id = (
+        SELECT id
+        FROM Departments
+        WHERE name = 'HR'
+    )
+);
+```
+
+**Explanation**:
+1. **Innermost Query**: `(SELECT id FROM Departments WHERE name = 'HR')` finds the department ID for 'HR'.
+2. **Second Query**: `SELECT id FROM Employees WHERE department_id = (...)` finds the employees belonging to 'HR'.
+3. **Outer Query**: `DELETE FROM Projects WHERE employee_id IN (...)` deletes projects for those employees.
+
+---
+
+### Key Takeaways:
+
+1. **Columns in Subqueries**: Subqueries can return single values, multiple columns, or entire tables depending on the use case.
+   - Single column subqueries are useful in `WHERE` or `HAVING` clauses.
+   - Multiple columns can be used in `IN` or `EXISTS` conditions.
+2. **Operations on Results**: The outer query can perform operations like `SELECT`, `UPDATE`, or `DELETE` based on the results returned from inner subqueries.
+3. **Nesting Depth**: You can nest subqueries to multiple levels, with each subquery feeding into the outer ones. However, performance might degrade if queries become overly complex.
+
+These examples demonstrate how subqueries can be used in various SQL operations to build complex queries across multiple tables!

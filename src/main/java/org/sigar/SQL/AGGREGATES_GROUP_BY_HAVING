@@ -1,0 +1,288 @@
+Aggregate functions in PostgreSQL are used to perform calculations on a set of values and return a single value. These functions are often used with `GROUP BY` to group rows sharing a property and apply calculations to each group. They can also be used without `GROUP BY` to calculate results over the entire dataset.
+
+Here are the main aggregate functions in PostgreSQL, their uses, and how to combine them with other operations:
+
+### 1. **`COUNT()`**
+   - Returns the number of input rows.
+   - Example:
+     ```sql
+     SELECT COUNT(*) FROM shoes;
+     ```
+     This will return the total number of rows in the `shoes` table.
+
+   - Counting non-null values in a specific column:
+     ```sql
+     SELECT COUNT(price) FROM shoes;
+     ```
+     This counts only the rows where the `price` is not `NULL`.
+
+### 2. **`SUM()`**
+   - Returns the sum of all non-null values.
+   - Example:
+     ```sql
+     SELECT SUM(price) FROM shoes;
+     ```
+     This calculates the total price of all shoes.
+
+   - Using `GROUP BY` with `SUM()`:
+     ```sql
+     SELECT brand, SUM(price) FROM shoes GROUP BY brand;
+     ```
+     This calculates the total price of shoes for each brand.
+
+### 3. **`AVG()`**
+   - Returns the average of non-null values.
+   - Example:
+     ```sql
+     SELECT AVG(price) FROM shoes;
+     ```
+     This returns the average price of all shoes.
+
+   - Average per brand:
+     ```sql
+     SELECT brand, AVG(price) FROM shoes GROUP BY brand;
+     ```
+     This returns the average price of shoes for each brand.
+
+### 4. **`MIN()`**
+   - Returns the smallest value.
+   - Example:
+     ```sql
+     SELECT MIN(price) FROM shoes;
+     ```
+     This returns the lowest price in the `shoes` table.
+
+   - Minimum price per brand:
+     ```sql
+     SELECT brand, MIN(price) FROM shoes GROUP BY brand;
+     ```
+     This returns the lowest price of shoes for each brand.
+
+### 5. **`MAX()`**
+   - Returns the largest value.
+   - Example:
+     ```sql
+     SELECT MAX(price) FROM shoes;
+     ```
+     This returns the highest price in the `shoes` table.
+
+   - Maximum price per brand:
+     ```sql
+     SELECT brand, MAX(price) FROM shoes GROUP BY brand;
+     ```
+     This returns the highest price of shoes for each brand.
+
+### 6. **`ARRAY_AGG()`**
+   - Returns an array of values aggregated from a group.
+   - Example:
+     ```sql
+     SELECT ARRAY_AGG(brand) FROM shoes;
+     ```
+     This returns an array containing all the brands in the `shoes` table.
+
+   - Using `GROUP BY` with `ARRAY_AGG()`:
+     ```sql
+     SELECT brand, ARRAY_AGG(price) FROM shoes GROUP BY brand;
+     ```
+     This returns an array of prices for each brand.
+
+### 7. **`STRING_AGG()`**
+   - Concatenates values into a single string, with an optional separator.
+   - Example:
+     ```sql
+     SELECT STRING_AGG(brand, ', ') FROM shoes;
+     ```
+     This concatenates all the brands into a single string, separated by commas.
+
+   - Using `GROUP BY` with `STRING_AGG()`:
+     ```sql
+     SELECT brand, STRING_AGG(color, ', ') FROM shoes GROUP BY brand;
+     ```
+     This concatenates all the colors for each brand into a string.
+
+### 8. **`VARIANCE()`** and **`STDDEV()`**
+   - Returns the variance and standard deviation of the values.
+   - Example:
+     ```sql
+     SELECT VARIANCE(price) FROM shoes;
+     ```
+     This returns the variance of the prices.
+
+     ```sql
+     SELECT STDDEV(price) FROM shoes;
+     ```
+     This returns the standard deviation of the prices.
+
+### 9. **`COUNT DISTINCT()`**
+   - Returns the count of distinct non-null values.
+   - Example:
+     ```sql
+     SELECT COUNT(DISTINCT brand) FROM shoes;
+     ```
+     This returns the count of unique brands.
+
+### 10. **`MODE()`**
+   - Returns the most frequent value.
+   - Example:
+     ```sql
+     SELECT MODE() WITHIN GROUP (ORDER BY price) FROM shoes;
+     ```
+     This returns the most frequent price.
+
+### Combining Aggregate Functions
+
+You can combine multiple aggregate functions in a single query to get multiple aggregated results.
+
+#### 1. **Combining `COUNT()`, `AVG()`, and `SUM()`**
+   ```sql
+   SELECT COUNT(*), AVG(price), SUM(price) FROM shoes;
+   ```
+   This returns the total number of shoes, the average price, and the total price.
+
+#### 2. **`GROUP BY` with Multiple Aggregates**
+   ```sql
+   SELECT brand, COUNT(*), AVG(price), SUM(price), MIN(price), MAX(price)
+   FROM shoes
+   GROUP BY brand;
+   ```
+   This groups the shoes by `brand` and calculates the total number of shoes, the average price, the total price, the minimum price, and the maximum price for each brand.
+
+#### 3. **Using `HAVING` with Aggregates**
+   The `HAVING` clause allows you to filter results after aggregation. It's similar to `WHERE`, but `HAVING` works with aggregate functions.
+
+   - Example:
+     ```sql
+     SELECT brand, COUNT(*), AVG(price)
+     FROM shoes
+     GROUP BY brand
+     HAVING AVG(price) > 1000;
+     ```
+     This returns the brands where the average price is greater than 1000.
+
+#### 4. **Using Aggregate Functions in `ORDER BY`**
+   You can sort the result set based on aggregate values.
+
+   - Example:
+     ```sql
+     SELECT brand, AVG(price) AS avg_price
+     FROM shoes
+     GROUP BY brand
+     ORDER BY avg_price DESC;
+     ```
+     This returns the brands sorted by the average price in descending order.
+
+### Nested Aggregates
+
+In some cases, you might want to use aggregate functions inside subqueries.
+
+- Example:
+  ```sql
+  SELECT brand, price
+  FROM shoes
+  WHERE price = (SELECT MAX(price) FROM shoes);
+  ```
+  This returns the shoe(s) with the maximum price.
+
+### Mathematical Operations with Aggregates
+
+You can combine aggregate functions with mathematical operations.
+
+- Example:
+  ```sql
+  SELECT brand, AVG(price) * 1.18 AS avg_price_with_tax
+  FROM shoes
+  GROUP BY brand;
+  ```
+  This returns the average price for each brand, with an 18% tax added.
+
+### Example: Full Use of Aggregates with `GROUP BY`, `HAVING`, and `ORDER BY`
+
+```sql
+SELECT brand, COUNT(*) AS total_shoes, AVG(price) AS avg_price, SUM(price) AS total_price, MIN(price) AS min_price, MAX(price) AS max_price
+FROM shoes
+GROUP BY brand
+HAVING AVG(price) > 1000
+ORDER BY total_price DESC;
+```
+
+- This query groups the shoes by brand and calculates the total number of shoes, average price, total price, minimum price, and maximum price for each brand.
+- It filters the brands where the average price is greater than 1000 (`HAVING AVG(price) > 1000`).
+- Finally, it orders the results by `total_price` in descending order.
+
+### Summary of Common Aggregate Functions:
+- `COUNT()`: Count the number of rows.
+- `SUM()`: Sum of values.
+- `AVG()`: Average of values.
+- `MIN()`: Minimum value.
+- `MAX()`: Maximum value.
+- `ARRAY_AGG()`: Collects values into an array.
+- `STRING_AGG()`: Concatenates values into a string.
+- `VARIANCE()` / `STDDEV()`: Variance and standard deviation.
+- `COUNT DISTINCT()`: Count of distinct values.
+
+These functions can be combined with `GROUP BY`, `HAVING`, and `ORDER BY` to perform complex aggregations and filtering in PostgreSQL.
+The error you're encountering arises because SQL does not recognize the alias `total` in the `HAVING` clause when you try to use it in this form:
+
+```sql
+HAVING total >= 2
+```
+
+In SQL, you cannot refer to an alias defined in the `SELECT` clause in the `HAVING` clause or the `WHERE` clause. Instead, you need to use the actual aggregate function again.
+
+### Correct Query
+
+Here’s the correct way to structure your query using the aggregate function directly in the `HAVING` clause:
+
+```sql
+SELECT brand, COUNT(*) AS total, AVG(price) AS average_price
+FROM shoes
+GROUP BY brand
+HAVING COUNT(*) >= 2;
+```
+
+### Explanation
+1. **`COUNT(*) AS total`**: This counts the number of rows for each brand and creates an alias named `total`.
+2. **`AVG(price) AS average_price`**: This calculates the average price for each brand.
+3. **`GROUP BY brand`**: This groups the results by the `brand` column.
+4. **`HAVING COUNT(*) >= 2`**: This filters the groups where the count of shoes is 2 or more.
+
+### Result
+When you run this query, it will return the brands with at least two entries, along with their total count and average price.
+
+The original query you provided is correct in its current form, while the second one that caused the error can be fixed by removing the reference to the alias:
+
+```sql
+SELECT brand, COUNT(*) AS total, AVG(price) AS average_price
+FROM shoes
+GROUP BY brand
+HAVING COUNT(*) >= 2;
+```
+
+If you need to check if the count is greater than or equal to 2 without repeating the `COUNT(*)`, you could also use a Common Table Expression (CTE) or a subquery, like this:
+
+### Using a Common Table Expression (CTE)
+
+```sql
+WITH brand_summary AS (
+    SELECT brand, COUNT(*) AS total, AVG(price) AS average_price
+    FROM shoes
+    GROUP BY brand
+)
+SELECT brand, total, average_price
+FROM brand_summary
+WHERE total >= 2;
+```
+
+### Using a Subquery
+
+```sql
+SELECT brand, total, average_price
+FROM (
+    SELECT brand, COUNT(*) AS total, AVG(price) AS average_price
+    FROM shoes
+    GROUP BY brand
+) AS brand_summary
+WHERE total >= 2;
+```
+
+Both of these methods will allow you to use the alias `total` in the filtering criteria without causing an error.

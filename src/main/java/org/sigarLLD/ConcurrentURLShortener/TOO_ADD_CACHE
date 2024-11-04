@@ -1,0 +1,56 @@
+The `updateCachedUrl` method, annotated with `@CachePut`, is used to update an existing cache entry in Redis after modifications have been made to the `UrlShortened` object (such as incrementing the hits counter). Unlike `@Cacheable`, which retrieves a cached value if present, `@CachePut` always updates the cache with the latest data, regardless of whether the method has been called before.
+
+Here’s how you would use and call the `updateCachedUrl` method in your `JpaURLService` to update the Redis cache after modifying a URL (such as after incrementing the hit count):
+
+### **Example Usage in `getOriginalUrl` Method**
+
+You need to modify the `getOriginalUrl` method to call `updateCachedUrl` after you update the `UrlShortened` object and save it to the database. This ensures that Redis has the most up-to-date information, especially after the `incrementHits()` operation.
+
+Here’s how to call `updateCachedUrl` from within `getOriginalUrl`:
+
+```java
+@Override
+@Cacheable(value = "shortUrlCache", key = "#tinyUrl", unless = "#result == null")
+public UrlShortened getOriginalUrl(String tinyUrl) {
+    UrlShortened urlShortened = urlRepository.findByTinyUrl(tinyUrl);
+    if (urlShortened == null) {
+        throw new ResourceNotFoundException("URL not found for tinyURL: " + tinyUrl);
+    }
+
+    // Increment hits
+    urlShortened.incrementHits();
+
+    // Save updated URLShortened back to the database
+    UrlShortened updatedUrl = urlRepository.save(urlShortened);
+
+    // Update the cache with the latest value (hits incremented)
+    updateCachedUrl(updatedUrl);
+
+    return updatedUrl;
+}
+```
+
+### **Explanation:**
+
+1. **Cache Lookup (`@Cacheable`)**: 
+   - The first time `getOriginalUrl` is called with a `tinyUrl`, the method will check the cache (using `@Cacheable`) to see if the original URL is cached. If the cache is empty, it will fetch the data from the database.
+   
+2. **Increment Hits**:
+   - Once the `UrlShortened` object is retrieved, you increment the `hits` counter to track the number of times the tiny URL has been accessed.
+
+3. **Save to Database**:
+   - After incrementing the hit counter, you save the updated `UrlShortened` object back to the database.
+
+4. **Update Redis Cache** (`@CachePut`):
+   - The `updateCachedUrl(updatedUrl)` method is then called. Since this method is annotated with `@CachePut`, it will **update** the Redis cache with the modified `UrlShortened` object. The cache key used is the `tinyUrl`, and the updated `UrlShortened` object will overwrite the previous cached version.
+
+### **Key Points About `@CachePut`**:
+- **Always Updates the Cache**: Unlike `@Cacheable`, which only caches results if the method is executed for the first time or if the cache is empty, `@CachePut` always updates the cache with the method's return value. In this case, every time `updateCachedUrl` is called, the Redis cache is updated with the most recent state of `UrlShortened`.
+  
+- **No Cache Lookup**: `@CachePut` does not perform a cache lookup. It directly updates the cache with the value returned by the method (`UrlShortened`).
+
+### **When to Call `updateCachedUrl`:**
+- Whenever you modify the `UrlShortened` object (such as incrementing hits, updating analytics, or modifying any other fields), call `updateCachedUrl` to ensure the cache remains in sync with the latest state from the database.
+
+### **Alternative Approach**:
+You could also directly annotate `getOriginalUrl` with `@CachePut` instead of `@Cacheable` if you want to ensure the cache is updated every time the method is called. However, this approach might result in more frequent updates to Redis and slightly reduced performance in high-traffic scenarios, which is why separating the cache update into a dedicated method like `updateCachedUrl` is preferred in this case.

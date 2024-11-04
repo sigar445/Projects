@@ -1,0 +1,78 @@
+If the query returns **6,000 matching rows** instead of a single row, the cost of the index scan will increase because more data pages need to be accessed and more rows need to be processed. Here's a detailed breakdown:
+
+### **Adjustments for 6,000 Matching Rows**
+When 6,000 rows are returned by the query, the database engine will need to:
+- Access the index to find the 6,000 matching rows.
+- Retrieve the corresponding data pages where these rows are stored.
+- Process and return the data for these rows.
+
+### **1. Sequential Scan (Full Table Scan)**
+The full table scan doesn't change significantly whether 1 row or 6,000 rows are returned, as it still has to scan the entire table. The CPU cost for processing rows will increase because more rows need to be checked.
+
+#### **Sequential Scan Summary**:
+- **Pages scanned**: All 74,074 pages (since it's still a full scan).
+- **CPU cost**: The CPU now has to process 6,000 matching rows out of the 6,000,000 rows, which is slightly higher but still proportional to the overall scan.
+
+#### **CPU cost calculation**:
+If checking each row takes **0.01ms**, and we check all 6,000,000 rows:
+\[
+6,000,000 \text{ rows} \times 0.01 \text{ ms/row} = 60,000 \text{ ms} = 60 \text{ seconds}
+\]
+No significant change occurs in CPU cost since all rows are processed anyway.
+
+#### **Total sequential scan cost**:
+- **I/O**: 12.35 minutes (same as before).
+- **CPU**: 1 minute (processing all rows).
+- **Total**: **13.35 minutes**, as most of the cost is due to reading the full table.
+
+### **2. Index Scan (Binary Search) with 6,000 Matching Rows**
+When 6,000 rows match, the index scan must access more data pages since these rows are likely spread across multiple pages. Let’s estimate the impact:
+
+#### **Data Page Estimation**:
+- Each page holds 81 rows (as calculated before).
+- To retrieve 6,000 rows, the database will need to access:
+\[
+\frac{6,000 \text{ rows}}{81 \text{ rows/page}} \approx 74 \text{ data pages}
+\]
+So, **74 data pages** will be read from disk.
+
+#### **Index Pages Scanned**:
+- The index still requires reading 4 pages (one per level of the B-tree), as the index depth does not change.
+
+#### **Total Pages Scanned**:
+- **Index pages**: 4 pages (as before).
+- **Data pages**: 74 pages (to retrieve 6,000 rows).
+
+Total pages scanned:
+\[
+4 \text{ (index pages)} + 74 \text{ (data pages)} = 78 \text{ pages}
+\]
+
+#### **I/O cost**:
+If reading a page from disk still takes 10ms, the total I/O time is:
+\[
+78 \text{ pages} \times 10 \text{ ms/page} = 780 \text{ ms}
+\]
+
+#### **CPU cost**:
+The CPU now has to process 6,000 rows, and if each row takes 0.01ms:
+\[
+6,000 \text{ rows} \times 0.01 \text{ ms/row} = 60 \text{ ms}
+\]
+
+#### **Total Index Scan Cost**:
+- **I/O**: 780ms (reading 78 pages).
+- **CPU**: 60ms (processing 6,000 rows).
+- **Total**: **780ms + 60ms = 840ms** (0.84 seconds).
+
+### **Comparison:**
+| **Scan Type**     | **Pages Scanned** | **I/O Time (ms)** | **CPU Time (ms)** | **Total Time**   |
+|-------------------|-------------------|-------------------|-------------------|------------------|
+| **Sequential Scan**| 74,074 pages      | 740,740 ms        | 60,000 ms         | **800.74 seconds (13.35 minutes)** |
+| **Index Scan**     | 78 pages          | 780 ms            | 60 ms             | **840 milliseconds (0.84 seconds)** |
+
+### **Conclusion**
+- **Sequential Scan**: No significant change, still requires scanning the entire table. Total time is over 13 minutes.
+- **Index Scan**: The cost increases with the number of matching rows, but even with 6,000 matches, the index scan is **far more efficient**, taking less than **1 second** to complete (compared to 13+ minutes for a full table scan).
+
+This illustrates that even with a moderate number of matching rows (6,000), an index scan is vastly more efficient than a sequential scan for large tables.

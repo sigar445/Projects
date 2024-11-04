@@ -1,0 +1,117 @@
+### Composite Indexes and How to Index Properly
+
+#### 1. **What is a Composite Index?**
+A **composite index** (also known as a **multi-column index**) is an index that includes more than one column in a database table. It allows the database to use multiple columns to efficiently perform searches, sorts, or join operations. Instead of indexing a single column, a composite index combines the values of multiple columns into a single index structure, allowing the database to retrieve rows more efficiently when queries involve these columns.
+
+- **Single-column Index**: Index on one column.
+  - Example: Index on `last_name`.
+- **Composite Index**: Index on two or more columns.
+  - Example: Index on `(last_name, first_name)`.
+
+#### 2. **How Composite Indexes Work**
+When a composite index is created, the DBMS sorts and organizes the data according to the combination of the indexed columns in a specific order. The order in which columns are specified in the index matters significantly because composite indexes work **left-to-right**.
+
+For example, consider a composite index on the columns `(A, B)`:
+
+- The index is ordered first by column `A`, and within each value of `A`, it is ordered by column `B`.
+- This means the database can efficiently search, sort, or filter rows based on `A`, or based on both `A` and `B` together.
+- However, the index cannot efficiently be used to search on `B` alone unless a search also includes `A` due to the left-to-right nature of composite indexes.
+
+#### 3. **Usage of Composite Index**
+- **Query using the leading column**: Queries that use the **first column** of the composite index can use the index efficiently.
+  - Example: If the index is on `(A, B)`, a query like `WHERE A = ?` will use the index effectively.
+
+- **Query using both columns**: Queries that filter on both columns can also use the index efficiently.
+  - Example: `WHERE A = ? AND B = ?` can use the index on `(A, B)`.
+
+- **Query using the second column alone**: If a query only filters by `B` (the second column), without filtering by `A`, the composite index **will not be used efficiently**.
+  - Example: `WHERE B = ?` will not benefit from an index on `(A, B)` unless `A` is included in the query.
+
+#### 4. **How Composite Indexes Improve Performance**
+- **Efficient Sorting**: If a query involves sorting or filtering by multiple columns in the same order as a composite index, the index can eliminate the need for additional sorting or scanning of the entire table.
+- **Covering Indexes**: If the index includes all the columns needed by a query (either in `SELECT`, `WHERE`, `JOIN`, or `ORDER BY` clauses), the query can be satisfied entirely by the index, eliminating the need to read the actual table data.
+
+Example:
+```sql
+SELECT last_name, first_name FROM employees WHERE last_name = 'Smith' AND first_name = 'John';
+```
+- If there is a composite index on `(last_name, first_name)`, the database can use this index to quickly find the matching rows without scanning the entire table.
+
+#### 5. **Choosing the Column Order in a Composite Index**
+The order of columns in a composite index is **crucial** for how effectively the index can be used by queries. General rules for determining the order of columns:
+
+- **Most Selective Column First**: Place the column that has the highest selectivity (i.e., the column that reduces the number of matching rows the most) as the **first column** in the index. This ensures that the index will filter the data more effectively.
+  - **Selectivity** refers to the uniqueness of values in a column. A column with many distinct values (like a primary key or `email`) is more selective than one with few distinct values (like `gender` or `country`).
+
+- **Frequently Used Columns First**: If certain columns are frequently used in WHERE clauses or joins, these should come first in the index.
+
+- **Equality Before Range**: If your queries involve both **equality comparisons** (`=`) and **range comparisons** (`<`, `>`, `BETWEEN`, etc.), place the column used in equality comparisons first in the composite index. Range comparisons should come later.
+
+#### 6. **Examples of Proper Indexing**
+Let’s say you have a table of `employees` with columns: `last_name`, `first_name`, and `department`. Now consider how to create a composite index for different queries.
+
+- **Query 1**:
+  ```sql
+  SELECT * FROM employees WHERE last_name = 'Smith';
+  ```
+  A single-column index on `last_name` (`INDEX(last_name)`) would work well here. No need for a composite index.
+
+- **Query 2**:
+  ```sql
+  SELECT * FROM employees WHERE last_name = 'Smith' AND first_name = 'John';
+  ```
+  A composite index on `(last_name, first_name)` would be efficient here, as it can filter by both columns.
+
+- **Query 3**:
+  ```sql
+  SELECT * FROM employees WHERE department = 'Sales' AND last_name = 'Smith';
+  ```
+  A composite index on `(department, last_name)` would be efficient here, as it matches the query pattern.
+
+#### 7. **Covering Indexes**
+A **covering index** is an index that contains all the columns needed by a query, so the query can be executed entirely from the index without needing to access the actual table data.
+
+For example, consider a query:
+```sql
+SELECT last_name, first_name FROM employees WHERE department = 'Sales';
+```
+- A composite index on `(department, last_name, first_name)` would be a **covering index** for this query, because it includes all the columns referenced by the `WHERE` and `SELECT` clauses.
+
+#### 8. **Avoiding Redundant Indexes**
+When using composite indexes, avoid creating redundant single-column indexes that could overlap with the composite index. For example, if you have a composite index on `(last_name, first_name)`, you don't need separate indexes on `last_name` and `first_name`.
+
+#### 9. **Performance Considerations**
+- **Too Many Indexes**: Indexes speed up reads but slow down writes (INSERT, UPDATE, DELETE) because the indexes need to be maintained when data changes. Avoid over-indexing.
+- **Index Size**: Composite indexes can become large if they include many columns, which can impact performance if not used efficiently.
+
+#### 10. **When Not to Use Composite Indexes**
+- If a column is highly selective and commonly used in isolation, creating a composite index that includes it might not add value. In such cases, a single-column index may suffice.
+
+- If a column is frequently involved in range queries (e.g., `price > 100`), it should be placed as the last column in the composite index to ensure proper utilization.
+
+### 11. **Partial Indexes**
+Sometimes you don't need to index all rows in a table. **Partial indexes** are indexes created on a subset of rows, which can improve performance and save space.
+
+Example:
+```sql
+CREATE INDEX idx_active_users ON users (last_name, first_name) WHERE active = true;
+```
+This index only applies to active users, optimizing queries that focus on active users while ignoring inactive ones.
+
+---
+
+### Summary: Best Practices for Proper Indexing
+
+1. **Use Composite Indexes for Multi-Column Queries**: If your queries often filter or sort by multiple columns, a composite index can significantly speed them up.
+
+2. **Order Columns Carefully**:
+   - Place the most selective column first.
+   - For range queries, place equality conditions first and range conditions later.
+
+3. **Covering Indexes**: Ensure the index covers all the columns needed by the query (`SELECT`, `WHERE`, `JOIN`, etc.) to avoid accessing the table.
+
+4. **Avoid Over-Indexing**: Indexes improve read performance but degrade write performance. Don’t create too many indexes, and avoid redundant indexes.
+
+5. **Analyze Query Patterns**: Base your indexing strategy on the most frequent and performance-critical queries in your application.
+
+Would you like to see examples of index optimization for a specific query, or dive deeper into the performance impact of certain indexing strategies?

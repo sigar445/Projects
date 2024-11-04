@@ -1,0 +1,229 @@
+In PostgreSQL, updating a time column can be done similarly to updating a date column. You can update a time column to a specific time, the current time, or even adjust the time by adding or subtracting intervals.
+
+### General Syntax for Updating a Time Column
+
+```sql
+UPDATE table_name
+SET time_column = 'HH:MI:SS'
+WHERE condition;
+```
+
+### Examples
+
+#### 1. **Updating a Time Column to a Specific Time**
+
+Suppose you have a table named `appointments` and you want to update the `appointment_time` of an appointment with `id = 101` to `14:30:00`.
+
+```sql
+UPDATE appointments
+SET appointment_time = '14:30:00'
+WHERE id = 101;
+```
+
+#### 2. **Updating a Time Column to the Current Time**
+
+You can set a time column to the current time using the `CURRENT_TIME` or `NOW()` function:
+
+```sql
+UPDATE appointments
+SET appointment_time = CURRENT_TIME
+WHERE id = 101;
+```
+
+- **`CURRENT_TIME`**: This only returns the current time without the date.
+- **`NOW()`**: This returns the current timestamp (date and time), but if the column is `TIME` type, it will use only the time part.
+
+#### 3. **Incrementing or Decrementing a Time**
+
+To increment or decrement a time column by a specific interval, you can use the `INTERVAL` keyword in PostgreSQL.
+
+- **Add 1 hour and 30 minutes**:
+  ```sql
+  UPDATE appointments
+  SET appointment_time = appointment_time + INTERVAL '1 hour 30 minutes'
+  WHERE id = 101;
+  ```
+
+- **Subtract 45 minutes**:
+  ```sql
+  UPDATE appointments
+  SET appointment_time = appointment_time - INTERVAL '45 minutes'
+  WHERE id = 101;
+  ```
+
+#### 4. **Setting Time Based on Another Column’s Value**
+
+If you want to set a time column based on another column’s value, you can reference the other column in the `SET` clause. For example, setting `appointment_time` to the value in `scheduled_time`:
+
+```sql
+UPDATE appointments
+SET appointment_time = scheduled_time
+WHERE id = 101;
+```
+
+### Updating Multiple Rows Based on a Condition
+
+You can update multiple rows in a table by applying a condition. For example, setting the `appointment_time` to `09:00:00` for all appointments scheduled for '2024-10-07':
+
+```sql
+UPDATE appointments
+SET appointment_time = '09:00:00'
+WHERE appointment_date = '2024-10-07';
+```
+
+### Querying and Displaying Updated Time Values
+
+To verify the update, you can run a simple `SELECT` query:
+
+```sql
+SELECT id, appointment_time
+FROM appointments
+WHERE appointment_date = '2024-10-07';
+```
+
+### Combining Date and Time Updates
+
+If you are dealing with both `DATE` and `TIME` in a table and need to update them together, you can combine both updates in one query:
+
+```sql
+UPDATE appointments
+SET appointment_date = '2024-10-07',
+    appointment_time = '14:30:00'
+WHERE id = 101;
+```
+
+Let me know if you need more advanced examples!
+Yes, SQL has a `DATETIME` or `TIMESTAMP` data type that is quite similar to Java’s `LocalDateTime` class. These types store both date and time together in a single column, much like Java’s `LocalDateTime`, which represents both date and time without time zone information.
+
+### `TIMESTAMP` and `DATETIME` in SQL
+
+The exact data type may vary depending on the SQL database you're using:
+
+- **PostgreSQL**: Uses `TIMESTAMP` or `TIMESTAMP WITH TIME ZONE`.
+- **MySQL**: Uses `DATETIME` and `TIMESTAMP`.
+- **SQL Server**: Uses `DATETIME` and `DATETIME2`.
+
+These types store date and time in the following format:
+
+- **Format**: `YYYY-MM-DD HH:MI:SS`
+
+For example, a `TIMESTAMP` value might look like:
+```text
+2024-10-07 14:30:00
+```
+
+### Java’s `LocalDateTime` Equivalent in SQL
+
+In Java, you might use `LocalDateTime` like this:
+```java
+LocalDateTime now = LocalDateTime.now();
+```
+
+In SQL, the equivalent would be:
+```sql
+SELECT NOW(); -- Retrieves the current date and time (both)
+```
+
+Or, when inserting data into a `TIMESTAMP` or `DATETIME` column:
+```sql
+INSERT INTO appointments (appointment_timestamp)
+VALUES ('2024-10-07 14:30:00');
+```
+
+### SQL `TIMESTAMP` vs `DATETIME`
+
+- **PostgreSQL**:
+  - `TIMESTAMP`: Stores date and time without time zone information.
+  - `TIMESTAMP WITH TIME ZONE` (or `TIMESTAMPTZ`): Stores date and time with time zone information.
+
+  **Example**:
+  ```sql
+  CREATE TABLE appointments (
+      id SERIAL PRIMARY KEY,
+      appointment_timestamp TIMESTAMP
+  );
+
+  INSERT INTO appointments (appointment_timestamp)
+  VALUES ('2024-10-07 14:30:00');
+  ```
+
+- **MySQL**:
+  - `DATETIME`: Stores date and time, independent of time zone.
+  - `TIMESTAMP`: Automatically adjusts to the current time zone when data is inserted or retrieved.
+
+  **Example**:
+  ```sql
+  CREATE TABLE appointments (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      appointment_timestamp DATETIME
+  );
+
+  INSERT INTO appointments (appointment_timestamp)
+  VALUES ('2024-10-07 14:30:00');
+  ```
+
+### SQL `TIMESTAMP` Functions
+
+- **Current Date and Time**:
+  ```sql
+  SELECT NOW(); -- Retrieves current date and time
+  ```
+
+- **Extracting Date and Time Parts**:
+  - Extracting year, month, day, hour, minute, second from a `TIMESTAMP`:
+    ```sql
+    SELECT EXTRACT(YEAR FROM appointment_timestamp) AS year,
+           EXTRACT(MONTH FROM appointment_timestamp) AS month,
+           EXTRACT(DAY FROM appointment_timestamp) AS day,
+           EXTRACT(HOUR FROM appointment_timestamp) AS hour,
+           EXTRACT(MINUTE FROM appointment_timestamp) AS minute,
+           EXTRACT(SECOND FROM appointment_timestamp) AS second
+    FROM appointments;
+    ```
+
+### Manipulating `TIMESTAMP` or `DATETIME` in SQL
+
+- **Adding intervals** (similar to `LocalDateTime.plusDays()` or `plusHours()` in Java):
+  ```sql
+  UPDATE appointments
+  SET appointment_timestamp = appointment_timestamp + INTERVAL '1 day 2 hours'
+  WHERE id = 101;
+  ```
+
+- **Subtracting intervals**:
+  ```sql
+  UPDATE appointments
+  SET appointment_timestamp = appointment_timestamp - INTERVAL '3 days'
+  WHERE id = 101;
+  ```
+
+### Retrieving and Formatting DateTime
+
+- **Format `TIMESTAMP` using `TO_CHAR()` (PostgreSQL)**:
+  ```sql
+  SELECT TO_CHAR(appointment_timestamp, 'YYYY-MM-DD HH24:MI:SS') AS formatted_datetime
+  FROM appointments;
+  ```
+
+- **Format `DATETIME` using `DATE_FORMAT()` (MySQL)**:
+  ```sql
+  SELECT DATE_FORMAT(appointment_timestamp, '%Y-%m-%d %H:%i:%s') AS formatted_datetime
+  FROM appointments;
+  ```
+
+### Inserting `LocalDateTime` from Java into SQL
+
+In a Java application, you would typically map `LocalDateTime` to a `TIMESTAMP` column:
+
+```java
+LocalDateTime localDateTime = LocalDateTime.now();
+PreparedStatement ps = connection.prepareStatement("INSERT INTO appointments (appointment_timestamp) VALUES (?)");
+ps.setTimestamp(1, Timestamp.valueOf(localDateTime)); // Inserts into TIMESTAMP column
+ps.executeUpdate();
+```
+
+In summary:
+- **SQL `TIMESTAMP` or `DATETIME`** is equivalent to **Java’s `LocalDateTime`**.
+- Both store date and time, but SQL `TIMESTAMP` can optionally include time zone information depending on the database.
+
+Let me know if you need help with specific queries or Java-SQL integration!

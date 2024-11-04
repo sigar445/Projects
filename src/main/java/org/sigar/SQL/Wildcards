@@ -1,0 +1,65 @@
+In PostgreSQL, wildcards are used with the `LIKE` (case-sensitive) and `ILIKE` (case-insensitive) operators for pattern matching in string data. There are two main wildcard characters:
+
+1. **`%` (Percent):**
+   - This wildcard matches **zero or more characters**.
+   - It can be used to match a string anywhere in a column.
+   - Example: `'P%a'` would match any string starting with `'P'` and ending with `'a'`, such as `'Puma'`, `'Panda'`, etc.
+
+2. **`_` (Underscore):**
+   - This wildcard matches **exactly one character**.
+   - It can be used to match strings of a specific length or structure.
+   - Example: `'P_ma'` would match `'Puma'`, `'Poma'`, but not `'Panda'`.
+
+### Examples of Using Wildcards
+
+#### 1. Using `%` (Percent)
+
+- **Match any string starting with `'Puma'`:**
+  ```sql
+  SELECT * FROM shoes WHERE brand LIKE 'Puma%';
+  ```
+  This will return any `brand` starting with `'Puma'` (like `'PumaMan'`, `'PumaShoes'`, etc.).
+
+- **Match any string containing `'uma'`:**
+  ```sql
+  SELECT * FROM shoes WHERE brand LIKE '%uma%';
+  ```
+  This will return any `brand` containing `'uma'` anywhere in the string (like `'Puma'`, `'Luma'`, etc.).
+
+#### 2. Using `_` (Underscore)
+
+- **Match any string with exactly one character before `'uma'`:**
+  ```sql
+  SELECT * FROM shoes WHERE brand LIKE '_uma';
+  ```
+  This will return any `brand` with exactly one character before `'uma'` (like `'Puma'`, `'Luma'`).
+
+- **Match any string with two characters before `'ma'`:**
+  ```sql
+  SELECT * FROM shoes WHERE brand LIKE '__ma';
+  ```
+  This will return any `brand` with exactly two characters before `'ma'` (like `'Roma'`, `'Toma'`).
+
+### Case-Insensitive Matching
+
+PostgreSQL's `ILIKE` operator behaves similarly to `LIKE`, but it's **case-insensitive**. For example:
+
+- **Case-insensitive match for any string starting with `'puma'`:**
+  ```sql
+  SELECT * FROM shoes WHERE brand ILIKE 'puma%';
+  ```
+
+### Escaping Wildcards
+
+If you need to search for literal characters that are also wildcards (`%` or `_`), you can escape them using a backslash (`\`):
+- **Match strings that contain a literal `%`:**
+  ```sql
+  SELECT * FROM shoes WHERE brand LIKE '%\%%' ESCAPE '\';
+  ```
+
+This will search for any brand containing the literal `%`.
+
+### Summary of Wildcards:
+- `%` matches any number of characters (including zero).
+- `_` matches exactly one character.
+- `ILIKE` can be used for case-insensitive pattern matching.

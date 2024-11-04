@@ -1,3 +1,21 @@
+select id,author from book limit 4;
+create table shoes (Id char(10) PRIMARY KEY, Brand char(20) NOT NULL, Color char(20) NOT NULL, Price decimal(8,2) NOT NULL, Desciption varchar(200) NULL);
+alter table shoes RENAME desciption TO description;
+insert into shoes (id,brand,color,price,description )values (14, 'Tape' ,'Marron',2031.50,'This is brand new 1st model');
+ \d shoes; describe for sql to see schema
+update shoes set description = 'This is a blue shoe' where color = 'Blue';
+delete from shoes where id = '13';
+ALTER TABLE shoes ADD COLUMN type char(30)  DEFAULT 'Not known' NOT NULL;
+ALTER TABLE customers ADD COLUMN email VARCHAR(100);
+ALTER TABLE table_name DROP COLUMN column_name;
+SELECT id,
+       -- brand,  -- this line is commented out price FROM shoes;
+ SELECT id,
+       /* brand,  -- this line is commented out */
+       price FROM shoes;
+
+
+
 mongod --dbpath ~/data/db
 mongodb://localhost:27017
 
@@ -12,6 +30,8 @@ Before using PostgreSQL commands, ensure that the PostgreSQL server is running o
 - **Linux**:
   
   ```bash
+   netstat -plnt | grep postgres
+
   sudo service postgresql start
    sudo service  postgresql restart
     To connect - sudo -u postgres psql

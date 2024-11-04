@@ -1,0 +1,199 @@
+To integrate Zookeeper into your Spring Boot URL shortener project for generating a range of values (e.g., a million) for shortening URLs, here’s how you can approach it. Zookeeper can be used to manage the distribution of unique ranges among multiple instances of your web servers running behind NGINX.
+
+### Key Steps:
+
+1. **Set Up Zookeeper**:
+   Zookeeper will act as the distributed coordinator. It will assign ranges to your Spring Boot instances dynamically, ensuring there are no overlaps.
+
+2. **Spring Boot Integration with Zookeeper**:
+   Spring Boot applications can interact with Zookeeper using Apache Curator, a high-level library that simplifies Zookeeper operations.
+
+3. **Algorithm for Range Distribution**:
+   Each instance of your web server will request a unique range of numbers (e.g., 1 million) from Zookeeper. Zookeeper will manage these ranges and ensure each server gets a different set.
+
+---
+
+### Step 1: Install and Set Up Zookeeper
+
+First, set up a Zookeeper cluster, or run it locally for testing purposes:
+
+- Download and install Zookeeper.
+- Start Zookeeper using the following command:
+  ```bash
+  ./zkServer.sh start
+  ```
+
+Ensure that your Zookeeper instance is running, and take note of the Zookeeper connection string (e.g., `localhost:2181`).
+
+---
+
+### Step 2: Add Dependencies to Your Spring Boot Project
+
+In your `pom.xml`, add the following dependencies for Apache Curator, which simplifies interaction with Zookeeper:
+
+```xml
+<dependency>
+    <groupId>org.apache.curator</groupId>
+    <artifactId>curator-framework</artifactId>
+    <version>5.4.0</version>
+</dependency>
+<dependency>
+    <groupId>org.apache.curator</groupId>
+    <artifactId>curator-recipes</artifactId>
+    <version>5.4.0</version>
+</dependency>
+```
+
+---
+
+### Step 3: Implement the Zookeeper Integration
+
+1. **Create a Zookeeper Service**:
+   This service will communicate with Zookeeper and retrieve a unique range of values for shortening URLs.
+
+```java
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.springframework.stereotype.Service;
+
+@Service
+public class ZookeeperRangeService {
+
+    private CuratorFramework client;
+    private static final String ZK_PATH = "/urlshortener/ranges";
+
+    public ZookeeperRangeService() {
+        // Initialize the Zookeeper client
+        this.client = CuratorFrameworkFactory.newClient(
+                "localhost:2181",
+                new ExponentialBackoffRetry(1000, 3)
+        );
+        this.client.start();
+    }
+
+    public synchronized long[] getRange() throws Exception {
+        // Fetch the current maximum value from Zookeeper
+        byte[] data = client.getData().forPath(ZK_PATH);
+        long currentMaxValue = Long.parseLong(new String(data));
+
+        // Assign the next 1 million values
+        long rangeStart = currentMaxValue + 1;
+        long rangeEnd = rangeStart + 999999;
+
+        // Update Zookeeper with the new maximum value
+        client.setData().forPath(ZK_PATH, String.valueOf(rangeEnd).getBytes());
+
+        return new long[]{rangeStart, rangeEnd};
+    }
+}
+```
+
+2. **Zookeeper Path and Initialization**:
+   You need to initialize the Zookeeper path to store the current range. You can manually set this up:
+
+```bash
+zkCli.sh
+create /urlshortener/ranges 0
+```
+
+This creates a Zookeeper node at `/urlshortener/ranges` with an initial value of `0`.
+
+---
+
+### Step 4: Assign Ranges to Each Web Server Instance
+
+Every time a Spring Boot instance starts, it will request a new range of values from Zookeeper:
+
+```java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+
+@Component
+public class StartupRunner implements CommandLineRunner {
+
+    @Autowired
+    private ZookeeperRangeService zookeeperRangeService;
+
+    @Override
+    public void run(String... args) throws Exception {
+        long[] range = zookeeperRangeService.getRange();
+        System.out.println("Assigned Range: " + range[0] + " to " + range[1]);
+
+        // Save these range values in the service handling URL shortening
+        // Example: UrlShortenerService.setRange(range[0], range[1]);
+    }
+}
+```
+
+This ensures each instance gets a unique range for shortening URLs.
+
+---
+
+### Step 5: Handle Multiple Instances with NGINX Load Balancer
+
+You already have multiple instances running behind NGINX. The Zookeeper setup ensures that even if new instances are added, each one gets a distinct range of values for URL shortening.
+
+Here’s how NGINX load balancing works with your instances:
+
+- NGINX distributes incoming traffic to available instances.
+- Each instance will have its own range of values assigned by Zookeeper.
+- No overlaps in the range ensure consistent URL shortening.
+
+---
+
+### Step 6: Implement URL Shortening Using the Assigned Range
+
+Now that each instance has a unique range of values, implement the URL shortening logic:
+
+```java
+@Service
+public class UrlShortenerService {
+
+    private long rangeStart;
+    private long rangeEnd;
+    private long currentValue;
+
+    public void setRange(long start, long end) {
+        this.rangeStart = start;
+        this.rangeEnd = end;
+        this.currentValue = start;
+    }
+
+    public synchronized String shortenUrl(String longUrl) {
+        if (currentValue > rangeEnd) {
+            // Handle the case when range is exhausted, e.g., request a new range
+            throw new RuntimeException("Range exhausted");
+        }
+
+        // Convert current value to shortened URL
+        String shortUrl = encode(currentValue);
+        currentValue++;
+
+        // Save the mapping between short URL and long URL in your database
+        // Example: urlMappingRepository.save(new UrlMapping(shortUrl, longUrl));
+
+        return shortUrl;
+    }
+
+    private String encode(long value) {
+        // Convert value to a short URL (use base62 or similar encoding)
+        // This is just a placeholder, implement your encoding logic
+        return Long.toString(value, 36); // Example: base36 encoding
+    }
+}
+```
+
+---
+
+### Step 7: Testing and Scaling
+
+- Test the system by running multiple instances of your Spring Boot application. Each instance will receive a unique range of values from Zookeeper.
+- Scale horizontally by adding more instances behind NGINX. Zookeeper will continue to assign non-overlapping ranges.
+
+---
+
+### Final Thoughts:
+
+By using Zookeeper to manage the range of values for your URL shortener, you ensure that each instance of your Spring Boot application gets a unique and consistent block of numbers to shorten URLs. This approach scales well and avoids conflicts, even with multiple instances running behind an NGINX load balancer.

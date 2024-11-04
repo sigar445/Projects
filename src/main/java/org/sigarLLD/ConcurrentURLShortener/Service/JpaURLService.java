@@ -13,13 +13,14 @@ import org.springframework.stereotype.Service;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.UUID;
 
 @Service
 public class JpaURLService implements URLService {
     private  final UrlRepo urlRepository;
+    private final TinyURLGenerator tinyUrlGenerator = new TinyURLGeneratorWithZookeeper();
     @Autowired
-    JpaURLService(UrlRepo urlRepo){
+    JpaURLService(UrlRepo urlRepo) throws Exception{
+
         this.urlRepository = urlRepo;
     }
 
@@ -45,7 +46,7 @@ public class JpaURLService implements URLService {
         }
         try {
             return generateShortUrl(originalUrl);
-        }catch (CustomOptimisticLockException e){
+        }catch (RuntimeException e){
             throw new InvalidUrlException(e.toString());
         }
     }
@@ -55,11 +56,15 @@ public class JpaURLService implements URLService {
         return false;
     }
 
-    private UrlShortened generateShortUrl(String originalUrl) throws CustomOptimisticLockException {
-        String tinyUrl = generateTinyUrl();
-        UrlShortened newUrlShortened = new UrlShortened(originalUrl,tinyUrl);
-        newUrlShortened = saveUrl(newUrlShortened);
-        return newUrlShortened; // Return the newly generated TinyURL
+    private UrlShortened generateShortUrl(String originalUrl) throws RuntimeException {
+        try {
+            String tinyUrl = tinyUrlGenerator.generateTinyURL(originalUrl);
+            UrlShortened newUrlShortened = new UrlShortened(originalUrl, tinyUrl);
+            newUrlShortened = saveUrl(newUrlShortened);
+            return newUrlShortened; // Return the newly generated TinyURL
+        }catch (Exception exception){
+            throw new RuntimeException("Failed to generate tiny URL from Zookeeper", exception);
+        }
     }
 
     @Override
@@ -87,8 +92,8 @@ public class JpaURLService implements URLService {
         }
 
 
-    private String generateTinyUrl() {
-        return UUID.randomUUID().toString().substring(0, 8); // Generate random 8-character string
-    }
+//    private String generateTinyUrl() {
+//        return UUID.randomUUID().toString().substring(0, 8); // Generate random 8-character string
+//    }
 
 }

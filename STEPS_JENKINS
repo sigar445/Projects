@@ -1,0 +1,112 @@
+To set up Jenkins on Windows with Docker support and GitHub credentials already configured, follow these steps to integrate the process for building, testing, and deploying a Spring Boot application using Jenkins pipelines.
+
+### Prerequisites:
+1. **Jenkins** is installed and running with Docker support.
+2. **GitHub credentials** are configured in Jenkins.
+3. **Docker Desktop** is installed and configured on your Windows machine.
+
+### Step-by-Step Configuration:
+
+#### 1. **Install Required Plugins:**
+Ensure Jenkins has the following plugins installed:
+- **Git**: For pulling your code from GitHub.
+- **Docker Pipeline**: For building Docker images and running Docker containers.
+- **Pipeline**: For defining your Jenkins jobs as code.
+- **Credentials Binding Plugin**: To securely handle GitHub credentials and Docker Hub credentials.
+
+You can install these plugins by navigating to `Manage Jenkins` > `Manage Plugins` > `Available` and searching for them.
+
+#### 2. **Create Docker Hub Credentials in Jenkins:**
+If you plan to push Docker images to Docker Hub, you'll need to configure Docker Hub credentials in Jenkins.
+
+- Go to `Manage Jenkins` > `Manage Credentials` > `Global` > `Add Credentials`.
+- Select "Username with password" and enter your Docker Hub username and password.
+- Give it an ID like `dockerhub-credentials`.
+
+#### 3. **Create Jenkins Pipeline:**
+You can define a Jenkins pipeline using a `Jenkinsfile`. This file should be placed in the root of your GitHub repository. Below is a sample pipeline for a Spring Boot application:
+
+##### Jenkinsfile:
+```groovy
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_CREDENTIALS_ID = 'dockerhub-credentials' // Change this to match your Jenkins Docker Hub credentials
+        IMAGE_NAME = 'my-spring-boot-app' // Customize the image name
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/your-repo/spring-boot-app.git' // Change this URL
+            }
+        }
+
+        stage('Build') {
+            steps {
+                script {
+                    // Run Maven build inside a Docker container
+                    docker.image('maven:3.8.1-jdk-11').inside {
+                        sh 'mvn clean package'
+                    }
+                }
+            }
+        }
+
+        stage('Docker Build & Push') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
+                        def app = docker.build("${IMAGE_NAME}:latest")
+                        app.push('latest')
+                    }
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    docker.image("${IMAGE_NAME}:latest").run("-p 8081:8081")
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs() // Clean the workspace after the build
+        }
+    }
+}
+```
+
+#### 4. **Set Up Jenkins Job:**
+1. Open Jenkins Dashboard.
+2. Click `New Item`, select `Pipeline`, and give it a name.
+3. Under the Pipeline section, choose `Pipeline script from SCM`.
+4. Select **Git** and provide the repository URL.
+5. In the **Credentials** dropdown, select the GitHub credentials you’ve configured.
+6. Specify the branch as `main` (or your preferred branch).
+7. Set the **Script Path** to `Jenkinsfile`.
+
+#### 5. **Test Your Pipeline:**
+1. After configuring the pipeline, click `Save` and then `Build Now` to trigger the pipeline.
+2. Jenkins will:
+   - Checkout the code from GitHub.
+   - Build the Spring Boot application using Docker and Maven.
+   - Build and push the Docker image to Docker Hub.
+   - Deploy the Docker container on the local machine.
+
+#### 6. **Monitor the Build:**
+You can monitor the progress of your build in the Jenkins console output. If any issues arise, you can debug based on the logs provided.
+
+### Optional: Set Up Jenkins Webhooks for GitHub
+To trigger builds automatically whenever you push to GitHub:
+1. In your GitHub repository, go to `Settings` > `Webhooks` > `Add Webhook`.
+2. Set the **Payload URL** to `http://<Jenkins-server-IP>:8080/github-webhook/`.
+3. Set the **Content type** to `application/json`.
+4. In Jenkins, install the **GitHub Integration Plugin** and configure it to trigger builds on pushes.
+
+This setup will automate the process of building, testing, and deploying your Spring Boot application on Jenkins with Docker support.   

@@ -1,0 +1,173 @@
+To configure a **ZooKeeper ensemble** (a group of ZooKeeper servers working together) in WSL2 Ubuntu and connect it from your Spring Boot application, follow the steps below. This setup will ensure high availability and fault tolerance for ZooKeeper by running multiple instances (typically 3 or 5).
+
+### Step 1: Download and Install ZooKeeper on WSL2
+
+1. **Download ZooKeeper:**
+   You can download the latest stable version of ZooKeeper from the official website or using the following commands:
+
+   ```bash
+   wget https://downloads.apache.org/zookeeper/zookeeper-3.7.1/apache-zookeeper-3.7.1-bin.tar.gz
+   tar -xvf apache-zookeeper-3.7.1-bin.tar.gz
+   mv apache-zookeeper-3.7.1-bin /opt/zookeeper
+   ```
+
+2. **Install Java (if not already installed):**
+
+   ZooKeeper requires Java, so ensure you have Java installed:
+
+   ```bash
+   sudo apt update
+   sudo apt install openjdk-11-jdk
+   ```
+
+3. **Create ZooKeeper Directories for Each Server Instance:**
+   Since ZooKeeper needs separate data directories for each instance in the ensemble, create directories for each ZooKeeper instance:
+
+   ```bash
+   mkdir -p /opt/zookeeper/data1
+   mkdir -p /opt/zookeeper/data2
+   mkdir -p /opt/zookeeper/data3
+   ```
+
+### Step 2: Configure ZooKeeper Ensemble
+
+1. **Create ZooKeeper Configuration Files for Each Instance:**
+
+   For each ZooKeeper instance, you need to configure a separate `zoo.cfg` file.
+
+   ```bash
+   cp /opt/zookeeper/conf/zoo_sample.cfg /opt/zookeeper/conf/zoo1.cfg
+   cp /opt/zookeeper/conf/zoo_sample.cfg /opt/zookeeper/conf/zoo2.cfg
+   cp /opt/zookeeper/conf/zoo_sample.cfg /opt/zookeeper/conf/zoo3.cfg
+   ```
+
+   Edit each configuration file as follows:
+
+   **For `zoo1.cfg`:**
+   ```bash
+   tickTime=2000
+   dataDir=/opt/zookeeper/data1
+   clientPort=2181
+   initLimit=5
+   syncLimit=2
+   server.1=127.0.0.1:2888:3888
+   server.2=127.0.0.1:2889:3889
+   server.3=127.0.0.1:2890:3890
+   ```
+
+   **For `zoo2.cfg`:**
+   ```bash
+   tickTime=2000
+   dataDir=/opt/zookeeper/data2
+   clientPort=2182
+   initLimit=5
+   syncLimit=2
+   server.1=127.0.0.1:2888:3888
+   server.2=127.0.0.1:2889:3889
+   server.3=127.0.0.1:2890:3890
+   ```
+
+   **For `zoo3.cfg`:**
+   ```bash
+   tickTime=2000
+   dataDir=/opt/zookeeper/data3
+   clientPort=2183
+   initLimit=5
+   syncLimit=2
+   server.1=127.0.0.1:2888:3888
+   server.2=127.0.0.1:2889:3889
+   server.3=127.0.0.1:2890:3890
+   ```
+
+2. **Create `myid` File for Each Server:**
+
+   Each ZooKeeper server needs a unique `myid` file that contains the server number (`1`, `2`, `3`, etc.).
+
+   ```bash
+   echo 1 > /opt/zookeeper/data1/myid
+   echo 2 > /opt/zookeeper/data2/myid
+   echo 3 > /opt/zookeeper/data3/myid
+   ```
+
+### Step 3: Start the ZooKeeper Ensemble
+
+Start each ZooKeeper instance by specifying the corresponding configuration file.
+
+1. **Start the first ZooKeeper instance:**
+   ```bash
+   /opt/zookeeper/bin/zkServer.sh start /opt/zookeeper/conf/zoo1.cfg
+   ```
+
+2. **Start the second ZooKeeper instance:**
+   ```bash
+   /opt/zookeeper/bin/zkServer.sh start /opt/zookeeper/conf/zoo2.cfg
+   ```
+
+3. **Start the third ZooKeeper instance:**
+   ```bash
+   /opt/zookeeper/bin/zkServer.sh start /opt/zookeeper/conf/zoo3.cfg
+   ```
+
+To check the status of each ZooKeeper instance, use:
+
+```bash
+/opt/zookeeper/bin/zkServer.sh status /opt/zookeeper/conf/zoo1.cfg
+/opt/zookeeper/bin/zkServer.sh status /opt/zookeeper/conf/zoo2.cfg
+/opt/zookeeper/bin/zkServer.sh status /opt/zookeeper/conf/zoo3.cfg
+```
+
+### Step 4: Connect Spring Boot Application to ZooKeeper Ensemble
+
+1. **Add ZooKeeper Dependency to Spring Boot:**
+
+   In your `pom.xml`, add the dependency for ZooKeeper and Spring Cloud:
+
+   ```xml
+   <dependency>
+       <groupId>org.apache.zookeeper</groupId>
+       <artifactId>zookeeper</artifactId>
+       <version>3.7.1</version>
+   </dependency>
+   <dependency>
+       <groupId>org.springframework.cloud</groupId>
+       <artifactId>spring-cloud-zookeeper-dependencies</artifactId>
+       <version>2.2.7.RELEASE</version>
+       <type>pom</type>
+       <scope>import</scope>
+   </dependency>
+   ```
+
+2. **Configure the ZooKeeper Connection:**
+
+   In your `application.properties` or `application.yml` file, configure the ZooKeeper connection to the ensemble. List all the ZooKeeper instances.
+
+   **For `application.yml`:**
+   ```yaml
+   zookeeper:
+     connect-string: 127.0.0.1:2181,127.0.0.1:2182,127.0.0.1:2183
+     sessionTimeout: 5000
+   ```
+
+   **For `application.properties`:**
+   ```properties
+   zookeeper.connect-string=127.0.0.1:2181,127.0.0.1:2182,127.0.0.1:2183
+   zookeeper.sessionTimeout=5000
+   ```
+
+3. **Use ZooKeeper in Your Application:**
+
+   In your Spring Boot application, you can use ZooKeeper to register and manage services or interact with the data using the ZooKeeper client.
+
+   Here’s an example of how to connect to ZooKeeper using Spring Boot:
+
+   ```java
+   @RestController
+   @RequestMapping("/zookeeper")
+   public class ZooKeeperController {
+
+       @Autowired
+       private CuratorFramework curatorFramework;
+
+       @GetMapping("/check")
+       public String checkZookeeper() throws Exception {
+           String

@@ -18,7 +18,7 @@ Designing an **Undo/Redo** functionality for a chess game involves considering t
    - When a move is made (`MoveCommand.execute()`), it is pushed onto the `undoStack`. If a move is undone, it's popped from the `undoStack` and pushed onto the `redoStack`.
    - When a move is redone, it is popped from the `redoStack`, executed again, and pushed back onto the `undoStack`.
 
-4. **Handling Game State**:
+4. **Handling TicTacToeGame State**:
    - The board state needs to be updated with every move. This can be achieved by having a `Board` class that represents the game state.
    - Moves alter the state of the `Board`, and undoing a move restores the previous state using information stored in the `MoveCommand`.
 
@@ -82,7 +82,7 @@ class Board {
 }
 
 // Client code handling the stack-based history
-class Game {
+class TicTacToeGame {
     private Stack<Command> undoStack = new Stack<>();
     private Stack<Command> redoStack = new Stack<>();
     private Board board = new Board();
@@ -125,6 +125,6 @@ The UML diagram for this approach would include:
 - A `Command` interface with `execute()` and `undo()` methods.
 - A `MoveCommand` class implementing `Command`.
 - A `Board` class representing the game state.
-- A `Game` class managing the history stacks (`undoStack` and `redoStack`) and invoking commands.
+- A `TicTacToeGame` class managing the history stacks (`undoStack` and `redoStack`) and invoking commands.
 
 If you'd like, I can create a UML diagram to visualize this design. Would you like me to do that?

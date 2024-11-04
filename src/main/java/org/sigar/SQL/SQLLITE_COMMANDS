@@ -1,0 +1,91 @@
+SQLite is a lightweight, self-contained SQL database engine that supports most of the standard SQL commands. Below are some commonly used commands for SQLite, including how to describe a table and perform various database operations.
+
+### 1. Creating a Table
+
+```sql
+CREATE TABLE salary_range_by_job_classification (
+    job_classification TEXT NOT NULL,
+    min_salary REAL,
+    max_salary REAL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP
+);
+```
+
+### 2. Inserting Data
+
+```sql
+INSERT INTO salary_range_by_job_classification (job_classification, min_salary, max_salary)
+VALUES ('Software Engineer', 60000, 120000),
+       ('Data Scientist', 70000, 130000),
+       ('Project Manager', 50000, 110000);
+```
+
+### 3. Selecting Data
+
+```sql
+SELECT * FROM salary_range_by_job_classification;
+```
+
+### 4. Describing a Table
+
+SQLite does not have a built-in `DESC` command like some other SQL databases, but you can use the following command to get the schema of a table:
+
+```sql
+PRAGMA table_info(salary_range_by_job_classification);
+```
+
+This command will return information about the columns in the specified table, including the column names, data types, and whether they can be NULL.
+
+### 5. Updating Data
+
+```sql
+UPDATE salary_range_by_job_classification
+SET min_salary = 65000
+WHERE job_classification = 'Software Engineer';
+```
+
+### 6. Deleting Data
+
+```sql
+DELETE FROM salary_range_by_job_classification
+WHERE job_classification = 'Project Manager';
+```
+
+### 7. Grouping and Aggregating Data
+
+You can use `GROUP BY` to group results and aggregate them. Here’s an example that calculates the average salary for each job classification:
+
+```sql
+SELECT job_classification, AVG(min_salary) AS average_min_salary, AVG(max_salary) AS average_max_salary
+FROM salary_range_by_job_classification
+GROUP BY job_classification;
+```
+
+### 8. Creating an Index
+
+Creating an index can help improve the performance of queries:
+
+```sql
+CREATE INDEX idx_job_classification ON salary_range_by_job_classification (job_classification);
+```
+
+### 9. Dropping a Table
+
+To drop a table from the database:
+
+```sql
+DROP TABLE salary_range_by_job_classification;
+```
+
+### 10. Viewing All Tables
+
+To see a list of all tables in the current SQLite database:
+
+```sql
+SELECT name FROM sqlite_master WHERE type='table';
+```
+
+### Summary
+
+These commands cover a range of operations you might perform in SQLite, from table creation to data manipulation and schema examination. If you have any specific operations or queries in mind, feel free to ask!

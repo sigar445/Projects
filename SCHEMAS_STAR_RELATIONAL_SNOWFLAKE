@@ -1,0 +1,162 @@
+### 1. **Star Schema**
+
+The **Star Schema** is a simple, denormalized database schema widely used in **data warehousing**. It consists of a **central fact table** connected to multiple **dimension tables** in a star-like formation.
+
+#### Structure:
+- **Fact Table**: Stores measurable, quantitative data (e.g., sales revenue, quantity sold).
+- **Dimension Tables**: Contain descriptive information that provides context to the facts (e.g., date, product, customer).
+
+#### Characteristics:
+- Denormalized: Dimension tables are not broken into smaller tables (no further normalization).
+- Simplified querying: Data is stored in fewer tables, making queries straightforward.
+- Ideal for OLAP (Online Analytical Processing).
+
+#### Text Diagram:
+
+```
+          +-------------------+
+          |    Date Dimension  |
+          +-------------------+
+                  |
++-----------------+------------------+
+|                                     |
+|                                     |
+|                                     |
+|                                     |
++------------------+                  +------------------+
+|   Product Dim    |--+  Fact Table  +--|   Customer Dim  |
++------------------+                  +------------------+
+                  |
+          +-------------------+
+          |   Location Dim     |
+          +-------------------+
+```
+
+- **Fact Table**: Central table storing **metrics** (e.g., Sales Amount, Units Sold).
+- **Dimension Tables**: Surrounding tables holding **descriptive attributes** (e.g., Product Name, Customer Name).
+
+---
+
+### 2. **Relational Model**
+
+The **Relational Model** is the foundation of most traditional databases, where data is organized into tables (or relations) and each table consists of rows and columns.
+
+#### Structure:
+- **Tables**: Represent entities or objects.
+- **Rows**: Represent individual records.
+- **Columns**: Represent attributes of the entity.
+- Relationships are established via **foreign keys**.
+
+#### Characteristics:
+- Data is **normalized** to reduce redundancy (often in 3NF or higher).
+- Focuses on ensuring **data integrity** and eliminating data anomalies.
+- Queries are performed using **SQL** (Structured Query Language).
+- Suitable for **OLTP (Online Transaction Processing)** systems.
+
+#### Text Diagram:
+
+```
++--------------+       +--------------+
+|  Customers   |       |   Orders      |
++--------------+       +--------------+
+| Customer_ID  |<----- | Customer_ID   |
+| Name         |       | Order_ID      |
+| Address      |       | Order_Date    |
++--------------+       | Amount        |
+                       +--------------+
+```
+
+- **Customers**: Each row is a customer.
+- **Orders**: Each row is an order.
+- The relationship between **Customers** and **Orders** is established via `Customer_ID`.
+
+---
+
+### 3. **Transactional Model**
+
+The **Transactional Model** refers to databases optimized for **OLTP (Online Transactional Processing)**. This model focuses on real-time data entry, updates, and querying with high concurrency.
+
+#### Structure:
+- Similar to the **Relational Model**, with tables for storing transactional data (e.g., sales, orders).
+- Designed for **fast, frequent updates** and short transactions.
+- Often uses **ACID (Atomicity, Consistency, Isolation, Durability)** properties to ensure reliable transactions.
+
+#### Characteristics:
+- High throughput for **insert/update/delete** operations.
+- **Normalization** is often used to ensure data integrity.
+- Commonly used in **banking, e-commerce, and retail** systems.
+
+#### Text Diagram:
+
+```
++--------------+       +--------------+
+| Transactions |       |  Accounts     |
++--------------+       +--------------+
+| Trans_ID     |<----- | Account_ID    |
+| Amount       |       | Customer_ID   |
+| Date         |       | Balance       |
+| Account_ID   |       +--------------+
++--------------+
+```
+
+- **Transactions**: Represents individual monetary transfers or activities.
+- **Accounts**: Each row stores details of an account, and `Account_ID` links the two tables.
+
+---
+
+### 4. **Snowflake Schema**
+
+The **Snowflake Schema** is a more complex version of the **Star Schema** where dimension tables are further normalized into multiple related tables.
+
+#### Structure:
+- **Fact Table**: Same as in a star schema, stores quantitative data.
+- **Normalized Dimension Tables**: Dimension tables are broken down into related sub-dimensions.
+
+#### Characteristics:
+- More **normalized** than the Star Schema, reducing redundancy.
+- Requires more **complex joins** for queries.
+- Space-efficient but slower query performance compared to Star Schema.
+- Suitable for scenarios where data integrity is critical.
+
+#### Text Diagram:
+
+```
+          +-------------------+
+          |    Date Dim        |
+          +-------------------+
+                  |
+          +-------------------+
+          |    Month Dim       |
+          +-------------------+
+                  |
++-----------------+------------------+
+|                                     |
+|                                     |
++------------------+                  +------------------+
+|   Product Dim    |--+  Fact Table  +--|   Customer Dim  |
++------------------+                  +------------------+
+      |
++-------------------+
+|   Product Brand   |
++-------------------+
+```
+
+- **Fact Table**: Central table holding metrics.
+- **Dimension Tables**: Broken into normalized sub-dimensions (e.g., Date Dim -> Month Dim, Product Dim -> Product Brand).
+
+---
+
+### **Key Differences:**
+
+| Feature                   | Star Schema                   | Snowflake Schema              | Relational Model            | Transactional Model         |
+|----------------------------|-------------------------------|-------------------------------|-----------------------------|-----------------------------|
+| **Normalization**           | Denormalized                  | Highly normalized              | Normalized (3NF or higher)   | Normalized (3NF or higher)   |
+| **Ease of Querying**        | Easy, fewer joins             | Complex, multiple joins        | Varies, depending on design  | Easy to complex, depending on transaction complexity |
+| **Use Case**                | OLAP (Data Warehousing)       | OLAP (Data Warehousing)        | OLTP (Real-time)             | OLTP (Transactional systems) |
+| **Query Performance**       | Faster, but more storage used | Slower due to joins, but more space-efficient | Good for real-time querying | Optimized for high throughput |
+| **Fact-Dimension Structure**| Central fact with denormalized dimensions | Central fact with normalized sub-dimensions | Tables with relationships | Tables handling real-time transactions |
+| **Redundancy**              | More redundancy               | Less redundancy                | Minimal redundancy due to normalization | Minimal redundancy due to normalization |
+
+---
+
+Each schema/model has its own purpose, depending on whether the goal is fast transaction processing (OLTP), data analytics (OLAP), or structured data storage.

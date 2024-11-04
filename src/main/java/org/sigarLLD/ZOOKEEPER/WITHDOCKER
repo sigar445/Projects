@@ -1,0 +1,258 @@
+When your Spring Boot web API is running inside a Docker container, the term `localhost` inside the container refers to the container itself, not your host machine. This means that your Spring Boot application will not be able to connect directly to `localhost` (your host machine) services like ZooKeeper.
+
+To allow a Docker container to connect to services running on your host machine, such as ZooKeeper running on `localhost`, you need to use the following approaches:
+
+### 1. **Use Host Networking (For Linux)**
+
+If you're running Docker on Linux, you can use host networking, which allows the container to directly access the network of the host machine. With this approach, the container can connect to `localhost` on the host machine.
+
+You can start the container with the `--network host` flag:
+
+```bash
+docker run --network host -p 8080:8080 your-springboot-image
+```
+
+With this setup, `localhost` inside the container will point to the host machine, and your Spring Boot app should be able to access ZooKeeper running on your local machine at `localhost:2181` (assuming ZooKeeper is running on the default port).
+
+However, **this option is only available on Linux** and is not supported in Docker for Windows or macOS.
+
+### 2. **Use Docker's `host.docker.internal` (For Windows and macOS)**
+
+If you're running Docker on Windows or macOS, Docker provides a special DNS name `host.docker.internal`, which allows the container to access services running on the host machine.
+
+In your Spring Boot application, you can configure the ZooKeeper connection to use this special address instead of `localhost`.
+
+For example, in your Spring Boot `application.properties` or `application.yml`, you can configure the ZooKeeper connection:
+
+```properties
+zookeeper.connect=host.docker.internal:2181
+```
+
+This will allow your Docker container to connect to ZooKeeper running on your host machine at port `2181`.
+
+### 3. **Expose ZooKeeper to a Docker Network**
+
+Another approach is to run both your Spring Boot web API and ZooKeeper in separate Docker containers, connected to the same Docker network. This way, the containers can communicate with each other using their container names.
+
+Here's how you can set it up:
+
+1. **Create a Docker Network** (if not already created):
+   ```bash
+   docker network create my-network
+   ```
+
+2. **Run ZooKeeper in a Docker Container**:
+   ```bash
+   docker run -d --name zookeeper --network my-network zookeeper:3.7
+   ```
+
+3. **Run Your Spring Boot Application in the Same Network**:
+   ```bash
+   docker run -d --name springboot-app --network my-network -p 8080:8080 your-springboot-image
+   ```
+
+4. **Configure Spring Boot to Use ZooKeeper's Container Name**:
+
+   In your `application.properties` or `application.yml` file, configure ZooKeeper to use the container name `zookeeper` as the host:
+
+   ```properties
+   zookeeper.connect=zookeeper:2181
+   ```
+
+In this setup, Docker’s internal DNS will resolve the hostname `zookeeper` to the appropriate container IP, allowing the Spring Boot app to communicate with ZooKeeper.
+
+### 4. **Port Mapping**
+
+Alternatively, if you're running ZooKeeper on your host machine but want to make it accessible from inside the Docker container, you can explicitly bind the ZooKeeper port to your host machine's IP (not just `localhost`). For example:
+
+- If ZooKeeper is running on port `2181` on your host machine, configure it to bind to `0.0.0.0`, so it's accessible from external clients (like the Docker container).
+
+Ensure that your firewall or security settings allow external access to this port.
+
+### Summary
+
+- **Linux**: Use `--network host` to connect to `localhost` directly.
+- **Windows/macOS**: Use `host.docker.internal` for host-machine connections from Docker containers.
+- **Docker Network**: Run both ZooKeeper and Spring Boot in Docker and connect them via the same Docker network.
+
+
+To run ZooKeeper locally, you can follow these steps. Whether you're running ZooKeeper as a standalone instance on your local machine (outside Docker) or in a Docker container, the setup is straightforward. Below are two methods for running ZooKeeper locally: one using direct installation and one using Docker.
+
+### Method 1: Running ZooKeeper Locally (Outside Docker)
+
+#### 1. **Download ZooKeeper**
+- Download the latest stable release of ZooKeeper from the official website: [ZooKeeper Download Page](https://zookeeper.apache.org/releases.html).
+- Unzip the downloaded file to a directory on your local machine.
+
+#### 2. **Configure ZooKeeper**
+
+ZooKeeper needs minimal configuration to run in standalone mode.
+
+- Navigate to the extracted folder. Inside the `conf` folder, you’ll find a file called `zoo_sample.cfg`. Copy this file and rename it to `zoo.cfg`:
+
+   ```bash
+   cp conf/zoo_sample.cfg conf/zoo.cfg
+   ```
+
+- Open the `zoo.cfg` file and ensure the data directory is correctly set. You can specify any directory to store the ZooKeeper snapshot and logs:
+
+   ```properties
+   dataDir=/path/to/your/zookeeper/data
+   ```
+
+   The default port for ZooKeeper is `2181`. You can change this if needed:
+
+   ```properties
+   clientPort=2181
+   ```
+
+#### 3. **Start ZooKeeper**
+
+Now, you can start ZooKeeper using the `zkServer.sh` script in the `bin` folder.
+
+- On **Linux/macOS**:
+
+   ```bash
+   ./bin/zkServer.sh start
+   ```
+
+- On **Windows**, use `zkServer.cmd`:
+
+   ```cmd
+   bin\zkServer.cmd
+   ```
+
+Once started, you should see logs indicating that ZooKeeper has started successfully.
+
+#### 4. **Connect to ZooKeeper**
+
+You can use the ZooKeeper CLI to connect to the ZooKeeper server and run commands.
+
+- On **Linux/macOS**:
+
+   ```bash
+   ./bin/zkCli.sh -server 127.0.0.1:2181
+   ```
+
+- On **Windows**:
+
+   ```cmd
+   bin\zkCli.cmd -server 127.0.0.1:2181
+   ```
+
+This opens a shell where you can run commands like `create`, `set`, `get`, etc.
+
+#### 5. **Stop ZooKeeper**
+
+To stop ZooKeeper, use:
+
+- On **Linux/macOS**:
+
+   ```bash
+   ./bin/zkServer.sh stop
+   ```
+
+- On **Windows**:
+
+   ```cmd
+   bin\zkServer.cmd stop
+   ```
+
+---
+
+### Method 2: Running ZooKeeper Using Docker
+
+#### 1. **Pull the ZooKeeper Docker Image**
+
+If you prefer running ZooKeeper inside a Docker container, you can pull the official ZooKeeper Docker image:
+
+```bash
+docker pull zookeeper:3.7
+```
+
+#### 2. **Run ZooKeeper in a Docker Container**
+
+You can run ZooKeeper in a container using the following command:
+
+```bash
+docker run -d --name zookeeper -p 2181:2181 zookeeper:3.7
+```
+
+This command does the following:
+- `-d`: Runs the container in detached mode.
+- `--name zookeeper`: Names the container `zookeeper`.
+- `-p 2181:2181`: Maps port 2181 on your local machine to port 2181 inside the container, making ZooKeeper accessible at `localhost:2181`.
+
+#### 3. **Connect to ZooKeeper from CLI**
+
+Once ZooKeeper is running in the container, you can use the ZooKeeper CLI inside the container to interact with it:
+
+```bash
+docker exec -it zookeeper zkCli.sh -server 127.0.0.1:2181
+```
+
+#### 4. **Stop ZooKeeper**
+
+To stop the ZooKeeper container, run:
+
+```bash
+docker stop zookeeper
+```
+
+If you want to remove the container, use:
+
+```bash
+docker rm zookeeper
+```
+
+---
+
+### Verifying ZooKeeper Setup
+
+Once ZooKeeper is running (locally or in Docker), you can verify it by connecting via the CLI:
+
+```bash
+./bin/zkCli.sh -server 127.0.0.1:2181
+```
+
+You should see a command prompt where you can type commands like:
+
+- `ls /`: Lists the nodes in ZooKeeper.
+- `create /my-node "some data"`: Creates a new node with the given data.
+- `get /my-node`: Retrieves data from the node.
+- `delete /my-node`: Deletes the node.
+
+---
+
+### Common ZooKeeper Commands
+
+Here are some frequently used ZooKeeper commands:
+
+- **List all nodes**:
+  ```bash
+  ls /
+  ```
+
+- **Create a znode**:
+  ```bash
+  create /my-node "some data"
+  ```
+
+- **Get the data of a node**:
+  ```bash
+  get /my-node
+  ```
+
+- **Set data of a node**:
+  ```bash
+  set /my-node "new data"
+  ```
+
+- **Delete a node**:
+  ```bash
+  delete /my-node
+  ```
+
+---
+
+By following these steps, you should be able to run ZooKeeper locally and connect your Spring Boot web API to it, either by running ZooKeeper directly on your machine or inside a Docker container.

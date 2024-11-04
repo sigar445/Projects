@@ -1,0 +1,94 @@
+In PostgreSQL, the `ORDER BY` clause is used to sort the result set of a query. You can specify sorting in ascending order (default) or descending order using `ASC` and `DESC`. Additionally, you can combine `ORDER BY` with multiple columns and other variations.
+
+Here are different ways to use `ORDER BY` in PostgreSQL, along with examples:
+
+### 1. **`ORDER BY ASC` (Ascending Order)**
+   - This is the default sorting order, and it arranges results from the lowest to highest values (numerically or alphabetically).
+   - Example:
+     ```sql
+     SELECT * FROM shoes ORDER BY price ASC;
+     ```
+     This will sort the results by the `price` column in ascending order (from the lowest price to the highest).
+
+### 2. **`ORDER BY DESC` (Descending Order)**
+   - This arranges results from the highest to lowest values (numerically or alphabetically).
+   - Example:
+     ```sql
+     SELECT * FROM shoes ORDER BY price DESC;
+     ```
+     This will sort the results by the `price` column in descending order (from the highest price to the lowest).
+
+### 3. **Ordering by Multiple Columns**
+   - You can sort by more than one column by listing them after `ORDER BY`. PostgreSQL will first sort by the first column and then by the second if there are ties.
+   - Example:
+     ```sql
+     SELECT * FROM shoes ORDER BY brand ASC, price DESC;
+     ```
+     This query will first sort the results by `brand` alphabetically in ascending order. If multiple rows have the same brand, they will be further sorted by `price` in descending order.
+
+### 4. **Using `NULLS FIRST` and `NULLS LAST`**
+   - PostgreSQL allows you to control where `NULL` values appear in the ordering using `NULLS FIRST` (put `NULL` values at the start) or `NULLS LAST` (put `NULL` values at the end).
+   - Example:
+     ```sql
+     SELECT * FROM shoes ORDER BY price DESC NULLS LAST;
+     ```
+     This will sort the results by `price` in descending order, but `NULL` values will appear at the end of the list.
+
+### 5. **Ordering by Column Index**
+   - You can order by the position of the columns in the `SELECT` clause (1 for the first column, 2 for the second column, etc.).
+   - Example:
+     ```sql
+     SELECT brand, price FROM shoes ORDER BY 2 DESC;
+     ```
+     This will order the results by the second column (`price`) in descending order.
+
+### 6. **Order by Expression**
+   - You can order by an expression or calculation.
+   - Example:
+     ```sql
+     SELECT id, price * 1.05 AS price_with_tax FROM shoes ORDER BY price_with_tax DESC;
+     ```
+     This will sort the results based on the calculated value `price_with_tax` (which is `price` plus 5%).
+
+### 7. **Limit Results with `ORDER BY`**
+   - Combine `ORDER BY` with `LIMIT` to restrict the number of rows returned after sorting.
+   - Example:
+     ```sql
+     SELECT * FROM shoes ORDER BY price DESC LIMIT 5;
+     ```
+     This will return the top 5 most expensive shoes.
+
+### Full Examples:
+
+#### 1. Sorting by price in ascending order:
+```sql
+SELECT * FROM shoes ORDER BY price ASC;
+```
+
+#### 2. Sorting by brand in ascending order and by price in descending order:
+```sql
+SELECT * FROM shoes ORDER BY brand ASC, price DESC;
+```
+
+#### 3. Sorting by price in descending order with `NULLS LAST`:
+```sql
+SELECT * FROM shoes ORDER BY price DESC NULLS LAST;
+```
+
+#### 4. Sorting by column position (second column) in descending order:
+```sql
+SELECT brand, price FROM shoes ORDER BY 2 DESC;
+```
+
+#### 5. Limiting results to the top 3 cheapest shoes:
+```sql
+SELECT * FROM shoes ORDER BY price ASC LIMIT 3;
+```
+
+### Summary:
+- `ORDER BY column_name ASC`: Ascending order (default).
+- `ORDER BY column_name DESC`: Descending order.
+- `ORDER BY column1, column2 DESC`: Multiple column sorting.
+- `NULLS FIRST` and `NULLS LAST`: Control where `NULL` values appear.
+- `ORDER BY 1, 2`: Sort by column position in the `SELECT` clause.
+- `LIMIT`: Restrict the number of returned rows after sorting.l

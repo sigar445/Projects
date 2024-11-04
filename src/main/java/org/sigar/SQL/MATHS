@@ -1,0 +1,152 @@
+In SQL, you can perform a variety of mathematical operations on numeric columns. These operations include basic arithmetic (addition, subtraction, multiplication, division), as well as more advanced functions (e.g., rounding, modulus, square root, etc.). The operations can be applied in `SELECT` queries, `WHERE` clauses, or in updates to data.
+
+### Basic Math Operations
+
+1. **Addition (`+`)**
+   - Adds two numbers.
+   ```sql
+   SELECT price, price + 500 AS price_with_shipping FROM shoes;
+   ```
+   This query returns the `price` and adds 500 to it (representing the price with a hypothetical shipping fee).
+
+2. **Subtraction (`-`)**
+   - Subtracts one number from another.
+   ```sql
+   SELECT price, price - 200 AS discounted_price FROM shoes;
+   ```
+   This subtracts 200 from the original price, representing a discount.
+
+3. **Multiplication (`*`)**
+   - Multiplies two numbers.
+   ```sql
+   SELECT price, price * 1.18 AS price_with_tax FROM shoes;
+   ```
+   This multiplies the price by 1.18 to add an 18% tax.
+
+4. **Division (`/`)**
+   - Divides one number by another.
+   ```sql
+   SELECT price, price / 2 AS half_price FROM shoes;
+   ```
+   This divides the price by 2, returning half the original price.
+
+5. **Modulus (`%`)**
+   - Returns the remainder after dividing one number by another.
+   ```sql
+   SELECT price, price % 100 AS remainder FROM shoes;
+   ```
+   This returns the remainder when dividing the price by 100 (useful for rounding or bucketing purposes).
+
+### Advanced Mathematical Functions
+
+1. **`ABS()`**: Absolute value of a number.
+   ```sql
+   SELECT price, ABS(price - 2500) AS price_diff FROM shoes;
+   ```
+   This calculates the absolute difference between the price and 2500.
+
+2. **`ROUND()`**: Rounds a number to a specified number of decimal places.
+   ```sql
+   SELECT price, ROUND(price, 2) AS rounded_price FROM shoes;
+   ```
+   This rounds the price to 2 decimal places.
+
+3. **`CEIL()`** or **`CEILING()`**: Rounds a number **up** to the nearest integer.
+   ```sql
+   SELECT price, CEIL(price) AS rounded_up_price FROM shoes;
+   ```
+   This rounds the price up to the next whole number.
+
+4. **`FLOOR()`**: Rounds a number **down** to the nearest integer.
+   ```sql
+   SELECT price, FLOOR(price) AS rounded_down_price FROM shoes;
+   ```
+   This rounds the price down to the nearest whole number.
+
+5. **`POWER()`**: Raises a number to the power of another number.
+   ```sql
+   SELECT price, POWER(price, 2) AS squared_price FROM shoes;
+   ```
+   This squares the price.
+
+6. **`SQRT()`**: Returns the square root of a number.
+   ```sql
+   SELECT price, SQRT(price) AS square_root_price FROM shoes;
+   ```
+   This returns the square root of the price.
+
+7. **`EXP()`**: Returns `e` raised to the power of the given number.
+   ```sql
+   SELECT price, EXP(price) AS exp_price FROM shoes;
+   ```
+
+8. **`LOG()`**: Returns the natural logarithm (base `e`) of a number.
+   ```sql
+   SELECT price, LOG(price) AS log_price FROM shoes;
+   ```
+
+9. **`PI()`**: Returns the value of pi (3.141593...).
+   ```sql
+   SELECT PI();
+   ```
+
+10. **`RANDOM()`**: Returns a random number between 0 and 1.
+    ```sql
+    SELECT RANDOM() AS random_number;
+    ```
+
+### Example of Combined Math Operations
+You can combine these operations within a single query, and SQL will follow the usual precedence rules (parentheses, multiplication/division, then addition/subtraction).
+
+- **Multiplication and Addition**
+   ```sql
+   SELECT price, (price * 0.9) + 100 AS discounted_and_shipping FROM shoes;
+   ```
+   This applies a 10% discount to the price and then adds 100 as a shipping fee.
+
+- **Division and Subtraction**
+   ```sql
+   SELECT price, (price / 2) - 50 AS discounted_half_price FROM shoes;
+   ```
+   This divides the price by 2 and then subtracts 50.
+
+### Order of Operations (Precedence)
+The mathematical order of operations, also known as **PEMDAS**, applies in SQL:
+1. **Parentheses**
+2. **Exponentiation**
+3. **Multiplication** and **Division**
+4. **Addition** and **Subtraction**
+
+For example:
+```sql
+SELECT price, price * (1.2 + 0.05) AS adjusted_price FROM shoes;
+```
+- In this query, `1.2 + 0.05` is calculated first due to parentheses, and the result is then multiplied by `price`.
+
+### Math Operations in the `WHERE` Clause
+
+You can also use math operations in the `WHERE` clause to filter data.
+
+- **Example 1:**
+   ```sql
+   SELECT * FROM shoes WHERE price * 1.18 > 2500;
+   ```
+   This returns all shoes where the price plus an 18% tax is greater than 2500.
+
+- **Example 2:**
+   ```sql
+   SELECT * FROM shoes WHERE (price / 2) <= 1500;
+   ```
+   This returns all shoes where half the price is less than or equal to 1500.
+
+### Using Math in `UPDATE` Statements
+You can use math operations to update values in your database.
+
+- **Example:**
+   ```sql
+   UPDATE shoes SET price = price * 1.1 WHERE brand = 'Puma';
+   ```
+   This increases the price of all `Puma` shoes by 10%.
+
+### Conclusion
+You can use a wide variety of math functions and operations in PostgreSQL, both in the `SELECT` query and other clauses like `WHERE` and `UPDATE`. Combining math operations and functions allows for complex calculations and data transformations within your queries.

@@ -1,0 +1,163 @@
+Designing software involves two key perspectives: **structure** (how the code is organized) and **behavior** (how it operates and responds to inputs). Effective code design requires a balance between these aspects, as structural choices can significantly impact behavioral flexibility and vice versa. Let’s explore both concepts, how to start with each, and examples to illustrate them.
+
+### Structural Changes in Code Design
+
+**1. Understanding Structure:**
+   Structure focuses on the static organization of your code—its components, modules, classes, and their relationships. Good structural design aligns with principles like modularity, cohesion, encapsulation, and separation of concerns.
+
+**2. Steps to Approach Structural Design:**
+   - **Define Responsibilities and Boundaries:** Identify distinct components and assign specific responsibilities, avoiding overlap. For example, in a microservice architecture, each service should handle a particular business capability.
+   - **Apply Design Patterns:** Patterns like Factory, Singleton, or Repository can enforce structure, making the code modular, testable, and easier to maintain.
+   - **Design for Flexibility and Reuse:** Aim to make components modular and reusable across the application by defining clear interfaces, keeping dependencies minimal, and using dependency injection.
+   - **Organize into Layers:** Use layering (e.g., Presentation, Service, Repository) to separate concerns, improving maintainability and testing. This approach is often used in Spring Boot applications.
+
+**3. Structural Design Example:**
+   Suppose you are designing a library system with modules like `Book`, `Patron`, and `Loan`.
+
+   - **Before Structural Change:**
+     ```java
+     class LibraryService {
+         public void checkoutBook(Book book, Patron patron) { ... }
+         public void returnBook(Book book, Patron patron) { ... }
+         public void addBook(Book book) { ... }
+         public void registerPatron(Patron patron) { ... }
+         // many other methods...
+     }
+     ```
+     Here, the `LibraryService` class has too many responsibilities, mixing book operations with patron operations and handling various tasks without clear separation.
+
+   - **After Structural Change:**
+     ```java
+     class BookService {
+         public void addBook(Book book) { ... }
+         public void updateBookDetails(Book book) { ... }
+     }
+
+     class PatronService {
+         public void registerPatron(Patron patron) { ... }
+     }
+
+     class LoanService {
+         public void checkoutBook(Book book, Patron patron) { ... }
+         public void returnBook(Book book, Patron patron) { ... }
+     }
+     ```
+     By breaking down responsibilities into separate services (`BookService`, `PatronService`, and `LoanService`), you increase modularity and separation of concerns. Each service now has a clear, cohesive role, making it easier to extend and maintain.
+
+### Behavioral Changes in Code Design
+
+**1. Understanding Behavior:**
+   Behavior defines how the system reacts to inputs, performs computations, or interacts with external systems. A behavioral change might involve the flow of logic within a function, the way data is processed, or how dependencies interact during runtime.
+
+**2. Steps to Approach Behavioral Design:**
+   - **Start with Use Cases:** Define the behaviors required by understanding user stories or business requirements. Identify the inputs, expected outcomes, and interactions with other systems.
+   - **Design for Flexibility:** Avoid rigid if-else structures or hard-coded values that make behavior difficult to adjust. Instead, use strategy patterns, state machines, or event-driven designs to make behavior adaptable.
+   - **Encapsulate Business Logic in Functions or Classes:** Keep logic close to the data it operates on, ensuring behaviors are encapsulated within relevant entities or service classes.
+   - **Use Domain Events and Observers:** In complex systems, behavioral changes often involve multiple subsystems. Event-driven approaches, like publishing domain events, help keep the code clean and decoupled.
+
+**3. Behavioral Design Example:**
+   Continuing with the library system, let’s design behavior for checking out a book with validation rules (e.g., "A patron can have only 5 books checked out at a time").
+
+   - **Before Behavioral Change:**
+     ```java
+     public void checkoutBook(Book book, Patron patron) {
+         if (patron.getCheckedOutBooks().size() < 5) {
+             patron.addBook(book);
+             System.out.println("Book checked out.");
+         } else {
+             System.out.println("Checkout limit reached.");
+         }
+     }
+     ```
+     This code lacks flexibility. If we later add more validation rules (e.g., overdue fines), this function becomes cluttered with conditional logic.
+
+   - **After Behavioral Change:**
+     Using the **Strategy Pattern** to encapsulate checkout rules.
+     ```java
+     interface CheckoutRule {
+         boolean canCheckout(Patron patron);
+     }
+
+     class MaxBooksRule implements CheckoutRule {
+         @Override
+         public boolean canCheckout(Patron patron) {
+             return patron.getCheckedOutBooks().size() < 5;
+         }
+     }
+
+     class NoOverdueFinesRule implements CheckoutRule {
+         @Override
+         public boolean canCheckout(Patron patron) {
+             return !patron.hasOverdueFines();
+         }
+     }
+
+     class LoanService {
+         private List<CheckoutRule> rules = List.of(new MaxBooksRule(), new NoOverdueFinesRule());
+
+         public void checkoutBook(Book book, Patron patron) {
+             for (CheckoutRule rule : rules) {
+                 if (!rule.canCheckout(patron)) {
+                     System.out.println("Checkout not allowed due to rule: " + rule.getClass().getSimpleName());
+                     return;
+                 }
+             }
+             patron.addBook(book);
+             System.out.println("Book checked out.");
+         }
+     }
+     ```
+     With this refactored design, you can easily add new rules without changing the existing logic in `LoanService`. Each rule has a single responsibility and can be reused or modified independently.
+
+### Combining Structure and Behavior
+
+1. **Define Use Cases and Boundaries Together:** Start by understanding the primary use cases and map out structural boundaries around them. For instance, in a library system, defining which behaviors (`checkout`, `return`, `reserve`) belong within each module helps clarify structural boundaries.
+2. **Apply Design Patterns to Support Both Aspects:** Structural patterns (like **Repository** or **Factory**) define module relationships, while behavioral patterns (like **Strategy** or **Observer**) help encapsulate behavior within structures.
+3. **Use Domain-Driven Design (DDD):** In DDD, both structure and behavior align around domains (e.g., `Library`, `Patron`, `Book`), where each domain encapsulates its structure (entities, repositories) and behavior (domain logic, events). This approach encourages cohesive boundaries and behavior tied to each domain concept.
+
+### Example of Combining Structure and Behavior
+
+Consider a **Loan** aggregate that handles both structural and behavioral needs.
+
+```java
+@Entity
+public class Loan extends AbstractAggregateRoot<Loan> {
+    @Id
+    private UUID id;
+
+    @ManyToOne
+    private Book book;
+
+    @ManyToOne
+    private Patron patron;
+
+    private LocalDate dateOfLoan;
+    private LoanStatus status;
+
+    // Structural methods (setters, getters, associations)
+
+    public Loan checkout(LocalDate checkoutDate) {
+        this.dateOfLoan = checkoutDate;
+        this.status = LoanStatus.ACTIVE;
+        registerEvent(new LoanCheckedOutEvent(this.id));
+        return this;
+    }
+
+    public Loan returnLoan(LocalDate returnDate) {
+        this.status = LoanStatus.RETURNED;
+        registerEvent(new LoanReturnedEvent(this.id));
+        return this;
+    }
+
+    public boolean isEligibleForCheckout(Patron patron) {
+        // Behavior validation logic
+        return patron.isEligible();
+    }
+}
+```
+
+Here:
+- **Structure** is maintained with fields, associations, and encapsulated behavior (`checkout` and `returnLoan`) for clarity.
+- **Behavior** is flexible with business rules like `isEligibleForCheckout` and domain events registered for specific behaviors (checkout, return).
+
+This approach makes the code flexible, modular, and easy to maintain, with each class clearly organized around both structural roles and behavioral responsibilities.
