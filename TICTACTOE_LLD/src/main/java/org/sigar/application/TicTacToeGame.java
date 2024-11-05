@@ -1,88 +1,83 @@
 package org.sigar.application;
 
 import lombok.Getter;
-import org.sigar.Board;
+import org.sigar.board.Board;
 import org.sigar.Pieces.Piece;
 import org.sigar.Pieces.PieceO;
 import org.sigar.Pieces.PieceX;
 import org.sigar.Player;
+import org.sigar.input.InputHandler;
 
 import java.util.*;
 @Getter
 public class TicTacToeGame {
-    private Board gameBoard;
+    private Board board;
     private List<Player> players;
+    private InputHandler inputHandler;
 
-    public void initGame(Scanner scanner){
+    public void initGame(){
         players = new ArrayList<>();
-        int size = requestBoardSize(scanner);
-        gameBoard = new Board(size);
-        players.add(createPlayer(scanner, "Enter player1 name: ", new PieceX()));
-        players.add(createPlayer(scanner, "Enter player2 name: ", new PieceO()));
-
+        inputHandler = new InputHandler(new Scanner(System.in));
+        int size = inputHandler.requestInt("Enter Board Size[3-10]",3,10);
+        board = new Board(size);
+        addPlayers();
     }
-    private int requestBoardSize(Scanner scanner){
-        System.out.println("Enter Board Size[3-10]");
-        int size = 0;
-        while (scanner.hasNext()) {
-            if (scanner.hasNextInt()) {
-                size = scanner.nextInt();
-                if (size >= 3 && size <= 10) {
-                    break; // Valid input, exit outer loop
-                } else {
-                    System.out.println("Invalid input. Please enter Board size between 3 and 10.");
-                }
-            } else {
-                scanner.next(); // Consume invalid non-integer input
-                System.out.println("Invalid input. Please enter a number.");
-            }
-        }
-        return size;
+    private void addPlayers(){
+        players.add(createPlayer("Enter player1 name: ", new PieceX()));
+        players.add(createPlayer("Enter player2 name: ", new PieceO()));
     }
-    private Player createPlayer(Scanner scanner, String prompt, Piece piece){
-        System.out.println(prompt);
-        String playerName = scanner.next().trim();
+    private Player createPlayer( String prompt, Piece piece){
+       String playerName = inputHandler.requestString(prompt);
         return new Player(playerName,piece);
     }
 
-    public void startGame(Scanner scanner){
+    public void startGame(){
         Deque<Player> turnQueue = new ArrayDeque<>(players);
-        int size = gameBoard.getSize();
+        int size = board.getSize();
         while (true) {
-            gameBoard.drawBoard();
+            board.drawBoard();
             Player currPlayer = turnQueue.removeFirst();
             System.out.println(currPlayer.getName() + "'s turn");
-            System.out.println("enter row,column to place Piece. Valid values for row,col are between 1-" + size);
-            String input="";
-            while (true) {
-                input = scanner.nextLine().trim();
-                if (input.matches("\\d+,\\d+")) {  // Check if input is in the correct format (e.g., "2,3")
-                    break;
-                } else {
-                    System.out.println("Invalid input. Please enter in the format row,column (e.g., 1,2).");
-                }
-            }
-
+            String prompt = "enter row,column to place Piece";
+            String input = inputHandler.requestCoordinates(prompt,size);
             String[] rowColVals = input.split(",");
             int row = Integer.parseInt(rowColVals[0]) - 1;
             int col = Integer.parseInt(rowColVals[1]) - 1;
-            if(!gameBoard.placePiece(row,col,currPlayer.getPiece())){
+            if(!board.placePiece(row,col,currPlayer.getPiece())){
                 System.out.println("Invalid or already full place");
                 turnQueue.addFirst(currPlayer);
                 continue;
             }
-            if(gameBoard.checkRowMatch(row) || gameBoard.checkColumnMatch(col) || gameBoard.checkDiagonalMatch(row,col)){
+            if(board.checkRowMatch(row) || board.checkColumnMatch(col) || board.checkDiagonalMatch(row,col)){
                 System.out.println(currPlayer.getName() + " Wins");
                 System.out.println("Game Over");
-                return;
+                break;
             }
 
-            if(gameBoard.isBoardFull()) {
+            if(board.isFull()) {
                 System.out.println("Game Tied");
-                return;
+                break;
             }
             turnQueue.addLast(currPlayer);
         }
-
+        inputHandler.close();
     }
 }
+//private int requestBoardSize(Scanner scanner){
+//        System.out.println("Enter Board Size[3-10]");
+//        int size = 0;
+//        while (scanner.hasNext()) {
+//            if (scanner.hasNextInt()) {
+//                size = scanner.nextInt();
+//                if (size >= 3 && size <= 10) {
+//                    break; // Valid input, exit outer loop
+//                } else {
+//                    System.out.println("Invalid input. Please enter Board size between 3 and 10.");
+//                }
+//            } else {
+//                scanner.next(); // Consume invalid non-integer input
+//                System.out.println("Invalid input. Please enter a number.");
+//            }
+//        }
+//        return size;
+//    }

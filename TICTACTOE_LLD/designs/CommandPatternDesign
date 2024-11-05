@@ -1,0 +1,182 @@
+Here's a refined version of the code with added patterns, error handling, and use of the latest Java features (such as Optional, Streams, and Functional Interfaces). This version also incorporates a Command Pattern to handle moves, separating concerns more clearly and making it easier to extend with additional functionalities or commands.
+
+TicTacToeGame Class
+We apply Dependency Injection via constructor for better testability, add improved error handling, and simplify the board size prompt using Optional.
+
+java
+Copy code
+@Getter
+public class TicTacToeGame {
+
+    private final Board board;
+    private final List<Player> players = new ArrayList<>();
+
+    public TicTacToeGame(Board board) {
+        this.board = board;
+    }
+
+    public void initGame(Scanner scanner) {
+        int size = requestBoardSize(scanner);
+        board.initBoard(size);
+
+        players.add(createPlayer(scanner, "Enter player 1 name: ", new PieceX()));
+        players.add(createPlayer(scanner, "Enter player 2 name: ", new PieceO()));
+    }
+
+    private int requestBoardSize(Scanner scanner) {
+        System.out.println("Enter Board Size [3-10]: ");
+        return Optional.ofNullable(scanner.nextLine())
+                .map(String::trim)
+                .filter(input -> input.matches("[3-9]|10"))
+                .map(Integer::parseInt)
+                .orElseGet(() -> {
+                    System.out.println("Invalid input. Defaulting to size 3.");
+                    return 3;
+                });
+    }
+
+    private Player createPlayer(Scanner scanner, String prompt, Piece piece) {
+        System.out.println(prompt);
+        String playerName = scanner.nextLine().trim();
+        return new Player(playerName, piece);
+    }
+
+    public void startGame(Scanner scanner) {
+        Deque<Player> turnQueue = new ArrayDeque<>(players);
+
+        while (true) {
+            board.drawBoard();
+            Player currPlayer = turnQueue.pollFirst();
+            System.out.printf("%s's turn\n", currPlayer.getName());
+
+            MoveCommand move = new MoveCommand(currPlayer, board);
+            if (!move.execute(scanner)) {
+                System.out.println("Invalid or already full place");
+                turnQueue.addFirst(currPlayer);
+                continue;
+            }
+
+            if (move.isWinningMove()) {
+                System.out.printf("%s Wins! Game Over.\n", currPlayer.getName());
+                break;
+            }
+
+            if (board.isFull()) {
+                System.out.println("Game Tied");
+                break;
+            }
+
+            turnQueue.addLast(currPlayer);
+        }
+    }
+}
+MoveCommand Class
+The Command Pattern is applied here, encapsulating the logic of each move.
+
+java
+Copy code
+public class MoveCommand {
+    private final Player player;
+    private final Board board;
+
+    public MoveCommand(Player player, Board board) {
+        this.player = player;
+        this.board = board;
+    }
+
+    public boolean execute(Scanner scanner) {
+        int[] rowCol = requestCoordinates(scanner, board.getSize());
+        return board.placePiece(rowCol[0], rowCol[1], player.getPiece());
+    }
+
+    public boolean isWinningMove() {
+        return board.checkWinConditions();
+    }
+
+    private int[] requestCoordinates(Scanner scanner, int size) {
+        System.out.printf("Enter row,column (1-%d):\n", size);
+        return Optional.ofNullable(scanner.nextLine().trim())
+                .filter(input -> input.matches("\\d+,\\d+"))
+                .map(input -> input.split(","))
+                .map(coords -> new int[]{Integer.parseInt(coords[0]) - 1, Integer.parseInt(coords[1]) - 1})
+                .orElseGet(() -> {
+                    System.out.println("Invalid input. Defaulting to row 1, column 1.");
+                    return new int[]{0, 0};
+                });
+    }
+}
+Board Class
+The board class now includes an improved checkWinConditions method that consolidates the win-checking logic for readability and maintainability.
+
+java
+Copy code
+@Getter
+public class Board {
+
+    private int size;
+    private Piece[][] grid;
+
+    public void initBoard(int size) {
+        this.size = size;
+        this.grid = new Piece[size][size];
+    }
+
+    public void drawBoard() {
+        System.out.println();
+        IntStream.range(0, size).forEach(row -> {
+            IntStream.range(0, size).forEach(col -> {
+                String pieceVal = grid[row][col] != null ? String.valueOf(grid[row][col].getPieceType()) : " ";
+                System.out.print(pieceVal + (col == size - 1 ? "\n" : " | "));
+            });
+        });
+    }
+
+    public boolean placePiece(int row, int col, Piece piece) {
+        if (isOutOfBounds(row, col) || grid[row][col] != null) {
+            return false;
+        }
+        grid[row][col] = piece;
+        return true;
+    }
+
+    public boolean isFull() {
+        return Arrays.stream(grid).flatMap(Arrays::stream).allMatch(Objects::nonNull);
+    }
+
+    public boolean checkWinConditions() {
+        return IntStream.range(0, size)
+                .anyMatch(i -> checkRowMatch(i) || checkColumnMatch(i)) ||
+                checkMainDiagonalMatch() || checkAntiDiagonalMatch();
+    }
+
+    private boolean isOutOfBounds(int row, int col) {
+        return row < 0 || row >= size || col < 0 || col >= size;
+    }
+
+    private boolean checkRowMatch(int row) {
+        PieceType type = grid[row][0].getPieceType();
+        return Arrays.stream(grid[row]).allMatch(p -> p != null && p.getPieceType() == type);
+    }
+
+    private boolean checkColumnMatch(int col) {
+        PieceType type = grid[0][col].getPieceType();
+        return IntStream.range(0, size).allMatch(row -> grid[row][col] != null && grid[row][col].getPieceType() == type);
+    }
+
+    private boolean checkMainDiagonalMatch() {
+        PieceType type = grid[0][0].getPieceType();
+        return IntStream.range(0, size).allMatch(i -> grid[i][i] != null && grid[i][i].getPieceType() == type);
+    }
+
+    private boolean checkAntiDiagonalMatch() {
+        PieceType type = grid[0][size - 1].getPieceType();
+        return IntStream.range(0, size).allMatch(i -> grid[i][size - i - 1] != null && grid[i][size - i - 1].getPieceType() == type);
+    }
+}
+Design Patterns and Architectural Improvements
+Command Pattern: MoveCommand encapsulates each move's logic, making it easy to add or modify move-related operations.
+Builder Pattern (could be added for constructing Player and Board objects in complex games).
+Dependency Injection: Constructor-based dependency injection allows the game to be more testable and maintainable.
+Error Handling: Optional and Streams with orElseGet provide robust defaults and handle errors gracefully, avoiding complex nested if statements.
+Layered Architecture: The board, player, and move functionalities are separate, creating a flexible, maintainable structure that allows for easy testing and potential scaling.
+This setup provides a modular and scalable Tic-Tac-Toe game with enhanced clarity, maintainability, and a strong foundation for extending functionality.

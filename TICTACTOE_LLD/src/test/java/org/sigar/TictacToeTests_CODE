@@ -1,0 +1,217 @@
+Here's the refactored `TicTacToeGame` class with improved naming, modern Java practices, and test cases.
+
+### Refactored Code
+
+```java
+package org.sigar.application;
+
+import lombok.Getter;
+import org.sigar.board.Board;
+import org.sigar.pieces.Piece;
+import org.sigar.pieces.PieceO;
+import org.sigar.pieces.PieceX;
+import org.sigar.Player;
+
+import java.util.*;
+
+@Getter
+public class TicTacToeGame {
+
+    private Board board;
+    private List<Player> players;
+
+    public void initializeGame(Scanner scanner) {
+        players = new ArrayList<>();
+        int boardSize = promptForBoardSize(scanner);
+        board = new Board(boardSize);
+
+        players.add(promptForPlayer(scanner, "Enter player 1 name: ", new PieceX()));
+        players.add(promptForPlayer(scanner, "Enter player 2 name: ", new PieceO()));
+    }
+
+    private int promptForBoardSize(Scanner scanner) {
+        System.out.println("Enter board size [3-10]:");
+        while (true) {
+            if (scanner.hasNextInt()) {
+                int size = scanner.nextInt();
+                if (size >= 3 && size <= 10) return size;
+                System.out.println("Invalid input. Please enter a board size between 3 and 10.");
+            } else {
+                scanner.next(); // Consume invalid non-integer input
+                System.out.println("Invalid input. Please enter a number.");
+            }
+        }
+    }
+
+    private Player promptForPlayer(Scanner scanner, String prompt, Piece piece) {
+        System.out.print(prompt);
+        String playerName = scanner.next().trim();
+        return new Player(playerName, piece);
+    }
+
+    public void playGame(Scanner scanner) {
+        Deque<Player> turnQueue = new ArrayDeque<>(players);
+        int boardSize = board.getBoardSize();
+
+        while (true) {
+            board.render();
+            Player currentPlayer = turnQueue.poll();
+            System.out.printf("%s's turn. Enter row,column to place piece (values between 1-%d):%n", currentPlayer.getName(), boardSize);
+
+            int[] position = promptForPosition(scanner, boardSize);
+            if (position == null || !board.placePiece(position[0], position[1], currentPlayer.getPiece())) {
+                System.out.println("Invalid position or cell already occupied.");
+                turnQueue.addFirst(currentPlayer); // Retry for the same player
+                continue;
+            }
+
+            if (board.hasRowMatch(position[0]) || board.hasColumnMatch(position[1]) || board.hasDiagonalMatch(position[0], position[1])) {
+                board.render();
+                System.out.printf("%s wins! Game Over.%n", currentPlayer.getName());
+                return;
+            }
+
+            if (board.isFull()) {
+                board.render();
+                System.out.println("Game tied. No more moves possible.");
+                return;
+            }
+            turnQueue.addLast(currentPlayer); // Proceed to next player's turn
+        }
+    }
+
+    private int[] promptForPosition(Scanner scanner, int boardSize) {
+        while (true) {
+            String input = scanner.nextLine().trim();
+            if (input.matches("\\d+,\\d+")) {
+                String[] parts = input.split(",");
+                int row = Integer.parseInt(parts[0]) - 1;
+                int col = Integer.parseInt(parts[1]) - 1;
+                if (row >= 0 && row < boardSize && col >= 0 && col < boardSize) {
+                    return new int[]{row, col};
+                }
+            }
+            System.out.printf("Invalid input. Enter row,column (values between 1 and %d).%n", boardSize);
+        }
+    }
+}
+```
+
+### Explanation of Changes
+1. **Improved Naming**: Renamed methods for clarity:
+   - `initializeGame` (was `initGame`), `promptForBoardSize` (was `requestBoardSize`), `promptForPlayer` (was `createPlayer`), `playGame` (was `startGame`), `promptForPosition`.
+2. **Code Structure**: Used helper methods (`promptForPosition`) to handle user input and validation.
+3. **Formatting and Output**: Used `printf` for formatting console output and added clearer messages.
+4. **Loop and Condition Simplification**: Simplified conditions and loops for readability.
+
+### JUnit Test Cases
+
+Here are JUnit test cases for the `TicTacToeGame` class. These tests use mocks for `Scanner` input to simulate user interactions.
+
+```java
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import java.util.Scanner;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class TicTacToeGameTest {
+
+    private TicTacToeGame game;
+    private Scanner scannerMock;
+
+    @BeforeEach
+    void setup() {
+        game = new TicTacToeGame();
+        scannerMock = Mockito.mock(Scanner.class);
+    }
+
+    @Test
+    void testInitializeGame() {
+        when(scannerMock.nextInt()).thenReturn(3); // Board size
+        when(scannerMock.next()).thenReturn("Alice", "Bob");
+
+        game.initializeGame(scannerMock);
+
+        assertNotNull(game.getBoard());
+        assertEquals(2, game.getPlayers().size());
+        assertEquals("Alice", game.getPlayers().get(0).getName());
+        assertEquals("Bob", game.getPlayers().get(1).getName());
+    }
+
+    @Test
+    void testPromptForBoardSize_ValidSize() {
+        when(scannerMock.nextInt()).thenReturn(4);
+        int boardSize = game.promptForBoardSize(scannerMock);
+        assertEquals(4, boardSize);
+    }
+
+    @Test
+    void testPromptForBoardSize_InvalidSize() {
+        when(scannerMock.nextInt()).thenReturn(2, 5); // Invalid then valid
+        int boardSize = game.promptForBoardSize(scannerMock);
+        assertEquals(5, boardSize);
+    }
+
+    @Test
+    void testPromptForPosition_ValidInput() {
+        when(scannerMock.nextLine()).thenReturn("1,2");
+        int[] position = game.promptForPosition(scannerMock, 3);
+        assertArrayEquals(new int[]{0, 1}, position);
+    }
+
+    @Test
+    void testPromptForPosition_InvalidThenValidInput() {
+        when(scannerMock.nextLine()).thenReturn("invalid", "2,3");
+        int[] position = game.promptForPosition(scannerMock, 3);
+        assertArrayEquals(new int[]{1, 2}, position);
+    }
+
+    @Test
+    void testPlayGame_PlayerWins() {
+        Board boardMock = Mockito.mock(Board.class);
+        game = new TicTacToeGame();
+        game.setBoard(boardMock);
+        game.setPlayers(List.of(new Player("Alice", new PieceX()), new Player("Bob", new PieceO())));
+
+        when(boardMock.getBoardSize()).thenReturn(3);
+        when(scannerMock.nextLine()).thenReturn("1,1", "2,2", "1,2", "2,1", "1,3");
+        when(boardMock.placePiece(anyInt(), anyInt(), any())).thenReturn(true);
+        when(boardMock.hasRowMatch(anyInt())).thenReturn(false);
+        when(boardMock.hasColumnMatch(anyInt())).thenReturn(false);
+        when(boardMock.hasDiagonalMatch(anyInt(), anyInt())).thenReturn(true); // Simulate a win on last move
+
+        game.playGame(scannerMock);
+
+        verify(boardMock, atLeast(5)).placePiece(anyInt(), anyInt(), any());
+        verify(boardMock, times(1)).render();
+    }
+
+    @Test
+    void testPlayGame_Tie() {
+        Board boardMock = Mockito.mock(Board.class);
+        game = new TicTacToeGame();
+        game.setBoard(boardMock);
+        game.setPlayers(List.of(new Player("Alice", new PieceX()), new Player("Bob", new PieceO())));
+
+        when(boardMock.getBoardSize()).thenReturn(3);
+        when(scannerMock.nextLine()).thenReturn("1,1", "1,2", "1,3", "2,1", "2,2", "2,3", "3,1", "3,2", "3,3");
+        when(boardMock.placePiece(anyInt(), anyInt(), any())).thenReturn(true);
+        when(boardMock.hasRowMatch(anyInt())).thenReturn(false);
+        when(boardMock.hasColumnMatch(anyInt())).thenReturn(false);
+        when(boardMock.hasDiagonalMatch(anyInt(), anyInt())).thenReturn(false);
+        when(boardMock.isFull()).thenReturn(true); // Simulate a tie
+
+        game.playGame(scannerMock);
+
+        verify(boardMock, times(9)).placePiece(anyInt(), anyInt(), any());
+        verify(boardMock, times(1)).render();
+    }
+}
+```
+
+### Notes
+- **Mocking**: Used `Mockito` to simulate `Scanner` inputs and `Board` behavior, making the tests independent of actual user input and board implementation.
+- **Test Cases**: Each test covers different game scenarios, including board initialization, prompt validation, winning, and tie conditions.
+- **Assertions**: Verifications and assertions validate expected behavior at each game stage.

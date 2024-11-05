@@ -1,0 +1,148 @@
+Yes, removing the `Scanner` parameter from method signatures is possible. To achieve this, we can move the `Scanner` instance into a dedicated `InputHandler` class or as a private instance field within the `TicTacToeGame` class. This approach encapsulates input handling, keeping methods cleaner and more flexible if you decide to change the input source later.
+
+Here's how you can update the code by introducing an `InputHandler` class and initializing `Scanner` once within the `TicTacToeGame` class.
+
+### InputHandler Class
+
+The `InputHandler` class encapsulates all interactions with the `Scanner`, providing methods for specific input types.
+
+```java
+public class InputHandler {
+
+    private final Scanner scanner = new Scanner(System.in);
+
+    public String requestString(String prompt) {
+        System.out.println(prompt);
+        return scanner.nextLine().trim();
+    }
+
+    public int requestInt(String prompt, int min, int max) {
+        int value;
+        while (true) {
+            System.out.println(prompt);
+            String input = scanner.nextLine().trim();
+            try {
+                value = Integer.parseInt(input);
+                if (value >= min && value <= max) break;
+                System.out.printf("Please enter a number between %d and %d.%n", min, max);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a number.");
+            }
+        }
+        return value;
+    }
+
+    public String requestCoordinates(String prompt, int size) {
+        System.out.printf(prompt + " (Valid values for row,col are between 1-%d):%n", size);
+        while (true) {
+            String input = scanner.nextLine().trim();
+            if (input.matches("\\d+,\\d+")) {
+                return input;
+            }
+            System.out.println("Invalid format. Enter as row,column (e.g., 1,2).");
+        }
+    }
+
+    public void close() {
+        scanner.close();
+    }
+}
+```
+
+### Updated TicTacToeGame Class
+
+Now, the `TicTacToeGame` class has a private instance of `InputHandler` for handling user input. This refactoring removes `Scanner` from method signatures.
+
+```java
+@Getter
+public class TicTacToeGame {
+
+    private final Board board;
+    private final List<Player> players = new ArrayList<>();
+    private final InputHandler inputHandler = new InputHandler();
+
+    public TicTacToeGame(Board board) {
+        this.board = board;
+    }
+
+    public void initGame() {
+        int size = inputHandler.requestInt("Enter Board Size [3-10]: ", 3, 10);
+        board.initBoard(size);
+
+        players.add(createPlayer("Enter player 1 name: ", new PieceX()));
+        players.add(createPlayer("Enter player 2 name: ", new PieceO()));
+    }
+
+    private Player createPlayer(String prompt, Piece piece) {
+        String playerName = inputHandler.requestString(prompt);
+        return new Player(playerName, piece);
+    }
+
+    public void startGame() {
+        Deque<Player> turnQueue = new ArrayDeque<>(players);
+
+        while (true) {
+            board.drawBoard();
+            Player currPlayer = turnQueue.pollFirst();
+            System.out.printf("%s's turn\n", currPlayer.getName());
+
+            MoveCommand move = new MoveCommand(currPlayer, board, inputHandler);
+            if (!move.execute()) {
+                System.out.println("Invalid or already full place");
+                turnQueue.addFirst(currPlayer);
+                continue;
+            }
+
+            if (move.isWinningMove()) {
+                System.out.printf("%s Wins! Game Over.\n", currPlayer.getName());
+                break;
+            }
+
+            if (board.isFull()) {
+                System.out.println("Game Tied");
+                break;
+            }
+
+            turnQueue.addLast(currPlayer);
+        }
+
+        inputHandler.close();
+    }
+}
+```
+
+### Updated MoveCommand Class
+
+The `MoveCommand` class now uses `InputHandler` instead of `Scanner`, which keeps input handling encapsulated.
+
+```java
+public class MoveCommand {
+
+    private final Player player;
+    private final Board board;
+    private final InputHandler inputHandler;
+
+    public MoveCommand(Player player, Board board, InputHandler inputHandler) {
+        this.player = player;
+        this.board = board;
+        this.inputHandler = inputHandler;
+    }
+
+    public boolean execute() {
+        String[] rowCol = inputHandler.requestCoordinates("Enter row,column", board.getSize()).split(",");
+        int row = Integer.parseInt(rowCol[0]) - 1;
+        int col = Integer.parseInt(rowCol[1]) - 1;
+        return board.placePiece(row, col, player.getPiece());
+    }
+
+    public boolean isWinningMove() {
+        return board.checkWinConditions();
+    }
+}
+```
+
+### Explanation
+
+1. **Encapsulation**: `InputHandler` encapsulates all input handling, allowing flexibility if you want to switch from console input to another source (e.g., GUI or file).
+2. **Separation of Concerns**: Each class now focuses on a single responsibility—`TicTacToeGame` for game flow, `Board` for board operations, and `InputHandler` for input.
+3. **Method Signatures**: Removing `Scanner` from method signatures results in a cleaner interface and better reusability.

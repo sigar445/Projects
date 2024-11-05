@@ -1,12 +1,11 @@
-package org.sigar;
+package org.sigar.board;
 
 
 import lombok.Getter;
+import lombok.Setter;
 import org.sigar.Pieces.Piece;
-import org.sigar.Pieces.PieceO;
 import org.sigar.Pieces.PieceType;
 
-import java.util.Arrays;
 import java.util.stream.IntStream;
 
 @Getter
@@ -41,7 +40,7 @@ public class Board {
         return true;
     }
 
-    public boolean isBoardFull(){
+    public boolean isFull(){
         return IntStream.range(0,size)
                 .allMatch(row -> IntStream.range(0,size)
                         .allMatch(col -> grid[row][col] != null));
@@ -51,7 +50,7 @@ public class Board {
         Board board = new Board(4);
         board.grid[2][2] = null;
         board.drawBoard();
-        System.out.println(board.isBoardFull());
+        System.out.println(board.isFull());
     }
     public boolean checkRowMatch(int row){
         if(grid[row][0] != null){

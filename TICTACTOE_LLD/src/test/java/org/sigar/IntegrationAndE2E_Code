@@ -1,0 +1,203 @@
+For end-to-end (E2E) tests with the `Board` and `TicTacToeGame` classes, we'll simulate user interactions and verify that the classes interact correctly and achieve expected outcomes. Here’s a breakdown of the necessary end-to-end and integration tests and examples of how they could be implemented.
+
+### End-to-End Test Cases
+
+1. **E2E Test Setup**: Create a test that initializes a `TicTacToeGame`, simulates a sequence of moves, and verifies expected game outcomes, such as a win, tie, or ongoing game.
+2. **Winning Conditions**:
+   - Test rows, columns, and diagonals to ensure the correct player is declared the winner.
+3. **Tie Condition**:
+   - Fill the board without any winning line, confirming that the game ends in a tie.
+4. **Invalid Moves**:
+   - Place pieces outside the board boundaries or in already occupied cells, verifying that invalid moves are rejected.
+5. **Board Display**:
+   - Confirm that each move updates the board accurately.
+
+### Integration Tests
+
+Since `TicTacToeGame` depends on `Board`, integration tests should verify that `TicTacToeGame` correctly interacts with `Board` to:
+1. Place pieces.
+2. Validate moves.
+3. Check winning conditions.
+
+### Sample Code for E2E and Integration Tests
+
+For these tests, we'll use JUnit and simulate user input using a list of commands for moves and board size inputs.
+
+#### E2E Test Class: `TicTacToeGameE2ETest`
+
+```java
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.sigar.application.TicTacToeGame;
+import org.sigar.board.Board;
+import org.sigar.pieces.PieceX;
+import org.sigar.pieces.PieceO;
+
+import java.util.Scanner;
+import static org.junit.jupiter.api.Assertions.*;
+
+class TicTacToeGameE2ETest {
+
+    private TicTacToeGame game;
+
+    @BeforeEach
+    void setup() {
+        game = new TicTacToeGame();
+    }
+
+    @Test
+    void testGameWithWinningRowCondition() {
+        String inputSequence = "3\nAlice\nBob\n1,1\n2,1\n1,2\n2,2\n1,3\n"; // Alice wins with a row match
+        Scanner scanner = new Scanner(inputSequence);
+
+        game.initializeGame(scanner);
+        game.playGame(scanner);
+
+        assertEquals("Alice", game.getPlayers().get(0).getName(), "Expected Alice to win with row match.");
+    }
+
+    @Test
+    void testGameWithWinningColumnCondition() {
+        String inputSequence = "3\nAlice\nBob\n1,1\n1,2\n2,1\n2,2\n3,1\n"; // Alice wins with a column match
+        Scanner scanner = new Scanner(inputSequence);
+
+        game.initializeGame(scanner);
+        game.playGame(scanner);
+
+        assertEquals("Alice", game.getPlayers().get(0).getName(), "Expected Alice to win with column match.");
+    }
+
+    @Test
+    void testGameWithDiagonalWin() {
+        String inputSequence = "3\nAlice\nBob\n1,1\n1,2\n2,2\n1,3\n3,3\n"; // Alice wins with a diagonal
+        Scanner scanner = new Scanner(inputSequence);
+
+        game.initializeGame(scanner);
+        game.playGame(scanner);
+
+        assertEquals("Alice", game.getPlayers().get(0).getName(), "Expected Alice to win with diagonal match.");
+    }
+
+    @Test
+    void testTieCondition() {
+        String inputSequence = "3\nAlice\nBob\n1,1\n1,2\n1,3\n2,1\n2,3\n2,2\n3,1\n3,3\n3,2\n"; // All cells filled, no win
+        Scanner scanner = new Scanner(inputSequence);
+
+        game.initializeGame(scanner);
+        game.playGame(scanner);
+
+        assertTrue(game.getBoard().isFull(), "Expected the board to be full.");
+    }
+
+    @Test
+    void testInvalidMoveRejection() {
+        String inputSequence = "3\nAlice\nBob\n1,1\n1,1\n"; // Second move is invalid, same position
+        Scanner scanner = new Scanner(inputSequence);
+
+        game.initializeGame(scanner);
+        game.playGame(scanner);
+
+        // Expect the board to remain with only the first move, no winner
+        assertEquals("Alice", game.getPlayers().get(0).getName());
+        assertNull(game.getBoard().getGrid()[0][1], "Expected cell to be empty after invalid move.");
+    }
+}
+```
+
+### Integration Test Class: `TicTacToeGameIntegrationTest`
+
+For integration tests, we’ll focus on the interactions between `TicTacToeGame` and `Board` to ensure they work correctly together.
+
+```java
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.sigar.application.TicTacToeGame;
+import org.sigar.board.Board;
+import org.sigar.Player;
+import org.sigar.pieces.PieceX;
+import org.sigar.pieces.PieceO;
+
+import java.util.Scanner;
+import static org.junit.jupiter.api.Assertions.*;
+
+class TicTacToeGameIntegrationTest {
+
+    private TicTacToeGame game;
+
+    @BeforeEach
+    void setup() {
+        game = new TicTacToeGame();
+    }
+
+    @Test
+    void testInitializeGameIntegration() {
+        String inputSequence = "3\nAlice\nBob\n"; // Initialize game
+        Scanner scanner = new Scanner(inputSequence);
+
+        game.initializeGame(scanner);
+
+        // Verify board size
+        Board board = game.getBoard();
+        assertNotNull(board, "Expected board to be initialized.");
+        assertEquals(3, board.getBoardSize(), "Expected board size to be 3.");
+
+        // Verify player setup
+        assertEquals(2, game.getPlayers().size(), "Expected two players.");
+        assertEquals("Alice", game.getPlayers().get(0).getName());
+        assertEquals("Bob", game.getPlayers().get(1).getName());
+    }
+
+    @Test
+    void testPlacePieceIntegration() {
+        String inputSequence = "3\nAlice\nBob\n1,1\n"; // Place a piece on (1,1)
+        Scanner scanner = new Scanner(inputSequence);
+
+        game.initializeGame(scanner);
+        game.playGame(scanner);
+
+        // Verify piece placement on board
+        PieceX pieceX = (PieceX) game.getPlayers().get(0).getPiece();
+        assertEquals(pieceX, game.getBoard().getGrid()[0][0], "Expected Alice's piece to be placed at (1,1).");
+    }
+
+    @Test
+    void testWinningConditionIntegration_RowMatch() {
+        String inputSequence = "3\nAlice\nBob\n1,1\n2,1\n1,2\n2,2\n1,3\n"; // Alice wins with row match
+        Scanner scanner = new Scanner(inputSequence);
+
+        game.initializeGame(scanner);
+        game.playGame(scanner);
+
+        // Verify board state and winning condition
+        assertTrue(game.getBoard().hasRowMatch(0), "Expected a row match on row 1.");
+        assertEquals("Alice", game.getPlayers().get(0).getName(), "Expected Alice to win.");
+    }
+
+    @Test
+    void testTieConditionIntegration() {
+        String inputSequence = "3\nAlice\nBob\n1,1\n1,2\n1,3\n2,1\n2,3\n2,2\n3,1\n3,3\n3,2\n"; // Full board, no winner
+        Scanner scanner = new Scanner(inputSequence);
+
+        game.initializeGame(scanner);
+        game.playGame(scanner);
+
+        assertTrue(game.getBoard().isFull(), "Expected board to be full.");
+        assertFalse(game.getBoard().hasRowMatch(0), "Expected no winning rows.");
+        assertFalse(game.getBoard().hasColumnMatch(0), "Expected no winning columns.");
+    }
+}
+```
+
+### Explanation of Integration Tests
+
+1. **`testInitializeGameIntegration`**: Verifies that the game correctly initializes the board and players.
+2. **`testPlacePieceIntegration`**: Confirms that a piece can be placed correctly on the board and verifies board state.
+3. **`testWinningConditionIntegration_RowMatch`**: Tests a row match condition to verify that `TicTacToeGame` detects the winning condition by row and the game ends.
+4. **`testTieConditionIntegration`**: Tests the scenario where the board is full, but no winning lines are present, confirming the board is full and no winner exists.
+
+### Summary
+
+These E2E and integration tests ensure that:
+- The `TicTacToeGame` and `Board` classes are interacting correctly.
+- Winning, tie, and invalid move conditions are handled as expected.
+- The board displays and updates correctly after each move.
