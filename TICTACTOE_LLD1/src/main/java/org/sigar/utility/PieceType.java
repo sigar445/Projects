@@ -1,4 +1,4 @@
-package org.sigar.Pieces;
+package org.sigar.utility;
 
 public enum PieceType {
     X,

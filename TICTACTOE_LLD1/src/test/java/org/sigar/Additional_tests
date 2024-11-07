@@ -1,0 +1,195 @@
+Beyond end-to-end (E2E) and integration tests, a complete testing suite for the `TicTacToeGame` and `Board` classes would include:
+
+1. **Unit Tests**: Focused on individual methods, especially for edge cases, isolated logic, and smaller components like `Board`.
+2. **Behavioral Tests**: Verifying that the game behaves correctly based on certain user inputs and conditions.
+3. **Boundary Tests**: Ensuring that edge cases like smallest/largest board sizes or board boundaries are correctly handled.
+4. **Error and Exception Handling Tests**: Making sure invalid input (e.g., out-of-bounds moves) and error conditions are appropriately managed.
+5. **Performance Tests**: Though not critical for a simple game, you may want to confirm performance is acceptable on larger boards (e.g., 10x10).
+6. **Mocked Tests**: Using mocks to isolate components if the `Board` or `TicTacToeGame` class is expanded to include more dependencies or interactions with external services.
+
+### Additional Test Categories and Examples
+
+#### 1. Unit Tests for `Board`
+
+Unit tests can verify that `Board` correctly manages pieces and matches.
+
+```java
+import org.junit.jupiter.api.Test;
+import org.sigar.board.Board;
+import org.sigar.pieces.Piece;
+import org.sigar.pieces.PieceX;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class BoardTest {
+
+    @Test
+    void testPlacePiece() {
+        Board board = new Board(3);
+        Piece piece = new PieceX();
+        assertTrue(board.placePiece(0, 0, piece));
+        assertEquals(piece, board.getGrid()[0][0], "Piece should be placed at (0,0).");
+        assertFalse(board.placePiece(0, 0, piece), "Should return false for placing on an occupied cell.");
+    }
+
+    @Test
+    void testIsBoardFull() {
+        Board board = new Board(3);
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                board.placePiece(row, col, new PieceX());
+            }
+        }
+        assertTrue(board.isFull(), "Board should be full after all cells are filled.");
+    }
+
+    @Test
+    void testRowMatch() {
+        Board board = new Board(3);
+        Piece piece = new PieceX();
+        board.placePiece(0, 0, piece);
+        board.placePiece(0, 1, piece);
+        board.placePiece(0, 2, piece);
+        assertTrue(board.hasRowMatch(0), "Should return true for a row match.");
+    }
+
+    // Additional tests for column, diagonal matches, and invalid positions
+}
+```
+
+#### 2. Unit Tests for `TicTacToeGame`
+
+Isolate `TicTacToeGame` methods to verify game logic and player initialization.
+
+```java
+import org.junit.jupiter.api.Test;
+import org.sigar.application.TicTacToeGame;
+import org.sigar.pieces.PieceX;
+import org.sigar.pieces.PieceO;
+import org.sigar.model.players.Player;
+
+import java.util.Scanner;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class TicTacToeGameTest {
+
+    @Test
+    void testInitializeGameWithValidInput() {
+        String inputSequence = "3\nAlice\nBob\n";
+        Scanner scanner = new Scanner(inputSequence);
+        TicTacToeGame game = new TicTacToeGame();
+
+        game.initializeGame(scanner);
+
+        assertNotNull(game.getBoard(), "Board should be initialized.");
+        assertEquals(2, game.getPlayers().size(), "Should initialize with two players.");
+        assertEquals("Alice", game.getPlayers().get(0).getName());
+        assertEquals("Bob", game.getPlayers().get(1).getName());
+    }
+
+    @Test
+    void testStartGameAndVerifyTurnOrder() {
+        // Setup a scenario where turn order is checked
+    }
+
+    // Additional unit tests for checking various game actions
+}
+```
+
+#### 3. Boundary Tests
+
+Test boundary values and unusual cases, like board size limits.
+
+```java
+import org.junit.jupiter.api.Test;
+import org.sigar.board.Board;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class BoundaryTest {
+
+    @Test
+    void testMinimumBoardSize() {
+        Board board = new Board(3);
+        assertEquals(3, board.getBoardSize(), "Expected minimum size to be 3.");
+    }
+
+    @Test
+    void testMaximumBoardSize() {
+        Board board = new Board(10);
+        assertEquals(10, board.getBoardSize(), "Expected maximum size to be 10.");
+    }
+
+    @Test
+    void testOutOfBoundsPlacement() {
+        Board board = new Board(3);
+        assertFalse(board.placePiece(-1, 0, new PieceX()), "Negative indices should return false.");
+        assertFalse(board.placePiece(3, 3, new PieceX()), "Indices outside of board size should return false.");
+    }
+}
+```
+
+#### 4. Exception Handling Tests
+
+Verify that invalid operations, such as null pieces or invalid board gridPosition, are handled gracefully.
+
+```java
+import org.junit.jupiter.api.Test;
+import org.sigar.board.Board;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class ExceptionHandlingTest {
+
+    @Test
+    void testNullPiecePlacement() {
+        Board board = new Board(3);
+        assertThrows(NullPointerException.class, () -> board.placePiece(0, 0, null), "Placing a null piece should throw an exception.");
+    }
+
+    @Test
+    void testInvalidInputInTicTacToeGame() {
+        TicTacToeGame game = new TicTacToeGame();
+        String inputSequence = "0\nAlice\nBob\n"; // Invalid board size
+        Scanner scanner = new Scanner(inputSequence);
+
+        assertThrows(IllegalArgumentException.class, () -> game.initializeGame(scanner), "Invalid board size should throw an exception.");
+    }
+}
+```
+
+#### 5. Mocked Tests for Future Scalability
+
+If future implementations introduce dependencies (like a `ScoreService`), you can use mocks to test the interaction between `TicTacToeGame` and such services.
+
+```java
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.sigar.application.TicTacToeGame;
+import org.sigar.ScoreService;
+
+class MockedServiceTest {
+
+    @Test
+    void testScoreUpdateOnWin() {
+        ScoreService mockScoreService = Mockito.mock(ScoreService.class);
+        TicTacToeGame game = new TicTacToeGame(mockScoreService);
+
+        // Simulate game play and win condition
+        game.playGameWithMockedScore();
+
+        Mockito.verify(mockScoreService).updateScore("Alice");
+    }
+}
+```
+
+### Summary of Additional Tests
+
+1. **Unit Tests** ensure each method works in isolation and handles edge cases correctly.
+2. **Boundary Tests** handle edge cases with board boundaries and constraints.
+3. **Exception Handling Tests** verify the application’s robustness against erroneous input and conditions.
+4. **Mocked Tests** simulate dependent services, helpful as the application grows.
+5. **Behavioral and Performance Tests** help validate complex scenarios and performance under load, though they may be less relevant here but useful in larger applications.
+
+Each of these tests further strengthens confidence that the `Board` and `TicTacToeGame` classes are robust, accurate, and flexible under different usage scenarios.

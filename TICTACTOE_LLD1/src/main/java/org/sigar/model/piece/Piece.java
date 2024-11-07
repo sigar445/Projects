@@ -1,7 +1,8 @@
-package org.sigar.Pieces;
+package org.sigar.model.piece;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.sigar.utility.PieceType;
 
 @Getter
 @AllArgsConstructor

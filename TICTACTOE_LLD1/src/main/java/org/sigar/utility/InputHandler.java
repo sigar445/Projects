@@ -1,7 +1,8 @@
-package org.sigar.input;
+package org.sigar.utility;
 
 import java.util.Scanner;
-
+//Split your InputHandler into specific interfaces like CoordinateInputProvider and PlayerInputProvider,
+//so that classes consuming it don’t have to know about unrelated methods.
 public class InputHandler {
     private final Scanner scanner;
 
@@ -28,12 +29,13 @@ public class InputHandler {
         System.out.println(prompt);
         return scanner.nextLine().trim();
     }
-    public String requestCoordinates(String prompt,int size){
+    public GridPosition requestGridPosition(String prompt, int size){
         System.out.printf(prompt + " (Valid values for row,col are between 1-%d).%n",size);
         while (true){
             String input = scanner.nextLine().trim();
             if(input.matches("\\d+,\\d+")){
-                return input;
+                return GridPosition.parseGridPosition(input);
+                //return input;
             }
             System.out.println("Invalid format enter row,col(e.g. 1,2 or 2,4 etc");
         }
@@ -45,6 +47,6 @@ public class InputHandler {
 //    public static void main(String[] args) {
 //        InputHandler inputHandler = new InputHandler();
 //        inputHandler.requestInt("Enter integer between 3-10 ",3,10);
-//        inputHandler.requestCoordinates("Enter row,col ",9);
+//        inputHandler.requestGridPosition("Enter row,col ",9);
 //    }
 }

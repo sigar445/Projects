@@ -1,0 +1,175 @@
+Here’s a refactored version that applies some design improvements, Java best practices, and additional separation of concerns:
+
+### Key Changes:
+1. **Command Pattern**: Streamlined `PlacePieceCommand` to leverage concise validation and execution.
+2. **Separation of Concerns**: Extracted `BoardDrawer` for drawing the board, improving the `Board` class's responsibility.
+3. **Redundant Methods Removed**: Eliminated `placePieceOnGrid` from `Board` by incorporating the `placePiece` method in `Command`.
+4. **Naming Consistency**: Enhanced naming to align with responsibilities and improved readability.
+5. **Java Best Practices**: Used private methods for encapsulation and improved method ordering for clarity.
+
+### Suggested Additions:
+- **Strategy Pattern**: If you want more flexibility with player input (e.g., human vs. AI), consider adding a `PlayerStrategy` interface.
+- **Event Handling**: Add a game event listener for more complex games, such as to notify UIs or log moves.
+
+### Refactored Code:
+
+```java
+@AllArgsConstructor
+public class PlacePieceCommand implements Command {
+    private final Board board;
+    private final GridPosition gridPosition;
+
+    @Override
+    public boolean isValidCommand() {
+        return board.isValidMove(gridPosition);
+    }
+
+    @Override
+    public void execute(Player player) {
+        board.placePiece(gridPosition, player.getPiece());
+    }
+}
+
+@Getter
+public class Board {
+    private final int size;
+    private final Piece[][] grid;
+    private final BoardValidator validator;
+    private final BoardDrawer drawer;
+
+    public Board(int size) {
+        this.size = size;
+        this.grid = new Piece[size][size];
+        this.validator = new BoardValidator(grid, size);
+        this.drawer = new BoardDrawer(grid, size);
+    }
+
+    public boolean isValidMove(GridPosition gridPosition) {
+        return validator.isMoveValid(gridPosition) && !validator.isOccupiedPlace(gridPosition);
+    }
+
+    public void placePiece(GridPosition gridPosition, Piece piece) {
+        grid[gridPosition.getRow()][gridPosition.getCol()] = piece;
+    }
+
+    public void drawBoard() {
+        drawer.draw();
+    }
+
+    public boolean isFull() {
+        return validator.isFull();
+    }
+
+    public boolean hasMatchingLine(GridPosition gridPosition) {
+        return validator.checkRowMatch(gridPosition) ||
+               validator.checkColumnMatch(gridPosition) ||
+               validator.checkDiagonalMatch(gridPosition);
+    }
+}
+
+public class BoardDrawer {
+    private final Piece[][] grid;
+    private final int size;
+
+    public BoardDrawer(Piece[][] grid, int size) {
+        this.grid = grid;
+        this.size = size;
+    }
+
+    public void draw() {
+        for (int row = 0; row < size; row++) {
+            for (int col = 0; col < size; col++) {
+                String pieceVal = grid[row][col] != null ? String.valueOf(grid[row][col].getPieceType()) : " ";
+                System.out.print(pieceVal + (col == size - 1 ? "\n" : " | "));
+            }
+        }
+    }
+}
+
+@Getter
+public class TicTacToeGame {
+    private Board board;
+    private List<Player> players;
+    private InputHandler inputHandler;
+
+    public void initGame(InputHandler inputHandler) {
+        this.inputHandler = inputHandler;
+        int size = inputHandler.requestInt("Enter Board Size [3-10]: ", 3, 10);
+        this.board = new Board(size);
+        initializePlayers();
+    }
+
+    private void initializePlayers() {
+        players = List.of(
+            createPlayer("Enter player 1 name: ", new PieceX()),
+            createPlayer("Enter player 2 name: ", new PieceO())
+        );
+    }
+
+    private Player createPlayer(String prompt, Piece piece) {
+        String playerName = inputHandler.requestString(prompt);
+        return new HumanPlayer(playerName, piece);
+    }
+
+    public void startGame() {
+        Deque<Player> turnQueue = new ArrayDeque<>(players);
+        while (true) {
+            board.drawBoard();
+            Player currentPlayer = turnQueue.removeFirst();
+            if (!playTurn(currentPlayer, turnQueue)) {
+                continue;
+            }
+            if (isGameOver(currentPlayer)) {
+                break;
+            }
+            turnQueue.addLast(currentPlayer);
+        }
+        inputHandler.close();
+    }
+
+    private boolean playTurn(Player currentPlayer, Deque<Player> turnQueue) {
+        int size = board.getSize();
+        String prompt = String.format("%s [%s]'s turn\nEnter row,column to place piece:",
+                                       currentPlayer.getName(), currentPlayer.getPiece().getPieceType());
+        GridPosition gridPosition = inputHandler.requestGridPosition(prompt, size);
+        Command command = new PlacePieceCommand(board, gridPosition);
+
+        if (!command.isValidCommand()) {
+            System.out.println("Invalid move: position is either occupied or out of bounds.");
+            turnQueue.addFirst(currentPlayer);
+            return false;
+        }
+        command.execute(currentPlayer);
+        return true;
+    }
+
+    private boolean isGameOver(Player currentPlayer) {
+        GridPosition lastMove = currentPlayer.getLastMove();
+        if (board.hasMatchingLine(lastMove)) {
+            System.out.println(currentPlayer.getName() + " wins!");
+            return true;
+        }
+        if (board.isFull()) {
+            System.out.println("The game is a tie.");
+            return true;
+        }
+        return false;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        TicTacToeGame game = new TicTacToeGame();
+        InputHandler inputHandler = new InputHandler(new Scanner(System.in));
+        game.initGame(inputHandler);
+        game.startGame();
+    }
+}
+```
+
+### Explanation of Additions
+1. **BoardDrawer**: Handles board drawing, improving `Board`’s responsibility.
+2. **PlayTurn Helper Method**: Extracted from `startGame()` for better readability and potential reuse.
+3. **Game Over Check**: Encapsulated win conditions in `isGameOver` for clarity.
+
+This refactor optimizes the game structure, enabling future extensibility while adhering to SOLID principles and the command design pattern.

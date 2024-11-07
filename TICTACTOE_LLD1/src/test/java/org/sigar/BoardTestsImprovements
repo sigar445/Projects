@@ -1,0 +1,180 @@
+To further improve your tests for robustness, clarity, and maintainability, here are some suggestions:
+
+### Additional Test Cases
+1. **Edge Cases for Empty Rows/Columns:**
+   - Test cases for completely empty rows and columns.
+
+2. **Invalid Board State:**
+   - Test that no `NullPointerException` or other errors occur when the board is queried without any pieces.
+
+3. **Tests for Occupied Position Handling:**
+   - Test that `placePiece` returns `false` when attempting to place a piece in an already occupied cell.
+
+4. **Diagonal Edge Cases:**
+   - Test diagonals in boards smaller than 3x3 or for non-square boards if supported.
+
+### Suggested Refactoring
+1. **Use Helper Methods for Setup**: Reduce repetition by consolidating common setup steps into helper methods.
+2. **Clear Naming for Test Methods**: Ensure test names reflect the action and expected outcome.
+3. **Test Parameterization (Optional)**: Use parameterized tests (e.g., JUnit 5’s `@ParameterizedTest`) to check for similar logic with different inputs.
+
+Here’s an improved version of the test class:
+
+```java
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+public class BoardTests {
+
+    private Board board;
+    private static final int SIZE = 4;
+    private Piece pieceX;
+    private Piece pieceO;
+
+    @BeforeEach
+    void setup() {
+        board = new Board(SIZE);
+        pieceX = new PieceX();
+        pieceO = new PieceO();
+    }
+
+    @Test
+    void testIsFull_EmptyBoard_ShouldReturnFalse() {
+        assertFalse(board.isFull(), "Expected board to be empty at initialization");
+    }
+
+    @Test
+    void testIsFull_PartiallyFilledBoard_ShouldReturnFalse() {
+        board.placePiece(0, 0, pieceX);
+        board.placePiece(1, 1, pieceO);
+        assertFalse(board.isFull(), "Expected board to not be full with only some pieces placed");
+    }
+
+    @Test
+    void testIsFull_FullBoard_ShouldReturnTrue() {
+        fillBoard(pieceX);
+        assertTrue(board.isFull(), "Expected board to be full when all cells are occupied");
+    }
+
+    @Test
+    void testPlacePiece_OutOfBounds_ShouldReturnFalse() {
+        assertFalse(board.placePiece(-1, 0, pieceX), "Expected false when placing piece out of bounds");
+        assertFalse(board.placePiece(SIZE, SIZE, pieceO), "Expected false when placing piece out of bounds");
+    }
+
+    @Test
+    void testPlacePiece_AlreadyOccupied_ShouldReturnFalse() {
+        board.placePiece(0, 0, pieceX);
+        assertFalse(board.placePiece(0, 0, pieceO), "Expected false when placing piece on an occupied cell");
+    }
+
+    @Test
+    void testCheckRowMatch_AllPiecesMatch_ShouldReturnTrue() {
+        int row = 2;
+        placeRow(row, pieceX);
+        assertTrue(board.checkRowMatch(row), "Expected row to have matching pieces");
+    }
+
+    @Test
+    void testCheckRowMatch_NotAllPiecesMatch_ShouldReturnFalse() {
+        int row = 2;
+        placeRow(row, pieceX);
+        board.placePiece(row, SIZE - 1, pieceO);
+        assertFalse(board.checkRowMatch(row), "Expected row to not have all matching pieces");
+    }
+
+    @Test
+    void testCheckColumnMatch_AllPiecesMatch_ShouldReturnTrue() {
+        int col = 1;
+        placeColumn(col, pieceO);
+        assertTrue(board.checkColumnMatch(col), "Expected column to have matching pieces");
+    }
+
+    @Test
+    void testCheckColumnMatch_NotAllPiecesMatch_ShouldReturnFalse() {
+        int col = 1;
+        placeColumn(col, pieceO);
+        board.placePiece(SIZE - 1, col, pieceX);
+        assertFalse(board.checkColumnMatch(col), "Expected column to not have all matching pieces");
+    }
+
+    @Test
+    void testCheckDiagonalMatch_MainDiagonalAllMatch_ShouldReturnTrue() {
+        placeMainDiagonal(pieceX);
+        assertTrue(board.checkDiagonalMatch(0, 0), "Expected main diagonal to have matching pieces");
+    }
+
+    @Test
+    void testCheckDiagonalMatch_MainDiagonalNotAllMatch_ShouldReturnFalse() {
+        placeMainDiagonal(pieceX);
+        board.placePiece(SIZE - 1, SIZE - 1, pieceO);
+        assertFalse(board.checkDiagonalMatch(0, 0), "Expected main diagonal to not have all matching pieces");
+    }
+
+    @Test
+    void testCheckDiagonalMatch_AntiDiagonalAllMatch_ShouldReturnTrue() {
+        placeAntiDiagonal(pieceX);
+        assertTrue(board.checkDiagonalMatch(0, SIZE - 1), "Expected anti-diagonal to have matching pieces");
+    }
+
+    @Test
+    void testCheckDiagonalMatch_AntiDiagonalNotAllMatch_ShouldReturnFalse() {
+        placeAntiDiagonal(pieceX);
+        board.placePiece(SIZE - 1, 0, pieceO);
+        assertFalse(board.checkDiagonalMatch(0, SIZE - 1), "Expected anti-diagonal to not have all matching pieces");
+    }
+
+    // Helper method to place pieces in all cells to fill the board
+    private void fillBoard(Piece piece) {
+        for (int row = 0; row < SIZE; row++) {
+            for (int col = 0; col < SIZE; col++) {
+                board.placePiece(row, col, piece);
+            }
+        }
+    }
+
+    // Helper method to place pieces across a row
+    private void placeRow(int row, Piece piece) {
+        for (int col = 0; col < SIZE; col++) {
+            board.placePiece(row, col, piece);
+        }
+    }
+
+    // Helper method to place pieces across a column
+    private void placeColumn(int col, Piece piece) {
+        for (int row = 0; row < SIZE; row++) {
+            board.placePiece(row, col, piece);
+        }
+    }
+
+    // Helper method to place pieces in the main diagonal
+    private void placeMainDiagonal(Piece piece) {
+        for (int ind = 0; ind < SIZE; ind++) {
+            board.placePiece(ind, ind, piece);
+        }
+    }
+
+    // Helper method to place pieces in the anti-diagonal
+    private void placeAntiDiagonal(Piece piece) {
+        for (int ind = 0; ind < SIZE; ind++) {
+            board.placePiece(ind, SIZE - ind - 1, piece);
+        }
+    }
+}
+```
+
+### Explanation of Changes
+
+1. **New Tests**:
+   - `testPlacePiece_AlreadyOccupied_ShouldReturnFalse` for testing occupied position handling.
+   - Additional assertions in diagonal match tests ensure that non-matching scenarios are robust.
+
+2. **Helper Methods**:
+   - `fillBoard`, `placeRow`, `placeColumn`, `placeMainDiagonal`, and `placeAntiDiagonal` reduce repetition and increase clarity.
+
+3. **Descriptive Assertions**:
+   - Custom messages in assertions help to pinpoint failure reasons when tests fail.
+
+These changes improve readability, make tests more comprehensive, and handle potential edge cases for robustness.

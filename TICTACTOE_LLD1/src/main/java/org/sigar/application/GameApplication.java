@@ -1,11 +1,14 @@
 package org.sigar.application;
 
+import org.sigar.utility.InputHandler;
+
 import java.util.Scanner;
 
-public class GamePlayApp {
+public class GameApplication {
     public static void main(String[] args) {
         TicTacToeGame game = new TicTacToeGame();
-        game.initGame();
+        InputHandler inputHandler = new InputHandler(new Scanner(System.in));
+        game.initGame(inputHandler);
         game.startGame();
     }
 }

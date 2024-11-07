@@ -1,72 +1,52 @@
-package org.sigar.board;
+package org.sigar.gameBoard;
 
-
-import lombok.Getter;
-import lombok.Setter;
-import org.sigar.Pieces.Piece;
-import org.sigar.Pieces.PieceType;
+import lombok.AllArgsConstructor;
+import org.sigar.model.piece.Piece;
+import org.sigar.utility.GridPosition;
+import org.sigar.utility.PieceType;
 
 import java.util.stream.IntStream;
 
-@Getter
-public class Board {
-
-    private Integer size;
+@AllArgsConstructor
+public class BoardValidator {
     private Piece[][] grid;
-
-    public Board(int size){
-        this.size = size;
-        grid = new Piece[size][size];
+    int size;
+    public boolean isOccupiedPlace(GridPosition gridPosition){
+        return grid[gridPosition.getRow()][gridPosition.getCol()] != null;
     }
-
-    public void drawBoard(){
-        for(int row = 0;row < size; row++){
-            for(int col = 0;col<size;col++){
-                String pieceVal = grid[row][col] != null ? String.valueOf(grid[row][col].getPieceType()) : " ";
-                String s = String.format("%s |",pieceVal);
-                if(col == size-1)
-                    System.out.println(pieceVal);
-                else
-                    System.out.print(s);
-            }
-        }
-    }
-    public boolean placePiece(int row,int col,Piece piece){
-        if(row < 0 || row >= size || col < 0 || col >= size){
-            return false;
-        }
-        if(grid[row][col] != null) return false;
-        grid[row][col] = piece;
-        return true;
-    }
-
     public boolean isFull(){
         return IntStream.range(0,size)
                 .allMatch(row -> IntStream.range(0,size)
                         .allMatch(col -> grid[row][col] != null));
 
     }
-    public static void main(String[] args) {
-        Board board = new Board(4);
-        board.grid[2][2] = null;
-        board.drawBoard();
-        System.out.println(board.isFull());
-    }
-    public boolean checkRowMatch(int row){
+    public boolean checkRowMatch(GridPosition gridPosition){
+        int row = gridPosition.getRow();
         if(grid[row][0] != null){
             return IntStream.range(0,size)
                     .allMatch(col -> grid[row][col] != null && grid[row][col].getPieceType() == grid[row][0].getPieceType());
         }
         return false;
     }
-    public boolean checkColumnMatch(int col){
+    public boolean checkColumnMatch(GridPosition gridPosition){
+        int col = gridPosition.getCol();
         if(grid[0][col] != null){
             return IntStream.range(0,size)
                     .allMatch(row -> grid[row][col] != null && grid[row][col].getPieceType() == grid[0][col].getPieceType());
         }
         return false;
     }
-    public boolean checkDiagonalMatch(int row,int col){
+    public boolean isMoveValid(GridPosition gridPosition){
+        int row = gridPosition.getRow();
+        int col = gridPosition.getCol();
+        if(row < 0 || row >= size || col < 0 || col >= size){
+            return false;
+        }
+        return grid[row][col] == null;
+    }
+    public boolean checkDiagonalMatch(GridPosition gridPosition){
+        int row = gridPosition.getRow();
+        int col = gridPosition.getCol();
         PieceType matchVal = grid[row][col].getPieceType();
         boolean mainDiagonalMatch = false;
         boolean antiDiagonalMatch = false;

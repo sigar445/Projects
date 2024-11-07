@@ -1,7 +1,7 @@
-package org.sigar.board;
+package org.sigar.gameBoard;
 import lombok.Getter;
-import org.sigar.Pieces.Piece;
-import org.sigar.Pieces.PieceType;
+import org.sigar.model.piece.Piece;
+import org.sigar.utility.PieceType;
 
 import java.util.Optional;
 import java.util.stream.IntStream;

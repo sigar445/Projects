@@ -1,0 +1,122 @@
+Using a command pattern to handle moves in your TicTacToe game can help encapsulate the execution of game actions and allow for flexible command handling. In this case, the `MoveCommand` would represent a move made by a player, and you can define an abstraction for different commands in the game. Here’s how to incorporate the command pattern into your TicTacToe game:
+
+### Step 1: Define the `Command` Interface
+This interface will declare methods for validating and executing commands, making it easy to add new command types in the future.
+
+```java
+public interface Command {
+    boolean isValid(Board board, GridPosition position);
+    boolean execute(Board board, Player player);
+}
+```
+
+### Step 2: Implement the `MoveCommand` Class
+The `MoveCommand` class will implement the `Command` interface and handle validation and execution of moves.
+
+```java
+public class MoveCommand implements Command {
+    private final GridPosition gridPosition;
+
+    public MoveCommand(GridPosition gridPosition) {
+        this.gridPosition = gridPosition;
+    }
+
+    @Override
+    public boolean isValid(Board board, GridPosition position) {
+        return position != null && board.getValidator().isValidMove(position.getRow(), position.getCol(), board.getGrid());
+    }
+
+    @Override
+    public boolean execute(Board board, Player player) {
+        if (isValid(board, gridPosition)) {
+            board.placePiece(gridPosition, player.getPiece());
+            return true;
+        }
+        return false;
+    }
+}
+```
+
+### Step 3: Modify `TicTacToeGame` to Use the `Command` Interface
+
+In `TicTacToeGame`, the `startGame` method will create and execute `MoveCommand` instances for each player's turn. This approach makes it easy to introduce additional commands, such as an "undo" or "restart" command in the future.
+
+```java
+public class TicTacToeGame {
+    private Board board;
+    private List<Player> players;
+    private InputHandler inputHandler;
+
+    public void initGame(InputHandler inputHandler) {
+        players = new ArrayList<>();
+        this.inputHandler = inputHandler;
+        int size = inputHandler.requestInt("Enter Board Size[3-10]", 3, 10);
+        board = new Board(size);
+        addPlayers();
+    }
+
+    private void addPlayers() {
+        players.add(createPlayer("Enter player1 name: ", new PieceX()));
+        players.add(createPlayer("Enter player2 name: ", new PieceO()));
+    }
+
+    private Player createPlayer(String prompt, Piece piece) {
+        String playerName = inputHandler.requestString(prompt);
+        return new HumanPlayer(playerName, piece);
+    }
+
+    public void startGame() {
+        Deque<Player> turnQueue = new ArrayDeque<>(players);
+        int size = board.getSize();
+
+        while (true) {
+            board.drawBoard();
+            Player currPlayer = turnQueue.removeFirst();
+            System.out.println(currPlayer.getName() + "'s turn");
+
+            String prompt = "Enter row, column to place piece:";
+            GridPosition inputGridPosition = inputHandler.requestGridPosition(prompt, size);
+            MoveCommand moveCommand = new MoveCommand(inputGridPosition);
+
+            if (!moveCommand.execute(board, currPlayer)) {
+                System.out.println("Invalid position or already full place.");
+                turnQueue.addFirst(currPlayer);
+                continue;
+            }
+
+            if (isGameOver(inputGridPosition, currPlayer)) break;
+            turnQueue.addLast(currPlayer);
+        }
+
+        inputHandler.close();
+    }
+
+    private boolean isGameOver(GridPosition gridPosition, Player currPlayer) {
+        if (board.checkRowMatch(gridPosition) ||
+            board.checkColumnMatch(gridPosition) ||
+            board.checkDiagonalMatch(gridPosition)) {
+            System.out.println(currPlayer.getName() + " Wins!");
+            System.out.println("Game Over");
+            return true;
+        }
+
+        if (board.isFull()) {
+            System.out.println("Game Tied!");
+            return true;
+        }
+        return false;
+    }
+}
+```
+
+### Benefits of Using the Command Pattern Here
+
+1. **Encapsulation**: Each command encapsulates the logic needed for executing a move, making it easy to add or modify commands independently of other parts of the game.
+2. **Flexibility**: You could easily add more commands (like undo, restart) by implementing the `Command` interface.
+3. **Decoupling**: `TicTacToeGame` no longer directly handles move validation or placement. Instead, it delegates those responsibilities to the `MoveCommand`, making `TicTacToeGame` more focused on game flow.
+
+### Adding Additional Commands (Optional)
+
+You can add additional commands (like `UndoCommand` or `RestartCommand`) following the same pattern, each implementing the `Command` interface and handling its specific logic.
+
+This approach makes the game more modular and adaptable to future enhancements.
