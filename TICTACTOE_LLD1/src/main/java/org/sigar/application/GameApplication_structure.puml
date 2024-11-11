@@ -108,6 +108,7 @@ subgraph cluster_109435074 {
 <TR><TD ALIGN="LEFT" >+ checkRowMatch(gridPosition: GridPosition): boolean</TD></TR>
 <TR><TD ALIGN="LEFT" >+ drawBoard()</TD></TR>
 <TR><TD ALIGN="LEFT" >+ placePiece(gridPosition: GridPosition, piece: Piece): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ placePieceOnGrid(gridPosition: GridPosition, piece: Piece)</TD></TR>
 </TABLE>>
 	style=filled
 	margin=0
@@ -125,7 +126,7 @@ BoardValidator34619614[
 <TR><TD ALIGN="LEFT" >+ checkColumnMatch(gridPosition: GridPosition): boolean</TD></TR>
 <TR><TD ALIGN="LEFT" >+ checkDiagonalMatch(gridPosition: GridPosition): boolean</TD></TR>
 <TR><TD ALIGN="LEFT" >+ checkRowMatch(gridPosition: GridPosition): boolean</TD></TR>
-<TR><TD ALIGN="LEFT" >+ isInputValid(gridPosition: GridPosition): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ isMoveValid(gridPosition: GridPosition): boolean</TD></TR>
 <TR><TD ALIGN="LEFT" >+ isOccupiedPlace(gridPosition: GridPosition): boolean</TD></TR>
 </TABLE>>
 	style=filled
@@ -203,7 +204,7 @@ TicTacToeGame545546650[
 <TR><TD ALIGN="LEFT" >- addPlayers()</TD></TR>
 <TR><TD ALIGN="LEFT" >- createPlayer(prompt: String, piece: Piece): Player</TD></TR>
 <TR><TD ALIGN="LEFT" >+ initGame(inputHandler: InputHandler)</TD></TR>
-<TR><TD ALIGN="LEFT" >- isGameOver(gridPosition: GridPosition, board: Board, currPlayer: Player): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >- isGameOver(row: int, col: int, board: Board, currPlayer: Player): boolean</TD></TR>
 <TR><TD ALIGN="LEFT" >+ startGame()</TD></TR>
 </TABLE>>
 	style=filled
@@ -219,9 +220,11 @@ subgraph cluster_68180227 {
 	fillcolor="#d8d8d8"
 	style=filled
    
-   HumanPlayer1824243140[
+   Piece1582953421[
 	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
-<TR><TD ALIGN="LEFT" >(C)HumanPlayer</TD></TR>
+<TR><TD ALIGN="LEFT" >(C)Piece</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   pieceType: PieceType [0..1]</TD></TR>
 </TABLE>>
 	style=filled
 	margin=0
@@ -229,7 +232,7 @@ subgraph cluster_68180227 {
 	fillcolor="#FFFFFF"
 ];
 
-Piece1582953421[
+Piece545663245[
 	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
 <TR><TD ALIGN="LEFT" >(C)Piece</TD></TR>
 <HR/>
@@ -251,6 +254,16 @@ PieceO1582953421[
 	fillcolor="#FFFFFF"
 ];
 
+PieceO545663245[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)PieceO</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
 PieceX1582953421[
 	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
 <TR><TD ALIGN="LEFT" >(C)PieceX</TD></TR>
@@ -261,7 +274,17 @@ PieceX1582953421[
 	fillcolor="#FFFFFF"
 ];
 
-Player1824243140[
+PieceX545663245[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)PieceX</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+Player545663245[
 	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
 <TR><TD ALIGN="LEFT" >(C)Player</TD></TR>
 <HR/>
@@ -286,14 +309,15 @@ BoardValidator34619614 -> Piece1582953421[label="grid
 InputHandler1738300746 -> GridPosition1738300746[label="requestGridPosition() -> parseGridPosition()"];
 Piece1582953421 -> PieceO1582953421[arrowhead=none, arrowtail=empty, dir=both];
 Piece1582953421 -> PieceX1582953421[arrowhead=none, arrowtail=empty, dir=both];
-Player1824243140 -> HumanPlayer1824243140[arrowhead=none, arrowtail=empty, dir=both];
-Player1824243140 -> Piece1582953421[label="piece
+Piece545663245 -> PieceO545663245[arrowhead=none, arrowtail=empty, dir=both];
+Piece545663245 -> PieceX545663245[arrowhead=none, arrowtail=empty, dir=both];
+Player545663245 -> Piece545663245[label="piece
 [0..1]"];
 TicTacToeGame545546650 -> Board34619614[label="board
 [0..1]"];
 TicTacToeGame545546650 -> InputHandler1738300746[label="inputHandler
 [0..1]"];
-TicTacToeGame545546650 -> Player1824243140[label="players
+TicTacToeGame545546650 -> Player545663245[label="players
 [0..*]"];
     
 }

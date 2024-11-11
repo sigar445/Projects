@@ -1,0 +1,269 @@
+    To achieve a socket-based Tic-Tac-Toe game where players can send moves remotely and receive board updates, here’s a possible approach:
+
+    ### 1. **Socket Server Setup**
+       - Create a `GameServer` class that listens for player connections on a specified port.
+       - Each player will connect to this server, and the server will spawn a dedicated thread or handler for each player connection.
+
+    ### 2. **Client-Server Communication**
+       - Define a protocol for communication, using simple text-based commands (e.g., `"MOVE X Y"`) or JSON to represent commands and responses.
+       - The server should receive moves from each player, validate them, update the board, and send the updated board to both players.
+
+    ### 3. **Game Commands and Updates**
+       - Use commands to represent moves. For example, a player could send a message like `"MOVE 1 1"` to place their piece in the center of the board.
+       - After each move, the server checks the game state (e.g., win or draw conditions) and sends updates back to both players.
+
+    ### 4. **Player Handlers**
+       - For each connected player, create a `PlayerHandler` class (or similar) that listens for commands from the player, sends game updates, and processes player-specific actions.
+       - The handler can be implemented using `Runnable` for concurrent execution, allowing multiple players to interact with the server simultaneously.
+
+    ### 5. **Broadcasting Updates**
+       - Whenever the game board updates, broadcast the new board to all connected clients.
+       - You might define an `updateBoard()` method on the server to iterate over all player connections and push the updated board state.
+
+    ### Example Skeleton Code
+
+    #### `GameServer.java`
+    ```java
+    import java.io.*;
+    import java.net.*;
+    import java.util.*;
+
+    public class GameServer {
+        private ServerSocket serverSocket;
+        private List<PlayerHandler> players = new ArrayList<>();
+
+        public void startServer(int port) throws IOException {
+            serverSocket = new ServerSocket(port);
+            System.out.println("Game Server started on port: " + port);
+
+            while (players.size() < 2) {
+                Socket playerSocket = serverSocket.accept();
+                PlayerHandler playerHandler = new PlayerHandler(playerSocket, this);
+                players.add(playerHandler);
+                new Thread(playerHandler).start();
+            }
+            System.out.println("Two players connected. Game starting...");
+            broadcastBoard();
+        }
+
+        public synchronized void broadcastBoard() {
+            for (PlayerHandler player : players) {
+                player.sendBoard();
+            }
+        }
+
+        public void handleMove(PlayerHandler player, int x, int y) {
+            // Process move logic, update board
+            broadcastBoard();
+        }
+
+        public void stopServer() throws IOException {
+            serverSocket.close();
+        }
+    }
+    ```
+
+    #### `PlayerHandler.java`
+    ```java
+    import java.io.*;
+    import java.net.*;
+
+    public class PlayerHandler implements Runnable {
+        private Socket socket;
+        private GameServer gameServer;
+        private PrintWriter out;
+        private BufferedReader in;
+
+        public PlayerHandler(Socket socket, GameServer gameServer) {
+            this.socket = socket;
+            this.gameServer = gameServer;
+        }
+
+        @Override
+        public void run() {
+            try {
+                out = new PrintWriter(socket.getOutputStream(), true);
+                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+                String message;
+                while ((message = in.readLine()) != null) {
+                    processCommand(message);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void processCommand(String message) {
+            if (message.startsWith("MOVE")) {
+                String[] parts = message.split(" ");
+                int x = Integer.parseInt(parts[1]);
+                int y = Integer.parseInt(parts[2]);
+                gameServer.handleMove(this, x, y);
+            }
+        }
+
+        public void sendBoard() {
+            // Send updated board to this player
+            out.println("Updated Board:\n" + gameServer.getBoard());
+        }
+    }
+    ```
+
+    This structure will allow players to connect to the server and send moves, which are processed and updated across both clients.
+To incorporate turn-based logic, you can modify the server to track whose turn it is and enforce turn order in the `handleMove` method. Here’s an enhanced version that includes turn control:
+
+
+1. **Turn Management**: Use a flag to indicate the current player’s turn. When a move is made, switch the turn to the other player.
+2. **Command Validation**: Only allow a player to make a move if it’s their turn. If it’s not, send a message back indicating they need to wait.
+3. **Broadcast Turn Updates**: After each move, notify both players about whose turn it is.
+
+### Updated Code Structure
+
+#### Add Turn Management in `GameServer`
+
+```java
+import java.io.*;
+import java.net.*;
+import java.util.*;
+
+public class GameServer {
+    private ServerSocket serverSocket;
+    private List<PlayerHandler> players = new ArrayList<>();
+    private int currentPlayerIndex = 0; // 0 for Player 1, 1 for Player 2
+
+    public void startServer(int port) throws IOException {
+        serverSocket = new ServerSocket(port);
+        System.out.println("Game Server started on port: " + port);
+
+        while (players.size() < 2) {
+            Socket playerSocket = serverSocket.accept();
+            PlayerHandler playerHandler = new PlayerHandler(playerSocket, this, players.size());
+            players.add(playerHandler);
+            new Thread(playerHandler).start();
+        }
+
+        System.out.println("Two players connected. Game starting...");
+        broadcastBoard();
+        broadcastTurn();
+    }
+
+    public synchronized void handleMove(PlayerHandler player, int x, int y) {
+        if (players.indexOf(player) != currentPlayerIndex) {
+            player.sendMessage("It's not your turn. Please wait.");
+            return;
+        }
+
+        // Assume placePiece(x, y) is a method that places the piece on the board
+        // and checks for win/draw conditions
+        boolean moveSuccessful = placePiece(player, x, y);
+        if (!moveSuccessful) {
+            player.sendMessage("Invalid move. Try again.");
+            return;
+        }
+
+        broadcastBoard();
+
+        if (isGameOver()) {
+            broadcastMessage("Game Over! Player " + (currentPlayerIndex + 1) + " wins!");
+            stopServer();
+        } else {
+            switchTurn();
+        }
+    }
+
+    private void switchTurn() {
+        currentPlayerIndex = (currentPlayerIndex + 1) % 2;
+        broadcastTurn();
+    }
+
+    public void broadcastTurn() {
+        for (PlayerHandler player : players) {
+            player.sendMessage("Player " + (currentPlayerIndex + 1) + "'s turn.");
+        }
+    }
+
+    public synchronized void broadcastBoard() {
+        for (PlayerHandler player : players) {
+            player.sendBoard();
+        }
+    }
+
+    public void stopServer() throws IOException {
+        serverSocket.close();
+    }
+
+    private boolean isGameOver() {
+        // Implement game-over check logic here
+        return false;
+    }
+
+    private boolean placePiece(PlayerHandler player, int x, int y) {
+        // Validate and place the piece on the board for the current player
+        // Return true if move is successful, false otherwise
+        return true;
+    }
+}
+```
+
+#### Modify `PlayerHandler` to Handle Turn-Based Messages
+
+```java
+import java.io.*;
+import java.net.*;
+
+public class PlayerHandler implements Runnable {
+    private Socket socket;
+    private GameServer gameServer;
+    private PrintWriter out;
+    private BufferedReader in;
+    private int playerId;
+
+    public PlayerHandler(Socket socket, GameServer gameServer, int playerId) {
+        this.socket = socket;
+        this.gameServer = gameServer;
+        this.playerId = playerId;
+    }
+
+    @Override
+    public void run() {
+        try {
+            out = new PrintWriter(socket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+            String message;
+            while ((message = in.readLine()) != null) {
+                processCommand(message);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void processCommand(String message) {
+        if (message.startsWith("MOVE")) {
+            String[] parts = message.split(" ");
+            int x = Integer.parseInt(parts[1]);
+            int y = Integer.parseInt(parts[2]);
+            gameServer.handleMove(this, x, y);
+        }
+    }
+
+    public void sendBoard() {
+        // Send updated board to this player
+        out.println("Updated Board:\n" + gameServer.getBoard());
+    }
+
+    public void sendMessage(String message) {
+        out.println(message);
+    }
+}
+```
+
+### Explanation of Changes
+- **`currentPlayerIndex`** in `GameServer`: Tracks which player’s turn it is.
+- **`handleMove`** Method: Ensures only the player whose turn it is can make a move.
+- **`switchTurn`** Method: Alternates the turn between players after a successful move.
+- **Broadcasting Turn Information**: The `broadcastTurn` method informs both players when turns switch, ensuring they know when they can play.
+
+This setup provides clear turn management and ensures the game flow remains structured.

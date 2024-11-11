@@ -1,0 +1,150 @@
+To enable a computer player and add support for commands via sockets or a web API, we can make the following adjustments:
+
+### 1. **Strategy Pattern for Player Moves**
+   - Introduce a `PlayerStrategy` interface with implementations for `HumanPlayerStrategy` and `ComputerPlayerStrategy`. This allows you to have different behaviors for player types without changing the core game logic.
+
+### 2. **Command Execution Over Network**
+   - Implement a `CommandHandler` that can process commands sent via a socket or web API. This handler will accept serialized commands, validate, and execute them on the server side.
+
+### Refactored Code for These Adjustments:
+
+```java
+// Strategy Interface for different player types
+public interface PlayerStrategy {
+    GridPosition getMove(Board board, InputHandler inputHandler, int boardSize, String prompt);
+}
+
+// Implementation for Human players
+public class HumanPlayerStrategy implements PlayerStrategy {
+    @Override
+    public GridPosition getMove(Board board, InputHandler inputHandler, int boardSize, String prompt) {
+        return inputHandler.requestGridPosition(prompt, boardSize);
+    }
+}
+
+// Implementation for Computer players (random move example)
+public class ComputerPlayerStrategy implements PlayerStrategy {
+    private final Random random = new Random();
+
+    @Override
+    public GridPosition getMove(Board board, InputHandler inputHandler, int boardSize, String prompt) {
+        GridPosition position;
+        do {
+            int row = random.nextInt(boardSize);
+            int col = random.nextInt(boardSize);
+            position = new GridPosition(row, col);
+        } while (!board.isValidMove(position));
+        return position;
+    }
+}
+
+// Player class now accepts a strategy for move behavior
+@Getter
+public class Player {
+    private final String name;
+    private final Piece piece;
+    private final PlayerStrategy strategy;
+
+    public Player(String name, Piece piece, PlayerStrategy strategy) {
+        this.name = name;
+        this.piece = piece;
+        this.strategy = strategy;
+    }
+
+    public GridPosition takeTurn(Board board, InputHandler inputHandler, int boardSize, String prompt) {
+        return strategy.getMove(board, inputHandler, boardSize, prompt);
+    }
+}
+
+// TicTacToeGame with Socket and API command handling
+@Getter
+public class TicTacToeGame {
+    private Board board;
+    private List<Player> players;
+    private InputHandler inputHandler;
+    private CommandHandler commandHandler;  // Command handler for sockets/API
+
+    public void initGame(InputHandler inputHandler, CommandHandler commandHandler) {
+        this.inputHandler = inputHandler;
+        this.commandHandler = commandHandler;
+        int size = inputHandler.requestInt("Enter Board Size [3-10]: ", 3, 10);
+        this.board = new Board(size);
+        initializePlayers();
+    }
+
+    private void initializePlayers() {
+        players = List.of(
+            createPlayer("Enter player 1 name: ", new PieceX(), new HumanPlayerStrategy()),
+            createPlayer("Enter player 2 name: ", new PieceO(), new ComputerPlayerStrategy()) // Or HumanPlayerStrategy
+        );
+    }
+
+    private Player createPlayer(String prompt, Piece piece, PlayerStrategy strategy) {
+        String playerName = inputHandler.requestString(prompt);
+        return new Player(playerName, piece, strategy);
+    }
+
+    public void startGame() {
+        Deque<Player> turnQueue = new ArrayDeque<>(players);
+        while (true) {
+            board.drawBoard();
+            Player currentPlayer = turnQueue.removeFirst();
+            if (!playTurn(currentPlayer, turnQueue)) {
+                continue;
+            }
+            if (isGameOver(currentPlayer)) {
+                break;
+            }
+            turnQueue.addLast(currentPlayer);
+        }
+        inputHandler.close();
+    }
+
+    private boolean playTurn(Player currentPlayer, Deque<Player> turnQueue) {
+        int size = board.getSize();
+        String prompt = String.format("%s [%s]'s turn\nEnter row,column to place piece:",
+                                       currentPlayer.getName(), currentPlayer.getPiece().getPieceType());
+        GridPosition gridPosition = currentPlayer.takeTurn(board, inputHandler, size, prompt);
+        Command command = new PlacePieceCommand(board, gridPosition);
+
+        if (!command.isValidCommand()) {
+            System.out.println("Invalid move: position is either occupied or out of bounds.");
+            turnQueue.addFirst(currentPlayer);
+            return false;
+        }
+        commandHandler.handleCommand(command);  // Execute via CommandHandler
+        return true;
+    }
+
+    private boolean isGameOver(Player currentPlayer) {
+        GridPosition lastMove = currentPlayer.getLastMove();
+        if (board.hasMatchingLine(lastMove)) {
+            System.out.println(currentPlayer.getName() + " wins!");
+            return true;
+        }
+        if (board.isFull()) {
+            System.out.println("The game is a tie.");
+            return true;
+        }
+        return false;
+    }
+}
+
+// CommandHandler class to handle commands from socket or web API
+public class CommandHandler {
+    public void handleCommand(Command command) {
+        if (command.isValidCommand()) {
+            command.execute();
+        } else {
+            System.out.println("Invalid command received");
+        }
+    }
+}
+```
+
+### Explanation of Changes
+1. **PlayerStrategy**: This allows both human and computer players to make moves through their specific strategies.
+2. **CommandHandler**: Abstracts the handling of commands, allowing for centralized command processing via network-based communication.
+3. **Socket/Web API Communication**: Commands can now be serialized and passed to `CommandHandler` over sockets or an API endpoint, which will validate and execute them.
+
+With this setup, you can seamlessly add more strategies (e.g., AI-based moves) and integrate commands over network protocols.

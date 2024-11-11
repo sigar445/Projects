@@ -1,0 +1,143 @@
+’s a refined approach:
+
+1. **GameEngine as the Core Component**:
+   - `GameEngine` should manage the game state, including the board, player turns, win conditions, and any other game-specific logic.
+   - `GameServer` would initialize `GameEngine`, and use it to retrieve updates and broadcast messages to players.
+
+2. **GameServer as a Communication Layer**:
+   - The `GameServer` handles player connections, relays player moves to `GameEngine`, and broadcasts updates from the `GameEngine` back to players.
+   - `GameServer` thus focuses on managing player communication and state synchronization, not on the game logic itself.
+
+3. **PlayerHandler**:
+   - Each `PlayerHandler` communicates directly with `GameServer` and sends moves to `GameEngine` indirectly through `GameServer`.
+   - It ensures that communication for each player remains isolated, simplifying individual player message handling.
+
+### Updated Design Outline
+
+Here’s how the interaction between these components could be set up.
+
+```java
+// GameEngine.java
+public class GameEngine {
+    private Board board;
+    private Deque<Player> players;
+
+    public GameEngine(List<Player> players) {
+        this.board = new Board();
+        this.players = new ArrayDeque<>(players);
+    }
+
+    public boolean processMove(Player player, String move) {
+        // Place piece on the board and check for win condition
+        boolean moveSuccessful = board.placePiece(player.getPiece(), move);
+        if (moveSuccessful) {
+            return checkWinCondition(player);
+        }
+        return false;
+    }
+
+    private boolean checkWinCondition(Player player) {
+        // Implement logic to check win
+    }
+
+    public Board getBoardState() {
+        return board;
+    }
+
+    public Player getNextPlayer() {
+        return players.pollFirst();
+    }
+}
+```
+
+```java
+// GameServer.java
+public class GameServer {
+    private ServerSocket serverSocket;
+    private GameEngine gameEngine;
+
+    public GameServer(ServerSocket serverSocket) {
+        this.serverSocket = serverSocket;
+    }
+
+    public void start() {
+        System.out.println("Server started. Waiting for players...");
+        List<Player> players = waitForPlayers();
+        this.gameEngine = new GameEngine(players);
+        startGameLoop();
+    }
+
+    private List<Player> waitForPlayers() {
+        List<Player> players = new ArrayList<>();
+        // Code to accept player connections and initialize player objects
+        return players;
+    }
+
+    private void startGameLoop() {
+        while (true) {
+            Player currentPlayer = gameEngine.getNextPlayer();
+            String move = receiveMoveFromPlayer(currentPlayer);
+
+            boolean isWin = gameEngine.processMove(currentPlayer, move);
+            if (isWin) {
+                broadcastMessage("Player " + currentPlayer.getName() + " has won the game!");
+                endGame();
+                break;
+            }
+            broadcastBoardUpdate();
+        }
+    }
+
+    private String receiveMoveFromPlayer(Player player) {
+        // Code to receive move from PlayerHandler
+    }
+
+    private void broadcastBoardUpdate() {
+        // Code to send updated board state to all players
+    }
+
+    private void endGame() {
+        // Handle game ending logic and notify players
+    }
+}
+```
+
+```java
+// PlayerHandler.java
+@AllArgsConstructor
+public class PlayerHandler implements Runnable {
+    private GameServer gameServer;
+    private Socket clientSocket;
+    private Player player;
+    private BufferedReader reader;
+    private PrintWriter writer;
+
+    @Override
+    public void run() {
+        try {
+            String move;
+            while ((move = reader.readLine()) != null) {
+                gameServer.processMove(player, move); // Relay move to GameServer
+            }
+        } catch (IOException e) {
+            System.out.println("Connection error with player: " + player.getName());
+        }
+    }
+
+    public void sendMessage(String message) {
+        writer.println(message);
+    }
+}
+```
+
+### Key Points in This Structure:
+
+- **`GameEngine` Manages the Game State**: The `GameEngine` controls the core game logic—validating moves, updating the board, and checking for win conditions.
+- **`GameServer` Handles Communication**: `GameServer` gathers moves from players, sends them to `GameEngine`, and then broadcasts updates or win notifications back to all players.
+- **`PlayerHandler` Serves Each Player Individually**: Each `PlayerHandler` receives inputs from a player and communicates these inputs to `GameServer`.
+
+### Advantages of This Structure
+
+1. **Clear Separation of Concerns**: `GameEngine` is isolated from communication logic, focusing solely on the game logic, making it easier to maintain.
+2. **Testability**: Each component (`GameEngine`, `GameServer`, and `PlayerHandler`) can be tested independently.
+3. **Flexibility**: This design makes it easier to add new features, like supporting a replay mechanism or adding new game modes, as `GameEngine` encapsulates the game state and logic entirely.

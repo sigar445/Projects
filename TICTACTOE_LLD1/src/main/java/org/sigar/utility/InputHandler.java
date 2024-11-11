@@ -40,6 +40,17 @@ public class InputHandler {
             System.out.println("Invalid format enter row,col(e.g. 1,2 or 2,4 etc");
         }
     }
+    public String requestGridPosition(String prompt){
+        System.out.printf(prompt + " (Valid format is row,column)");
+        while (true){
+            String input = scanner.nextLine().trim();
+            if(input.matches("\\d+,\\d+")){
+                //return GridPosition.parseGridPosition(input);
+                return input;
+            }
+            System.out.println("Invalid format enter row,col(e.g. 1,2 or 2,4 etc");
+        }
+    }
     public void close() {
         scanner.close();
     }

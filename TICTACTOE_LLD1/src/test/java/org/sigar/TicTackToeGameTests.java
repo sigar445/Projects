@@ -2,25 +2,27 @@ package org.sigar;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.sigar.application.TicTacToeGame;
+import org.sigar.application.GameEngine;
 import org.sigar.utility.InputHandler;
 
+
+import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class TicTackToeGameTests {
 
-    private TicTacToeGame game;
+    private GameEngine game;
     private InputHandler inputHandlerMock;
     @BeforeEach
     void setup() {
-        game = new TicTacToeGame();
+        game = new GameEngine();
         inputHandlerMock = Mockito.mock(InputHandler.class);
     }
 
     @Test
-    void testInitializeGame() {
+    void testInitializeGame() throws IOException {
         when(inputHandlerMock.requestInt(any(String.class), any(Integer.class), any(Integer.class))).thenReturn(3);
 
 //        when(inputHandlerMock.requestInt(any(),any(),any())).thenReturn(3); // Board size
@@ -65,7 +67,7 @@ class TicTackToeGameTests {
 //    @Test
 //    void testPlayGame_PlayerWins() {
 //        Board boardMock = Mockito.mock(Board.class);
-//        game = new TicTacToeGame();
+//        game = new GameEngine();
 //        game.setBoard(boardMock);
 //        game.setPlayers(List.of(new Player("Alice", new PieceX()), new Player("Bob", new PieceO())));
 //
@@ -85,7 +87,7 @@ class TicTackToeGameTests {
 //    @Test
 //    void testPlayGame_Tie() {
 //        Board boardMock = Mockito.mock(Board.class);
-//        game = new TicTacToeGame();
+//        game = new GameEngine();
 //        game.setBoard(boardMock);
 //        game.setPlayers(List.of(new Player("Alice", new PieceX()), new Player("Bob", new PieceO())));
 //

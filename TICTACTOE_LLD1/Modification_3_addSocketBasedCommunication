@@ -1,0 +1,344 @@
+Yes, we can make this more concise by focusing on essential socket communication and removing extra complexities. Here’s a simplified approach where the game server and client only handle move communication, keeping socket setup and I/O operations minimal.
+
+The server will:
+1. Accept connections from multiple clients (players).
+2. Broadcast each player's move to all connected clients.
+
+The client will:
+1. Connect to the server.
+2. Send moves to the server and display moves received from other players.
+
+### Simplified Game Server Code
+
+The server will accept connections and broadcast moves to all connected clients, managing each player’s channel in a straightforward loop.
+
+```java
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.*;
+import java.util.Iterator;
+import java.util.Set;
+
+public class SimpleGameServer {
+    private Selector selector;
+    private ServerSocketChannel serverChannel;
+
+    public SimpleGameServer(int port) throws IOException {
+        selector = Selector.open();
+        serverChannel = ServerSocketChannel.open();
+        serverChannel.bind(new InetSocketAddress(port));
+        serverChannel.configureBlocking(false);
+        serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+        System.out.println("Server started on port " + port);
+    }
+
+    public void start() throws IOException {
+        while (true) {
+            selector.select();
+            Set<SelectionKey> keys = selector.selectedKeys();
+            Iterator<SelectionKey> iterator = keys.iterator();
+
+            while (iterator.hasNext()) {
+                SelectionKey key = iterator.next();
+                iterator.remove();
+
+                if (key.isAcceptable()) {
+                    SocketChannel client = serverChannel.accept();
+                    client.configureBlocking(false);
+                    client.register(selector, SelectionKey.OP_READ);
+                    System.out.println("Player connected: " + client.getRemoteAddress());
+                } else if (key.isReadable()) {
+                    handleMove((SocketChannel) key.channel());
+                }
+            }
+        }
+    }
+
+    private void handleMove(SocketChannel client) throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(256);
+        int bytesRead = client.read(buffer);
+        if (bytesRead == -1) {
+            client.close();
+            System.out.println("Player disconnected.");
+            return;
+        }
+        buffer.flip();
+        String move = new String(buffer.array(), 0, buffer.limit()).trim();
+        System.out.println("Received move: " + move);
+        broadcastMove(move, client);
+    }
+
+    private void broadcastMove(String move, SocketChannel sender) throws IOException {
+        ByteBuffer buffer = ByteBuffer.wrap(move.getBytes());
+        for (SelectionKey key : selector.keys()) {
+            Channel channel = key.channel();
+            if (channel instanceof SocketChannel && channel != sender) {
+                ((SocketChannel) channel).write(buffer);
+                buffer.rewind();
+            }
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        SimpleGameServer server = new SimpleGameServer(8080);
+        server.start();
+    }
+}
+```
+
+### Simplified Game Client Code
+
+Each client connects to the server, sends moves, and listens for moves from other players.
+
+```java
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
+import java.util.Scanner;
+
+public class SimpleGameClient {
+    private Selector selector;
+    private SocketChannel socketChannel;
+
+    public SimpleGameClient(String hostname, int port) throws IOException {
+        selector = Selector.open();
+        socketChannel = SocketChannel.open(new InetSocketAddress(hostname, port));
+        socketChannel.configureBlocking(false);
+        System.out.println("Connected to Game Server at " + hostname + ":" + port);
+    }
+
+    public void sendMove(String move) throws IOException {
+        ByteBuffer buffer = ByteBuffer.wrap(move.getBytes());
+        socketChannel.write(buffer);
+    }
+
+    public void receiveMoves() throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(256);
+        while (true) {
+            int bytesRead = socketChannel.read(buffer);
+            if (bytesRead > 0) {
+                buffer.flip();
+                String move = new String(buffer.array(), 0, buffer.limit()).trim();
+                System.out.println("Opponent's move: " + move);
+                buffer.clear();
+            }
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        SimpleGameClient client = new SimpleGameClient("localhost", 8080);
+        Scanner scanner = new Scanner(System.in);
+
+        // Separate thread for receiving moves
+        new Thread(() -> {
+            try {
+                client.receiveMoves();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+
+        // Loop to send moves
+        while (true) {
+            System.out.print("Enter your move (e.g., 1,1): ");
+            String move = scanner.nextLine();
+            client.sendMove(move);
+        }
+    }
+}
+```
+
+### Key Points in the Simplified Approach
+
+1. **Concise Communication**: Each client sends a move string (e.g., "1,1") to the server, which broadcasts it to all clients. The server does minimal processing, focusing only on accepting and broadcasting moves.
+
+2. **Separate Thread for Receiving Moves**: The client uses a background thread to listen for opponent moves, allowing the main thread to handle input and send moves.
+
+3. **Minimal Code Structure**: This version removes complex connection handling and selectors on the client side, relying on straightforward socket communication.
+
+This structure will allow your Tic-Tac-Toe game to handle moves sent over a socket channel, making it simple to integrate the code with command handling and game logic. You can easily expand this setup with REST API support if needed, by adding endpoints for players to send and receive moves.
+To integrate socket-based communication into your Tic-Tac-Toe game, where player moves can be sent over a channel or REST API, we can create a client-server setup. The socket channel can handle moves transmitted between players and the game server, while the REST API can offer alternative communication.
+
+Here’s how you can configure and adapt the provided `NioMultipleSocketChannelConnector` code:
+
+1. **Define Game Server**: Create a `GameServer` that listens for player connections, receives moves, and broadcasts the updated board state.
+
+2. **Refactor `NioMultipleSocketChannelConnector` as Client**: Update this code to act as a `GameClient`, responsible for connecting to the server, sending moves, and reading board updates.
+
+3. **REST API as Fallback**: Expose a REST API for alternate communication if socket channels are unavailable.
+
+### Step 1: Game Server Code
+
+```java
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.*;
+import java.util.Iterator;
+import java.util.Set;
+
+public class GameServer {
+    private Selector selector;
+
+    public GameServer(int port) throws IOException {
+        selector = Selector.open();
+        ServerSocketChannel serverChannel = ServerSocketChannel.open();
+        serverChannel.bind(new InetSocketAddress(port));
+        serverChannel.configureBlocking(false);
+        serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+        System.out.println("Game Server started on port " + port);
+    }
+
+    public void start() throws IOException {
+        while (true) {
+            selector.select();
+            Set<SelectionKey> keys = selector.selectedKeys();
+            Iterator<SelectionKey> iterator = keys.iterator();
+
+            while (iterator.hasNext()) {
+                SelectionKey key = iterator.next();
+                iterator.remove();
+
+                if (key.isAcceptable()) {
+                    acceptClientConnection((ServerSocketChannel) key.channel());
+                } else if (key.isReadable()) {
+                    handleClientMove((SocketChannel) key.channel());
+                }
+            }
+        }
+    }
+
+    private void acceptClientConnection(ServerSocketChannel serverChannel) throws IOException {
+        SocketChannel clientChannel = serverChannel.accept();
+        clientChannel.configureBlocking(false);
+        clientChannel.register(selector, SelectionKey.OP_READ);
+        System.out.println("New player connected: " + clientChannel.getRemoteAddress());
+    }
+
+    private void handleClientMove(SocketChannel clientChannel) throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(256);
+        int bytesRead = clientChannel.read(buffer);
+
+        if (bytesRead == -1) {
+            clientChannel.close();
+            System.out.println("Player disconnected.");
+            return;
+        }
+
+        buffer.flip();
+        String move = new String(buffer.array(), 0, buffer.limit()).trim();
+        System.out.println("Received move: " + move);
+        broadcastMove(move, clientChannel);
+    }
+
+    private void broadcastMove(String move, SocketChannel sender) throws IOException {
+        ByteBuffer buffer = ByteBuffer.wrap(move.getBytes());
+        for (SelectionKey key : selector.keys()) {
+            if (key.channel() instanceof SocketChannel && key.channel() != sender) {
+                ((SocketChannel) key.channel()).write(buffer);
+                buffer.rewind();
+            }
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        GameServer server = new GameServer(8081);
+        server.start();
+    }
+}
+```
+
+### Step 2: Refactor `NioMultipleSocketChannelConnector` as `GameClient`
+
+Here, modify your client to send and receive player moves through the `PlacePieceCommand`.
+
+```java
+public class GameClient {
+    private Selector selector;
+    private SocketChannel socketChannel;
+
+    public GameClient(String hostname, int port) throws IOException {
+        selector = Selector.open();
+        socketChannel = SocketChannel.open();
+        socketChannel.configureBlocking(false);
+        socketChannel.connect(new InetSocketAddress(hostname, port));
+        socketChannel.register(selector, SelectionKey.OP_CONNECT);
+    }
+
+    public void start() throws IOException {
+        while (true) {
+            selector.select();
+            Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
+
+            while (keys.hasNext()) {
+                SelectionKey key = keys.next();
+                keys.remove();
+
+                if (key.isConnectable()) {
+                    if (socketChannel.finishConnect()) {
+                        socketChannel.register(selector, SelectionKey.OP_READ);
+                        System.out.println("Connected to Game Server.");
+                    }
+                } else if (key.isReadable()) {
+                    receiveMove();
+                }
+            }
+        }
+    }
+
+    public void sendMove(GridPosition position, Piece piece) throws IOException {
+        String move = position.getRow() + "," + position.getCol() + ":" + piece.getPieceType();
+        ByteBuffer buffer = ByteBuffer.wrap(move.getBytes());
+        socketChannel.write(buffer);
+    }
+
+    private void receiveMove() throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(256);
+        socketChannel.read(buffer);
+        buffer.flip();
+        String move = new String(buffer.array(), 0, buffer.limit()).trim();
+        System.out.println("Received opponent move: " + move);
+        // Process received move to update local game state
+    }
+
+    public static void main(String[] args) throws IOException {
+        GameClient client = new GameClient("localhost", 8081);
+        client.start();
+    }
+}
+```
+
+### Step 3: REST API Integration (Optional)
+Implement REST controllers that handle move submission and provide current board state. Here's an example using Spring Boot:
+
+```java
+@RestController
+@RequestMapping("/api/game")
+public class GameController {
+    private final TicTacToeGame game;
+
+    @PostMapping("/move")
+    public ResponseEntity<String> submitMove(@RequestBody MoveRequest request) {
+        GridPosition position = new GridPosition(request.getRow(), request.getCol());
+        boolean success = game.placePiece(position, request.getPlayer());
+        return success ? ResponseEntity.ok("Move accepted") : ResponseEntity.badRequest().body("Invalid move");
+    }
+
+    @GetMapping("/board")
+    public BoardState getBoardState() {
+        return game.getBoard().getCurrentState();
+    }
+}
+```
+
+In this configuration:
+1. **Game Server** listens for player connections, receives moves, and broadcasts moves.
+2. **Game Client** sends and receives moves to/from the server, which can represent each player’s moves in real-time.
+3. **REST API** offers an alternate method to communicate moves and check the board state.
+
+This setup allows you to:
+- Use `GameClient` to send moves via sockets for real-time gameplay.
+- Provide REST endpoints for frontend or external systems to query and submit moves as needed.

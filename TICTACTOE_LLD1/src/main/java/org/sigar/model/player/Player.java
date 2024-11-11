@@ -11,4 +11,5 @@ import org.sigar.model.piece.Piece;
 public abstract class Player{
     private String name;
     private Piece piece;
+    private PlayerStrategy strategy;
 }
