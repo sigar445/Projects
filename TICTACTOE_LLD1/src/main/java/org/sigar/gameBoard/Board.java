@@ -41,6 +41,7 @@ public class Board {
         int row = gridPosition.getRow();
         int col = gridPosition.getCol();
         grid[row][col] = piece;
+
     }
 
     public boolean isFull(){

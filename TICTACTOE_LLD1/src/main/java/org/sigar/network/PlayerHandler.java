@@ -3,14 +3,12 @@ package org.sigar.network;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.sigar.model.player.Player;
-import org.sigar.utility.GridPosition;
 import org.sigar.utility.InputHandler;
 
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 @AllArgsConstructor
 public class PlayerHandler implements Runnable{
@@ -47,7 +45,7 @@ public class PlayerHandler implements Runnable{
 //            }
             String message;
             while ((message = reader.readLine()) != null) {
-                processCommand(player,message);
+                processInput(player,message);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -56,12 +54,16 @@ public class PlayerHandler implements Runnable{
         }
     }
 
-    public void sendMessage(String message) throws IOException {
+    public void sendMessage(String message)   {
         System.out.println("Sending message: " + message);
-        writer.println(message);
+        try {
+            writer.println(message);
+        }catch (Exception exception){
+            close();
+        }
     }
-    public void processCommand(Player player,String input){
-        server.placePiece(player,input);
+    public void processInput(Player player, String input){
+        server.processInput(player,input);
     }
     private void close() {
         try {

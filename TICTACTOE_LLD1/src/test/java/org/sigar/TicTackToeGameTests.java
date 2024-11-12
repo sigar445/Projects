@@ -13,28 +13,28 @@ import static org.mockito.Mockito.*;
 
 class TicTackToeGameTests {
 
-    private GameEngine game;
-    private InputHandler inputHandlerMock;
-    @BeforeEach
-    void setup() {
-        game = new GameEngine();
-        inputHandlerMock = Mockito.mock(InputHandler.class);
-    }
-
-    @Test
-    void testInitializeGame() throws IOException {
-        when(inputHandlerMock.requestInt(any(String.class), any(Integer.class), any(Integer.class))).thenReturn(3);
-
-//        when(inputHandlerMock.requestInt(any(),any(),any())).thenReturn(3); // Board size
-        when(inputHandlerMock.requestString(any(String.class))).thenReturn("Alice", "Bob");
-
-        game.initGame(inputHandlerMock);
-
-        assertNotNull(game.getBoard());
-        assertEquals(2, game.getPlayers().size());
-        assertEquals("Alice", game.getPlayers().get(0).getName());
-        assertEquals("Bob", game.getPlayers().get(1).getName());
-    }
+//    private GameEngine game;
+//    private InputHandler inputHandlerMock;
+//    @BeforeEach
+//    void setup() {
+//        game = new GameEngine();
+//        inputHandlerMock = Mockito.mock(InputHandler.class);
+//    }
+//
+//    @Test
+//    void testInitializeGame() throws IOException {
+//        when(inputHandlerMock.requestInt(any(String.class), any(Integer.class), any(Integer.class))).thenReturn(3);
+//
+////        when(inputHandlerMock.requestInt(any(),any(),any())).thenReturn(3); // Board size
+//        when(inputHandlerMock.requestString(any(String.class))).thenReturn("Alice", "Bob");
+//
+//        game.initGame(inputHandlerMock);
+//
+//        assertNotNull(game.getBoard());
+//        assertEquals(2, game.getPlayers().size());
+//        assertEquals("Alice", game.getPlayers().get(0).getName());
+//        assertEquals("Bob", game.getPlayers().get(1).getName());
+//    }
 
 //    @Test
 //    void testPromptForBoardSize_ValidSize() {

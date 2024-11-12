@@ -17,5 +17,6 @@ public class PlacePieceCommand implements Command{
     @Override
     public void execute(Player player){
         board.placePieceOnGrid(gridPosition,player.getPiece());
+
     }
 }

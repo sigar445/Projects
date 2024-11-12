@@ -7,9 +7,10 @@ import java.util.Scanner;
 
 public class TicTacToeGameApplication {
     public static void main(String[] args) throws IOException {
-        GameEngine game = new GameEngine();
         InputHandler inputHandler = new InputHandler(new Scanner(System.in));
-        game.initGame(inputHandler);
+        GameEngine game = new GameEngine(inputHandler);
+
+        //game.initGame(inputHandler);
         game.startGame();
     }
 }

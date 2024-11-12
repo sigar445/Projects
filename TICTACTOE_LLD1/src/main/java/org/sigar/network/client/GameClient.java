@@ -1,37 +1,58 @@
 package org.sigar.network.client;
-
-
+import org.sigar.network.modifiedFiles.ModifiedGameApplication;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Scanner;
 
-public class GameClient implements AutoCloseable {
+import static java.lang.Thread.sleep;
+
+public class GameClient implements AutoCloseable{
     private Socket socket;
     private BufferedReader reader;
     private PrintWriter writer;
-
-    public GameClient(Socket socket){
-        try{
-            this.socket = socket;
-            reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
-        }catch (IOException e){
-            this.close();
-        }
+    boolean isRunning = true;
+    public GameClient(String host, int port) throws IOException {
+        this.socket = new Socket(host, port);
+        this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        this.writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
     }
     public void startClient(){
+        activateSender();
+        listenForServerMessages();
+    }
+    public void stopClient(){
+        isRunning = false;
+        close();
+    }
+    public void activateSender()  {
+        new Thread(() -> {
+            try(Scanner scanner = new Scanner(System.in)){
+                while (isRunning){
+                    String command = scanner.nextLine().trim();
+                    writer.println(command);
+                    if(command.contains("QUIT") || command.contains("Quit") || command.contains("quit")) {
+                        System.out.println("Exiting the sender");
+                        stopClient();
+                    }
+                }
+            }
+        }).start();
+    }
+    public void listenForServerMessages(){
         try {
             System.out.println("Waiting for messages from server ");
-            System.out.println(reader.readLine());  // Receive prompt
-            writer.println("Harry");
             String message;
-            while ((message = reader.readLine()) != null) {
+            while (isRunning && ((message = reader.readLine()) != null)) {
                 System.out.println("Server: " + message);
             }
         }catch (IOException e){
-            this.close();
+            System.out.println("Connection error: " + e.getMessage());
+        }finally {
+            stopClient();
         }
     }
+
     public void close(){
         try {
             System.out.println("Closing all connections");
@@ -50,12 +71,12 @@ public class GameClient implements AutoCloseable {
     }
 
     public static void main(String[] args) {
-        try(GameClient client = new GameClient(new Socket("localhost", 1245))){
+        String host = "localhost";
+        int port = ModifiedGameApplication.SERVER_PORT;
+        try(GameClient client = new GameClient(host,port)){
             client.startClient();
         } catch (Exception e) {
-            e.printStackTrace();
-
+            System.err.println("Failed to start client: " + e.getMessage());
         }
-
     }
 }

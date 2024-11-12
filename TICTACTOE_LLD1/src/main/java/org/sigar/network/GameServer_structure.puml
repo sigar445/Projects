@@ -1,0 +1,386 @@
+@startuml
+
+/' diagram meta data start
+config=StructureConfiguration;
+{
+  "projectClassification": {
+    "searchMode": "OpenProject", // OpenProject, AllProjects
+    "includedProjects": "",
+    "pathEndKeywords": "*.impl",
+    "isClientPath": "",
+    "isClientName": "",
+    "isTestPath": "",
+    "isTestName": "",
+    "isMappingPath": "",
+    "isMappingName": "",
+    "isDataAccessPath": "",
+    "isDataAccessName": "",
+    "isDataStructurePath": "",
+    "isDataStructureName": "",
+    "isInterfaceStructuresPath": "",
+    "isInterfaceStructuresName": "",
+    "isEntryPointPath": "",
+    "isEntryPointName": "",
+    "treatFinalFieldsAsMandatory": false
+  },
+  "graphRestriction": {
+    "classPackageExcludeFilter": "",
+    "classPackageIncludeFilter": "",
+    "classNameExcludeFilter": "",
+    "classNameIncludeFilter": "",
+    "methodNameExcludeFilter": "",
+    "methodNameIncludeFilter": "",
+    "removeByInheritance": "", // inheritance/annotation based filtering is done in a second step
+    "removeByAnnotation": "",
+    "removeByClassPackage": "", // cleanup the graph after inheritance/annotation based filtering is done
+    "removeByClassName": "",
+    "cutMappings": false,
+    "cutEnum": true,
+    "cutTests": true,
+    "cutClient": true,
+    "cutDataAccess": false,
+    "cutInterfaceStructures": false,
+    "cutDataStructures": false,
+    "cutGetterAndSetter": true,
+    "cutConstructors": true
+  },
+  "graphTraversal": {
+    "forwardDepth": 6,
+    "backwardDepth": 6,
+    "classPackageExcludeFilter": "",
+    "classPackageIncludeFilter": "",
+    "classNameExcludeFilter": "",
+    "classNameIncludeFilter": "",
+    "methodNameExcludeFilter": "",
+    "methodNameIncludeFilter": "",
+    "hideMappings": false,
+    "hideDataStructures": false,
+    "hidePrivateMethods": true,
+    "hideInterfaceCalls": true, // indirection: implementation -> interface (is hidden) -> implementation
+    "onlyShowApplicationEntryPoints": false, // root node is included
+    "useMethodCallsForStructureDiagram": "ForwardOnly" // ForwardOnly, BothDirections, No
+  },
+  "details": {
+    "aggregation": "GroupByClass", // ByClass, GroupByClass, None
+    "showClassGenericTypes": true,
+    "showMethods": true,
+    "showMethodParameterNames": true,
+    "showMethodParameterTypes": true,
+    "showMethodReturnType": true,
+    "showPackageLevels": 2,
+    "showDetailedClassStructure": true
+  },
+  "rootClass": "org.sigar.network.GameServer",
+  "extensionCallbackMethod": "" // qualified.class.name#methodName - signature: public static String method(String)
+}
+diagram meta data end '/
+
+
+
+digraph g {
+    rankdir="TB"
+    splines=polyline
+    
+
+'nodes 
+subgraph cluster_109435074 { 
+   	label=sigar
+	labeljust=l
+	fillcolor="#ececec"
+	style=filled
+   
+   subgraph cluster_1336605672 { 
+   	label=gameBoard
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   Board34619614[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)Board</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   boardValidator: BoardValidator [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   grid: Piece[][] [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   size: Integer [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ checkColumnMatch(gridPosition: GridPosition): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ checkDiagonalMatch(gridPosition: GridPosition): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ checkRowMatch(gridPosition: GridPosition): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ drawBoard()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ placePiece(gridPosition: GridPosition, piece: Piece): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ placePieceOnGrid(gridPosition: GridPosition, piece: Piece)</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+BoardValidator34619614[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)BoardValidator</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   grid: Piece[][] [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >#   size: int [1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ checkColumnMatch(gridPosition: GridPosition): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ checkDiagonalMatch(gridPosition: GridPosition): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ checkRowMatch(gridPosition: GridPosition): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ isMoveValid(gridPosition: GridPosition): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ isOccupiedPlace(gridPosition: GridPosition): boolean</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+} 
+
+subgraph cluster_1856346176 { 
+   	label=utility
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   GridPosition1738300746[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)GridPosition</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >#   col: int [1]</TD></TR>
+<TR><TD ALIGN="LEFT" >#   row: int [1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ parseGridPosition(input: String): GridPosition</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+InputHandler1738300746[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)InputHandler</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   scanner: Scanner [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ close()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ requestGridPosition(prompt: String, size: int): GridPosition</TD></TR>
+<TR><TD ALIGN="LEFT" >+ requestGridPosition(prompt: String): String</TD></TR>
+<TR><TD ALIGN="LEFT" >+ requestInt(prompt: String, min: int, max: int): int</TD></TR>
+<TR><TD ALIGN="LEFT" >+ requestString(prompt: String): String</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+} 
+
+subgraph cluster_1918665252 { 
+   	label=application
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   GameEngine545546650[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)GameEngine</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   board: Board [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   inputHandler: InputHandler [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   players: Deque&lt;Player&gt; [0..*]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ addPlayer(player: Player)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ initializeBoard(inputHandler: InputHandler)</TD></TR>
+<TR><TD ALIGN="LEFT" >- isGameOver(gridPosition: GridPosition, board: Board, currPlayer: Player): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ startGame()</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+} 
+
+subgraph cluster_480157438 { 
+   	label=network
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   GameServer220162936[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)GameServer</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+   gameEngine: GameEngine [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   pieces: Deque&lt;Piece&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   playerDeque: Deque&lt;Player&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   serverSocket: ServerSocket [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ broadcastMessage(messsage: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ close()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ initializePlayersAndPieces()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ main(args: String[])</TD></TR>
+<TR><TD ALIGN="LEFT" >+ placePiece(player: Player, input: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ startServer()</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+PlayerHandler220162936[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)PlayerHandler</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   clientSocket: Socket [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   inputHandler: InputHandler [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   player: Player [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   reader: BufferedReader [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   server: GameServer [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   writer: PrintWriter [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- close()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ processCommand(player: Player, input: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ run()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ sendMessage(message: String)</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+} 
+
+subgraph cluster_68180227 { 
+   	label=model
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   HumanPlayer1824243140[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)HumanPlayer</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+HumanPlayerStrategy1824243140[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)HumanPlayerStrategy</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ getMove(inputHandler: InputHandler, boardSize: int, prompt: String): GridPosition</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+Piece1582953421[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)Piece</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   pieceType: PieceType [0..1]</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+PieceO1582953421[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)PieceO</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+PieceX1582953421[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)PieceX</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+PlacePieceCommand726999888[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)PlacePieceCommand</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   board: Board [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   gridPosition: GridPosition [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ execute(player: Player)</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+Player1824243140[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)Player</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   name: String [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   piece: Piece [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   strategy: PlayerStrategy [0..1]</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+} 
+} 
+
+'edges    
+Board34619614 -> BoardValidator34619614[label="boardValidator
+[0..1]"];
+Board34619614 -> Piece1582953421[label="grid
+[0..*]"];
+GameEngine545546650 -> Board34619614[label="board
+[0..1]"];
+GameEngine545546650 -> InputHandler1738300746[label="inputHandler
+[0..1]"];
+GameEngine545546650 -> PlacePieceCommand726999888[arrowhead=none];
+GameEngine545546650 -> Player1824243140[label="players
+[0..*]"];
+GameServer220162936 -> GameEngine545546650[label="gameEngine
+[0..1]"];
+GameServer220162936 -> Piece1582953421[label="pieces
+[0..*]"];
+GameServer220162936 -> Player1824243140[label="playerDeque
+[0..*]"];
+GameServer220162936 -> PlayerHandler220162936[label="broadcastMessage() -> sendMessage()"];
+HumanPlayerStrategy1824243140 -> InputHandler1738300746[label="getMove() -> requestGridPosition()"];
+InputHandler1738300746 -> GridPosition1738300746[label="requestGridPosition() -> parseGridPosition()"];
+Piece1582953421 -> PieceO1582953421[arrowhead=none, arrowtail=empty, dir=both];
+Piece1582953421 -> PieceX1582953421[arrowhead=none, arrowtail=empty, dir=both];
+PlacePieceCommand726999888 -> Board34619614[label="board
+[0..1]"];
+PlacePieceCommand726999888 -> GridPosition1738300746[label="gridPosition
+[0..1]"];
+Player1824243140 -> HumanPlayer1824243140[arrowhead=none, arrowtail=empty, dir=both];
+Player1824243140 -> HumanPlayerStrategy1824243140[arrowhead=none];
+Player1824243140 -> Piece1582953421[label="piece
+[0..1]"];
+PlayerHandler220162936 -> GameServer220162936[label="server
+[0..1]"];
+PlayerHandler220162936 -> InputHandler1738300746[label="inputHandler
+[0..1]"];
+PlayerHandler220162936 -> Player1824243140[label="player
+[0..1]"];
+    
+}
+@enduml

@@ -2,11 +2,14 @@ package org.sigar.network;
 
 import lombok.Getter;
 import org.sigar.application.GameEngine;
+import org.sigar.model.command.Command;
+import org.sigar.model.command.PlacePieceCommand;
 import org.sigar.model.piece.Piece;
 import org.sigar.model.piece.PieceO;
 import org.sigar.model.piece.PieceX;
 import org.sigar.model.player.HumanPlayer;
 import org.sigar.model.player.Player;
+import org.sigar.utility.GridPosition;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -19,7 +22,7 @@ import java.util.List;
 public class GameServer implements AutoCloseable{
 
     private final ServerSocket serverSocket;
-    private  Deque<Player> playerDeque;
+ //   private  Deque<Player> playerDeque;
 //    @Getter
 //    private Player currentTurnPlayer;
     private  Deque<Piece> pieces;
@@ -39,21 +42,33 @@ public class GameServer implements AutoCloseable{
         initializePlayersAndPieces();
     }
     public void initializePlayersAndPieces(){
-        playerDeque = new ArrayDeque<>();
+      //  playerDeque = new ArrayDeque<>();
         pieces = new ArrayDeque<>(List.of(
                 new PieceX(),
                 new PieceO()
         ));
     }
 
+    private PlayerHandler getPlayerHandlerFromPlayer(Player player){
+        for(PlayerHandler playerHandler : PlayerHandler.playerHandlers){
+          if(player == playerHandler.getPlayer()) return playerHandler;
+        }
+        return null;
+    }
     public void startServer()  {
         try {
             System.out.println("Server started. Waiting for players...");
-            while(playerDeque.size() < 2){
+            while(PlayerHandler.playerHandlers.size() < 2){
                 Socket playerSocket = serverSocket.accept();
                 setupPlayer(playerSocket);
             }
-            gameEngine.initGame();
+            while(gameEngine.getResult() == null){
+                Player player = gameEngine.getTurn();
+                PlayerHandler currPlayerHandler = getPlayerHandlerFromPlayer(player);
+                notifyPlayerTurn(currPlayerHandler);
+            }
+            broadcastMessage(gameEngine.getResult());
+          //  gameEngine.initGame();
         }catch (IOException e){
             close();
         }
@@ -66,9 +81,10 @@ public class GameServer implements AutoCloseable{
             System.out.println("Waiting for player name: ");
             String name = in.readLine();
            // System.out.println("Got player name:" + name);
-
-            PlayerHandler playerHandler = new PlayerHandler(this,playerSocket,new HumanPlayer(name,pieces.pop()),in,out);
-            playerDeque.addFirst(playerHandler.getPlayer());
+            Player newPlayer = new HumanPlayer(name,pieces.pop());
+            PlayerHandler playerHandler = new PlayerHandler(this,playerSocket,newPlayer,in,out);
+           // playerDeque.addFirst(newPlayer);
+            gameEngine.addPlayer(newPlayer);
             broadcastMessage("Player "+ name + " has joined the game");
             new Thread(playerHandler).start();
         }
@@ -97,10 +113,40 @@ public class GameServer implements AutoCloseable{
             e.printStackTrace();
         }
     }
-    public void placePiece(Player player,String input) {
-        System.out.printf("Trying to place piece %s on %s\n",player.getPiece().toString(),input);
+    public void processInput(Player player,String command) {
+        if (command == null || command.isBlank()) {
+            System.out.println("Invalid command.");
+            return;
+        }
 
-     //   gameEngine.placePiece(input);
+        command = command.trim();
+        if (command.startsWith("MOVE")) {
+            processMoveCommand(player,command);
+        } else if (command.equalsIgnoreCase("QUIT")) {
+            processQuitCommand();
+        } else {
+            System.out.println("Unknown command.");
+        }
+    }
+
+    private void processMoveCommand(Player player,String input) {
+        try {
+            // Extracting coordinates after "MOVE"
+            String[] parts = input.substring(5).split(",");
+            int x = Integer.parseInt(parts[0].trim());
+            int y = Integer.parseInt(parts[1].trim());
+
+            // Make the move in the game engine
+            gameEngine.validateAndExecuteCommand(player,new PlacePieceCommand(gameEngine.getBoard(),new GridPosition(x, y)));
+           // System.out.println("Move made to (" + x + ", " + y + ")");
+        } catch (Exception e) {
+            System.out.println("Invalid MOVE command. Please use the format 'MOVE x,y'");
+        }
+    }
+
+    private void processQuitCommand() {
+        System.out.println("Quitting the game...");
+     //   gameEngine.quitGame();
     }
     public void broadcastMessage(String messsage) throws IOException {
         System.out.println("Broadcasting message : " + messsage);
@@ -109,6 +155,11 @@ public class GameServer implements AutoCloseable{
             playerHandler.sendMessage(messsage);
         }
     }
+    public void notifyPlayerTurn(PlayerHandler playerHandler) throws IOException {
+            String messsage = "SEND MOVE  " + playerHandler.getPlayer().getName();
+            playerHandler.sendMessage(messsage);
+        }
+
     @Override
     public void close() {
         try {

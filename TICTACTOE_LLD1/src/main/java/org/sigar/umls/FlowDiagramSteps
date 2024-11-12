@@ -1,0 +1,187 @@
+Here's a text-based flow diagram of the game application process, based on the detailed steps you outlined. This structure shows how different components interact and gives a clear view of the sequence and conditional logic:
+
+```
+Start Game Application
+|
+v
++----------------------------+
+| Initialize GameServer      |
+| Initialize GameEngine      |
+| Initialize Board in GameEngine |
++----------------------------+
+            |
+            v
++----------------------------+
+| Wait for Player Connections |
++----------------------------+
+            |
+            v
++----------------------------+
+| Accept Player Connection   |
++----------------------------+
+            |
+            v
++-----------------------------+
+| Request Player Name from    |
+| Client                      |
++-----------------------------+
+            |
+            v
++-----------------------------+
+| Receive and Add Player to   |
+| GameEngine                  |
++-----------------------------+
+            |
+            v
++-----------------------------+
+| Start PlayerHandler Thread  |
++-----------------------------+
+            |
+            v
++-----------------------------+
+| Is Player Pool Full?        |
++-----------------------------+
+      |                   |
+      | Yes               | No
+      v                   |
+ (Continue)          <----+
+
+       Game Loop Begins
+            |
+            v
++-----------------------------+
+| Get Player Turn from        |
+| GameEngine                  |
++-----------------------------+
+            |
+            v
++-----------------------------+
+| Notify Active Player of     |
+| Their Turn                  |
++-----------------------------+
+            |
+            v
++-----------------------------+
+| Receive Move from Player    |
+| via PlayerHandler           |
++-----------------------------+
+            |
+            v
++-----------------------------+
+| Validate and Process Move   |
+| in GameEngine               |
++-----------------------------+
+            |
+            v
++-----------------------------+
+| Is Move Valid?              |
++-----------------------------+
+      |                |
+     Yes              No
+      |                |
+      v                v
++-------------------+ +-------------------+
+| Broadcast Success | | Notify Player to  |
+| and Update Board  | | Retry Move        |
++-------------------+ +-------------------+
+            |
+            v
++-----------------------------+
+| Is Game Over?               |
++-----------------------------+
+      |                 |
+      | Yes             | No
+      v                 |
++-------------------+   |
+| Broadcast Game    |<--+
+| Result (Win/Draw) |
++-------------------+
+            |
+            v
+        End Game
+```
+
+This flow diagram clearly represents the sequence and decisions in the game application process. Each stage is connected by arrows that guide you through the flow from initialization to the game loop and ending condition.
+Creating a flow diagram for a process like this involves breaking down each step and representing it visually with shapes, lines, and labels. Here’s a guide to help you build your flow diagram, along with specific suggestions based on the flow you described.
+
+### Flow Diagram Basics
+
+1. **Start/End**: Represented by ovals, these indicate the start and end points of a process.
+2. **Process/Action**: Represented by rectangles, these indicate tasks or actions taken (e.g., “Initialize Game Engine”).
+3. **Decision**: Represented by diamonds, these indicate a decision point where the process can take different paths based on conditions (e.g., “Is Player Pool Full?”).
+4. **Input/Output**: Represented by parallelograms, these indicate data going in or out (e.g., "Receive Player Move").
+5. **Arrows/Connectors**: Show the flow from one step to the next, indicating the sequence of actions.
+
+### How to Think Through the Flow
+
+Let’s walk through the flow you described in detail and break it down into steps. Each step can then be represented by a specific symbol in the diagram.
+
+### Step-by-Step Process Flow
+
+#### 1. Initial Setup and Initialization
+
+1. **Start** - Mark the start point with an oval labeled "Start Game Application."
+2. **Initialize Server and Game Engine** - Use a rectangle to show the server starting and initializing the game engine, labeled “Initialize GameServer and GameEngine”.
+3. **Initialize Board in GameEngine** - Show the GameEngine initializing the board. Another rectangle labeled “Initialize Board” would follow this.
+
+#### 2. Waiting for Players
+
+4. **Wait for Players** - The server waits for players to connect. Use a rectangle labeled "Wait for Player Connections".
+5. **Accept Player Connection** - Show a connection is established with a player. Label it "Accept Player Connection".
+6. **Ask for Player Name** - The server asks the player for their name. Use a parallelogram for this input/output step, labeled "Request Player Name from Client".
+
+#### 3. Adding Players and Handling Threads
+
+7. **Receive and Add Player** - The server receives the player’s name, creates a player object, and adds it to the GameEngine. Label this step "Add Player to GameEngine".
+8. **Start PlayerHandler Thread** - After adding the player, the server starts a `PlayerHandler` thread for managing that player. Label it "Start PlayerHandler Thread".
+
+9. **Repeat Until Player Pool is Full** - Use a diamond shape for a decision point labeled "Is Player Pool Full?". If "No," loop back to "Wait for Player Connections." If "Yes," continue.
+
+#### 4. Game Loop Begins
+
+10. **Determine Player Turn** - The server requests the current player’s turn from the GameEngine. Label this "Get Player Turn from GameEngine".
+
+11. **Notify Active Player** - The server sends a message to the player whose turn it is, notifying them that they can make a move. Label this "Notify Player of Their Turn".
+
+#### 5. Receiving and Processing Moves
+
+12. **Receive Move from Player** - The server receives the move from the active player via `PlayerHandler`. Use a parallelogram for this input step, labeled "Receive Move from PlayerHandler".
+
+13. **Send Move to GameEngine for Validation** - Send the move to GameEngine to check if it's valid and process it. Label this as "Validate and Process Move in GameEngine".
+
+#### 6. Handling Move Result
+
+14. **Decision: Is Move Successful?** - Use a diamond to check if the move was valid or not. Label it "Is Move Valid?".
+
+   - **If Yes**:
+     - Update the board in the GameEngine.
+     - Broadcast the success and send the updated board to all players. Label these steps "Broadcast Move Success" and "Broadcast Updated Board State".
+     - Go to the next player’s turn.
+
+   - **If No**:
+     - Notify the active player to send a valid move. Label this as "Notify Player to Retry Move".
+
+15. **Check Game Over Condition** - After each successful move, the GameEngine checks if there’s a winner or if the game is a draw. Use a diamond labeled "Is Game Over?".
+
+   - **If Yes**:
+     - End the game and broadcast the result to all players. Label this step "Broadcast Game Result".
+
+   - **If No**:
+     - Loop back to “Get Player Turn” to continue with the next turn.
+
+#### 7. End
+
+16. **End Game** - Mark the end point of the process with an oval labeled "End Game".
+
+### Putting It All Together
+
+Here's how this might look in a flow diagram tool:
+
+1. Start with the "Start Game Application" oval.
+2. Connect this to the sequence of rectangles for initialization steps.
+3. Include the loop that waits for player connections and asks for their names until the player pool is full.
+4. Add a game loop that iterates through player turns, validating and processing moves.
+5. Include decision diamonds for conditions like "Is Move Valid?" and "Is Game Over?" to show branching.
+6. Add endpoints for "End Game" to conclude the flow.
+
+This flow diagram captures your detailed process and clearly shows each stage, from initial setup through to game completion, highlighting communication and interactions across `GameServer`, `GameEngine`, `PlayerHandler`, and players.
