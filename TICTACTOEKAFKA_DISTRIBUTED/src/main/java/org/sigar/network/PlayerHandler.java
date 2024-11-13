@@ -12,43 +12,35 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 
+import static org.sigar.utility.GAME_CONSTANTS.*;
 public class PlayerHandler implements Runnable{
-    //private InputHandler inputHandler;
-    private GameServer server;
-    private Socket clientSocket;
+    private final Socket clientSocket;
     private Player player;
-    private BufferedReader reader;
-    private PrintWriter writer;
-    private GameEngine gameEngine;
-    public static final List<PlayerHandler> playerHandlers = new ArrayList<>();
-    static  String INVALID_COMMAND_MESSAGE = "Invalid command. Send again!!";
-    static String UNKNOWN_COMMAND_MESSAGE = "Unknown command. Send again!!";
-    static  String INVALID_MOVE_COMMAND_MESSAGE = "Invalid MOVE command. Please use the format 'MOVE x,y' ,send again!!";
+    private final BufferedReader reader;
+    private final PrintWriter writer;
+    private final GameEngine gameEngine;
     private boolean stopThread = false;
-    public PlayerHandler(GameServer server, Socket clientSocket, GameEngine gameEngine){
+
+    public PlayerHandler(Socket clientSocket, GameEngine gameEngine){
         try {
-            this.server = server;
             this.clientSocket = clientSocket;
-            this.gameEngine = gameEngine;
             reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             writer = new PrintWriter(clientSocket.getOutputStream(),true);
-            playerHandlers.add(this);
+            this.gameEngine = gameEngine;
+            gameEngine.addPlayerHandler(this);
+            setupPlayer();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
     private void setupPlayer() {
         try {
-            writer.println("Enter player name\n");
-            System.out.println("Waiting for player name: ");
+            writer.println("Enter player name : ");
             String name = reader.readLine();
-            System.out.println("Got player name:" + name);
             player = new HumanPlayer(name, gameEngine.getAvailablePiece());
             gameEngine.addPlayer(player);
-            server.broadcastMessage("Player " + name + " has joined the game");
+            gameEngine.broadcastMessage("Player " + name + " has joined the game");
 
         } catch (IOException e) {
             System.out.println("Error in setting up the player");
@@ -56,11 +48,10 @@ public class PlayerHandler implements Runnable{
         }
     }
     public void run(){
-        setupPlayer();
         String message;
         try {
             while ((message = reader.readLine()) != null && !stopThread) {
-                if(gameEngine.getTurn() == player)
+                if(gameEngine.getCurrentTurn() == player)
                     processMessage(message);
                 else
                     writer.println("Wait for your turn");
@@ -71,20 +62,19 @@ public class PlayerHandler implements Runnable{
 
     }
     private void processMessage(String message){
-        Command command = createCommandFromMessage(message);
+        Command command = parseCommand(message);
         if(command != null){
             boolean result = gameEngine.validateAndExecuteCommand(player,command);
             if(!result){
-                sendMessageToClient(INVALID_MOVE_COMMAND_MESSAGE);
+                sendMessage(INVALID_MOVE_COMMAND_MESSAGE);
             }
         }
     }
-    public Command createCommandFromMessage(String message) {
+    public Command parseCommand(String message) {
         Command command = null;
-        System.out.println("Trying to create command " + message);
         if (message == null || message.isBlank()) {
-            System.out.println(INVALID_COMMAND_MESSAGE);
-            sendMessageToClient(INVALID_COMMAND_MESSAGE);
+           // System.out.println(INVALID_COMMAND_MESSAGE);
+            sendMessage(INVALID_COMMAND_MESSAGE);
             return null;
         }
 
@@ -94,8 +84,8 @@ public class PlayerHandler implements Runnable{
         } else if (message.equalsIgnoreCase("QUIT")) {
             processQuitCommand();
         } else {
-            System.out.println(UNKNOWN_COMMAND_MESSAGE);
-            sendMessageToClient(UNKNOWN_COMMAND_MESSAGE);
+           // System.out.println(UNKNOWN_COMMAND_MESSAGE);
+            sendMessage(UNKNOWN_COMMAND_MESSAGE);
         }
         return command;
     }
@@ -108,28 +98,21 @@ public class PlayerHandler implements Runnable{
             int x = Integer.parseInt(parts[0].trim())-1;
             int y = Integer.parseInt(parts[1].trim())-1;
 
-            // Make the move in the game engine
-        //    gameEngine.validateAndExecuteCommand(player,new PlacePieceCommand(gameEngine.getBoard(),new GridPosition(x, y)));
           command = new PlacePieceCommand(gameEngine.getBoard(),new GridPosition(x, y));
-            // System.out.println("Move made to (" + x + ", " + y + ")");
         } catch (NumberFormatException exception) {
-            System.out.println(INVALID_MOVE_COMMAND_MESSAGE);
-            sendMessageToClient(INVALID_MOVE_COMMAND_MESSAGE);
+           // System.out.println(INVALID_MOVE_COMMAND_MESSAGE);
+            sendMessage(INVALID_MOVE_COMMAND_MESSAGE);
         }
-        System.out.println("Returning a valid Move Command");
         return command;
     }
 
-    private Command processQuitCommand() {
+    private void processQuitCommand() {
         String quitMessage = String.format("%s has quit the game.",player.getName());
-        server.broadcastMessage(quitMessage);
-        playerHandlers.remove(this);
-//        System.out.println("Quitting the game...");
+        gameEngine.broadcastMessage(quitMessage);
         stopThread = true;
-        return null;
-        // gameEngine.removePlayer(player);
+        close();
     }
-    public void sendMessageToClient(String message){
+    public void sendMessage(String message){
         writer.println(message);
     }
     public void close() {

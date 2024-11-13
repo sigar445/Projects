@@ -30,6 +30,26 @@ public class Board {
             }
         }
     }
+    public String getBoardDisplay(){
+        StringBuilder boardDisplay = new StringBuilder();
+        for(int row = 0;row < size; row++){
+            for(int col = 0; col < size; col++){
+                String pieceVal = grid[row][col] != null ? String.valueOf(grid[row][col].getPieceType()) : " ";
+                String s = String.format("%s |",pieceVal);
+                if(col == size-1) {
+                    System.out.println(pieceVal);
+                    boardDisplay.append(pieceVal + "\n");
+                }
+                else {
+                    System.out.print(s);
+                    boardDisplay.append(s);
+                }
+            }
+        }
+        System.out.println();
+//        boardDisplay.append("\n");
+        return boardDisplay.toString();
+    }
     public boolean placePiece(GridPosition gridPosition, Piece piece){
         int row = gridPosition.getRow();
         int col = gridPosition.getCol();
@@ -48,16 +68,7 @@ public class Board {
        return boardValidator.isFull();
 
     }
-    public boolean checkRowMatch(GridPosition gridPosition){
 
-        return boardValidator.checkRowMatch(gridPosition);
-    }
-    public boolean checkColumnMatch(GridPosition gridPosition){
-        return boardValidator.checkColumnMatch(gridPosition);
-    }
-    public boolean checkDiagonalMatch(GridPosition gridPosition) {
-        return boardValidator.checkDiagonalMatch(gridPosition);
-    }
     public boolean hasAnyMatch(){
         return boardValidator.hasAnyMatch();
     }
