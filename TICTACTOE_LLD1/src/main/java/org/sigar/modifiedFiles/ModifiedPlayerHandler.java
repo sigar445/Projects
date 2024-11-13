@@ -1,11 +1,10 @@
-package org.sigar.network.modifiedFiles;
+package org.sigar.modifiedFiles;
 
-import org.sigar.application.GameEngine;
+import org.sigar.service.GameEngine;
 import org.sigar.model.command.Command;
 import org.sigar.model.command.PlacePieceCommand;
 import org.sigar.model.player.HumanPlayer;
 import org.sigar.model.player.Player;
-import org.sigar.network.PlayerHandler;
 import org.sigar.utility.GridPosition;
 
 import java.io.*;
@@ -57,8 +56,11 @@ public class ModifiedPlayerHandler implements Runnable{
         setupPlayer();
         String message;
         try {
-            while ((message = reader.readLine()) != null || !stopThread) {
-                processMessage(message);
+            while ((message = reader.readLine()) != null && !stopThread) {
+                if(gameEngine.getTurn() == player)
+                    processMessage(message);
+                else
+                    writer.println("Wait for your turn");
             }
         }catch (IOException exception){
             close();
@@ -127,7 +129,15 @@ public class ModifiedPlayerHandler implements Runnable{
     public void sendMessageToClient(String message){
         writer.println(message);
     }
-    private void close(){
-        return;
+    public void close() {
+        try {
+            if (reader != null) reader.close();
+            if (writer != null) writer.close();
+            if (clientSocket != null && !clientSocket.isClosed()) clientSocket.close();
+           // playerHandlers.remove(this);
+            System.out.println("Connection with player " + player.getName() + " closed.");
+        } catch (IOException e) {
+            System.err.println("Error closing player handler: " + e.getMessage());
+        }
     }
 }

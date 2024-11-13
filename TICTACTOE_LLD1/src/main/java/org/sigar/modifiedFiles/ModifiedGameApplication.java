@@ -1,6 +1,6 @@
-package org.sigar.network.modifiedFiles;
+package org.sigar.modifiedFiles;
 
-import org.sigar.application.GameEngine;
+import org.sigar.service.GameEngine;
 import org.sigar.utility.InputHandler;
 
 import java.io.IOException;

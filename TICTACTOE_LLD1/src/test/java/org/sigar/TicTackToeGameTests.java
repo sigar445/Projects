@@ -1,15 +1,4 @@
 package org.sigar;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.sigar.application.GameEngine;
-import org.sigar.utility.InputHandler;
-
-
-import java.io.IOException;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 class TicTackToeGameTests {
 

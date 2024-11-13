@@ -1,7 +1,7 @@
 package org.sigar;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.sigar.application.GameEngine;
+import org.sigar.service.GameEngine;
 import org.sigar.gameBoard.Board;
 import org.sigar.utility.InputHandler;
 

@@ -1,5 +1,6 @@
 package org.sigar.application;
 
+import org.sigar.service.GameEngine;
 import org.sigar.utility.InputHandler;
 
 import java.io.IOException;

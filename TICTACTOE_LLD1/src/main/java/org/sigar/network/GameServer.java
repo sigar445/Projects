@@ -1,8 +1,6 @@
 package org.sigar.network;
 
-import lombok.Getter;
-import org.sigar.application.GameEngine;
-import org.sigar.model.command.Command;
+import org.sigar.service.GameEngine;
 import org.sigar.model.command.PlacePieceCommand;
 import org.sigar.model.piece.Piece;
 import org.sigar.model.piece.PieceO;
@@ -16,7 +14,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.LinkedList;
 import java.util.List;
 
 public class GameServer implements AutoCloseable{

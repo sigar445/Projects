@@ -58,4 +58,7 @@ public class Board {
     public boolean checkDiagonalMatch(GridPosition gridPosition) {
         return boardValidator.checkDiagonalMatch(gridPosition);
     }
+    public boolean hasAnyMatch(){
+        return boardValidator.hasAnyMatch();
+    }
 }
