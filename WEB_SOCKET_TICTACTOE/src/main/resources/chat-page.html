@@ -30,9 +30,13 @@
     function connect() {
         const socket = new SockJS('http://localhost:8080/chat');  // Explicitly specify the full server URL
         stompClient = Stomp.over(socket);
+        stompClient.debug = (msg) => console.log(msg);
 
-        stompClient.connect({}, function () {
-           subscribeToRoom();
+      stompClient.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+            subscribeToRoom();
+        }, function (error) {
+            console.error('STOMP connection error:', error);
         });
     }
     function subscribeToRoom(){
