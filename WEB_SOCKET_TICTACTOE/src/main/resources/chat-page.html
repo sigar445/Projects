@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Application</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+<div>
+    <h2>Simple Chat</h2>
+    <select id="chatRoom" onchange="subscribeToRoom()">
+        <option value="room1">Room 1</option>
+        <option value="room2">Room 2</option>
+        <option value="room3">Room 3</option>
+        <option value="room4">Room 4</option>
+    </select>
+    <input id="sender" placeholder="Your name" />
+    <input id="message" placeholder="Your message" />
+    <button onclick="sendMessage()">Send</button>
+    <div id="chat">
+        <h3>Messages:</h3>
+    </div>
+</div>
+
+<script>
+    let stompClient = null;
+    let currentSubscription = null;
+
+    function connect() {
+        const socket = new SockJS('http://localhost:8080/chat');  // Explicitly specify the full server URL
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, function () {
+           subscribeToRoom();
+        });
+    }
+    function subscribeToRoom(){
+        const chatRoom = document.getElementById("chatRoom").value;
+        if (currentSubscription) {
+            currentSubscription.unsubscribe();
+        }
+
+        currentSubscription = stompClient.subscribe(`/topic/messages/${chatRoom}`, function (msg) {
+            showMessage(JSON.parse(msg.body));
+        });
+        document.getElementById("chat").innerHTML = `<h3>Messages in ${chatRoom}:</h3>`;
+    }
+    function sendMessage() {
+        const sender = document.getElementById("sender").value;
+        const message = document.getElementById("message").value;
+        const chatRoom = document.getElementById("chatRoom").value;
+        stompClient.send("/app/" + chatRoom + "/sendMessage", {}, JSON.stringify({ sender: sender, content: message }));
+    }
+
+    function showMessage(message) {
+        const chat = document.getElementById("chat");
+        const messageElement = document.createElement("p");
+        messageElement.appendChild(document.createTextNode(message.sender + ": " + message.content));
+        chat.appendChild(messageElement);
+    }
+
+    connect();
+</script>
+</body>
+</html>
