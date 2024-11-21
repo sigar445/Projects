@@ -2,22 +2,21 @@ package org.sigar.chat.http;
 
 import org.sigar.chat.channel.CommunicationChannel;
 import org.sigar.chat.channel.MessageHandler;
-import org.springframework.beans.factory.annotation.Value;
+import org.sigar.chat.core.ChatMessageBroadcaster;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 
 @Component
 @ConditionalOnProperty(name = "chat.communication.channel", havingValue = "http")
 public class HttpCommunicationChannel implements CommunicationChannel {
-    private final RestTemplate restTemplate;
-    @Value("${chat.http.base-url}")
-    private String baseUrl;
-    public HttpCommunicationChannel(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
 
+    private final SimpMessagingTemplate messagingTemplate;
+
+    public HttpCommunicationChannel(SimpMessagingTemplate messagingTemplate) {
+        this.messagingTemplate = messagingTemplate;
+    }
     @Override
     public void connect() {
         System.out.println("HTTP channel connected");
@@ -30,14 +29,12 @@ public class HttpCommunicationChannel implements CommunicationChannel {
 
     @Override
     public void sendMessage(String destination, String message) {
-        String url = String.format("%s/%s", baseUrl, destination); // Construct the full URL
-        System.out.printf("Sending %s to %s",message,url);
-        restTemplate.postForObject(url, message, Void.class);
+        ChatMessageBroadcaster.broadcastMessageToSubscribers(messagingTemplate,destination,message);
     }
 
     @Override
     public void receiveMessage(String source, MessageHandler messageHandler) {
        // throw new UnsupportedOperationException("HTTP does not support continuous message subscription");
-        return;
+        System.out.println("HTTP does not support continuous message subscription,handling via stomp");
     }
 }

@@ -17,7 +17,6 @@ public class RedisCommunicationChannel implements CommunicationChannel {
 
     public RedisCommunicationChannel(RedisTemplate<String, String> redisTemplate,RedisMessageListenerContainer messageListenerContainer) {
         this.redisTemplate = redisTemplate;
-
         this.messageListenerContainer = messageListenerContainer;
 
 

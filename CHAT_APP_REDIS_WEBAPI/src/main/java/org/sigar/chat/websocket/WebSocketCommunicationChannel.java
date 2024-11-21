@@ -1,11 +1,8 @@
 package org.sigar.chat.websocket;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.sigar.chat.channel.CommunicationChannel;
 import org.sigar.chat.channel.MessageHandler;
-import org.sigar.chat.model.ChatMessage;
-import org.sigar.chat.redis.ChatMessageListener;
+import org.sigar.chat.core.ChatMessageBroadcaster;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
@@ -32,7 +29,7 @@ public class WebSocketCommunicationChannel implements CommunicationChannel {
 
     @Override
     public void sendMessage(String destination,String message) {
-        ChatMessageListener.sendMessageToSubscribers(simpMessagingTemplate,destination,message);
+        ChatMessageBroadcaster.broadcastMessageToSubscribers(simpMessagingTemplate,destination,message);
     }
 
     @Override
