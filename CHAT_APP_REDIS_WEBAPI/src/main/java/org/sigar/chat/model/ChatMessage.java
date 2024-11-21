@@ -1,4 +1,4 @@
-package org.sigar.chat;
+package org.sigar.chat.model;
 
 import lombok.Getter;
 import lombok.Setter;

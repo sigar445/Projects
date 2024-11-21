@@ -1,16 +1,13 @@
-package org.sigar.redis;
+package org.sigar.chat.redis;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.sigar.chat.ChatMessage;
+import org.sigar.chat.model.ChatMessage;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Component;
 
-import java.util.logging.Logger;
-
-@Component
+//@Component
 public class RedisMessageListener implements MessageListener {
   //  private static Logger logger = Logger.getAnonymousLogger();
     private final SimpMessagingTemplate messagingTemplate;
@@ -22,7 +19,7 @@ public class RedisMessageListener implements MessageListener {
     @Override
     public void onMessage(Message message, byte[] pattern) {
         String channel = new String(message.getChannel());
-        String body = new String(message.getBody());
+        String body    = new String(message.getBody());
         System.out.printf("\nReceived message on channel: %s\n",channel);
         System.out.printf("Message body: %s \n", body);
 
